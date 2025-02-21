@@ -1,0 +1,8 @@
+﻿  main.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(65,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(66,59): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(66,41): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(71,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(72,56): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(72,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
