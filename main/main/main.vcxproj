@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Blocks.cpp" />
     <ClCompile Include="DragAndDrop.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

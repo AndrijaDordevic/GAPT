@@ -1,8 +1,18 @@
-﻿  main.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(65,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(66,59): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(66,41): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(71,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(72,56): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\main.cpp(72,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+﻿  Blocks.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(134,26): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(146,41): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
+  DragAndDrop.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragAndDrop.cpp(27,17): warning C4804: '<': unsafe use of type 'bool' in operation
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragAndDrop.cpp(36,36): warning C4804: '<': unsafe use of type 'bool' in operation
+  main.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(65,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(66,59): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(66,41): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(71,21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(72,56): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(72,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Generating Code...
+  LINK : C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe not found or not built by the last incremental link; performing full link
+DragAndDrop.obj : error LNK2005: main already defined in Blocks.obj
+main.obj : error LNK2005: main already defined in Blocks.obj
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe : fatal error LNK1169: one or more multiply defined symbols found
