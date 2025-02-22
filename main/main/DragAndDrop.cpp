@@ -21,7 +21,7 @@ SDL_FRect createShape()
 
 
 
-int main() {
+int test() {
 
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {

@@ -121,7 +121,7 @@ void RenderTetrominos() {
     }
 }
 
-int main(int argc, char* argv[]) {
+int test(int argc, char* argv[]) {
     srand(static_cast<unsigned>(time(0)));
     SDL_Init(SDL_INIT_VIDEO);
 
