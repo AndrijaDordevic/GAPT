@@ -1,93 +1,94 @@
+#define SDL_MAIN_USE_CALLBACKS 1  // Use callbacks instead of the main() method
 #include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h> // Need additional library to render text
+#include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <iostream>
 #include <vector>
 
 const int WINDOW_WIDTH = 1400;
 const int WINDOW_HEIGHT = 900;
 
-// Menu item structure
-struct MenuItem {
-    SDL_Rect rect;
-    std::string label;
-    bool isHovered;
-};
+static SDL_Window* window = NULL;
+static SDL_Renderer* renderer = NULL;
+static SDL_Texture* texture = NULL;
+static TTF_Font* font = NULL;
 
-// Function to render text
-SDL_Texture* renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string& text,size_t size, SDL_Color color) {
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), size, color);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_DestroySurface(surface);
-    return texture;
+// This function runs once on startup
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
+{
+    SDL_Color colour = { 255, 255, 255, SDL_ALPHA_OPAQUE };
+    SDL_Surface* text;
+
+    // Create window
+    if (!SDL_CreateWindowAndRenderer("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+        SDL_Log("Couldn't create window and renderer: %s\n", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    if (!TTF_Init()) {
+        SDL_Log("Couldn't initialise SDL_ttf: %s\n", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    // Open the font
+    font = TTF_OpenFont("arial.ttf", 24);
+    if (!font) {
+        SDL_Log("Couldn't open font: %s\n", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    // Create text
+    text = TTF_RenderText_Blended(font, "Start Game\nSettings\nExit Game", 0, colour);
+    if (text) {
+        texture = SDL_CreateTextureFromSurface(renderer, text);
+        SDL_DestroySurface(text);
+    }
+    if (!texture) {
+        SDL_Log("Couldn't create text: %s\n", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    return SDL_APP_CONTINUE;
 }
 
-int main() {
-
-    if (SDL_Init(SDL_INIT_VIDEO) != 0 || TTF_Init() != 0) {
-        std::cerr << "SDL/TTF Init Error: " << SDL_GetError() << "\n";
-        return 1;
+// Fn for keypresses
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
+{
+    // Pressing any key or clicking will end the program
+    if (event->type == SDL_EVENT_KEY_DOWN || event->type == SDL_EVENT_QUIT || event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        return SDL_APP_SUCCESS;  // end the program and report to os
     }
+    return SDL_APP_CONTINUE;
+}
 
-    SDL_Window* window = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
-    if (!window || !renderer) {
-        std::cerr << "Window/Renderer Creation Error: " << SDL_GetError() << "\n";
-        SDL_Quit();
-        return 1;
+// This runs every frame
+SDL_AppResult SDL_AppIterate(void* appstate)
+{
+    int w = 0, h = 0;
+    SDL_FRect dst;
+    const float scale = 4.0f;
+
+    // Center text and scale it up
+    SDL_GetRenderOutputSize(renderer, &w, &h);
+    SDL_SetRenderScale(renderer, scale, scale);
+    SDL_GetTextureSize(texture, &dst.w, &dst.h);
+    dst.x = ((w / scale) - dst.w) / 2;
+    dst.y = ((h / scale) - dst.h) / 2;
+
+    // Draw text
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderTexture(renderer, texture, NULL, &dst);
+    SDL_RenderPresent(renderer);
+
+    return SDL_APP_CONTINUE;
+}
+
+// Shutdown fn
+void SDL_AppQuit(void* appstate, SDL_AppResult result)
+{
+    if (font) {
+        TTF_CloseFont(font);
     }
-
-    TTF_Font* font = TTF_OpenFont("arial.ttf", 24);
-
-    // Define menu items
-    std::vector<MenuItem> menuItems = {
-        {{300, 200, 200, 50}, "Start", false},
-        {{300, 270, 200, 50}, "Options", false},
-        {{300, 340, 200, 50}, "Exit", false}
-    };
-
-    bool running = true;
-    SDL_Event event;
-
-    while (running) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
-            else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                int mouseX = event.motion.x;
-                int mouseY = event.motion.y;
-
-                for (auto& item : menuItems) {
-                    item.isHovered = SDL_PointInRect(&(SDL_Point) {mouseX, mouseY}, & item.rect);
-
-                    if (item.isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                        if (item.label == "Exit") running = false;
-                        else std::cout << item.label << " clicked!\n";
-                    }
-                }
-            }
-        }
-
-        // Clear screen
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        // Draw menu
-        for (auto& item : menuItems) {
-            SDL_Color color = item.isHovered ? SDL_Color{ 255, 0, 0, 255 } : SDL_Color{ 255, 255, 255, 255 };
-            SDL_Texture* textTexture = renderText(renderer, font, item.label, size, color);
-            SDL_RenderTexture(renderer, textTexture, NULL, &item.rect);
-            SDL_DestroyTexture(textTexture);
-        }
-
-        SDL_RenderPresent(renderer);
-    }
-
-    // Cleanup
-    TTF_CloseFont(font);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     TTF_Quit();
-    SDL_Quit();
-    return 0;
 }
