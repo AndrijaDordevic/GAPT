@@ -1,4 +1,15 @@
-﻿  Window.cpp
+﻿  Grid.cpp
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Window.cpp
   main.cpp
+C:\Users\andri\source\repos\GAPT\main\main\main.cpp(12,15): warning C4101: 'event': unreferenced local variable
   Generating Code...
+LINK : warning LNK4067: ambiguous entry point; selected 'mainCRTStartup'
   main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe
