@@ -1,6 +1,6 @@
 #include "Window.hpp"  // Includes drawGrid() declaration
 
-int main() {
+int mai() {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
 

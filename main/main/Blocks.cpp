@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include <ctime>
 
+
+using namespace std;
+
+
 const int SCREEN_WIDTH = 1000;   // Fixed width
 const int SCREEN_HEIGHT = 600;   // Fixed height
 const int BLOCK_SIZE = 40;       // Block size
@@ -10,9 +14,11 @@ const int BLOCK_SIZE = 40;       // Block size
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
+
 struct Block {
     int x, y;
     SDL_Color color;
+    bool dragging = false;
 };
 
 struct Tetromino {
@@ -121,12 +127,84 @@ void RenderTetrominos() {
     }
 }
 
-int test(int argc, char* argv[]) {
+void DragDrop(SDL_Event& event) {
+
+    // Static variables to track the dragged tetromino and mouse offsets
+    static Tetromino* draggedTetromino = nullptr; // Pointer to the currently dragged tetromino
+    static int mouseOffsetX = 0, mouseOffsetY = 0; // Offset between mouse click and top-left corner of the tetromino
+    static int initialX, initialY; // Store the original position of the first block (top-left corner)
+
+    // Check if the left mouse button is pressed
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
+        // Iterate through all tetrominos to find the one being clicked
+        for (auto& tetromino : tetrominos) {
+            // Iterate through all blocks in the current tetromino
+            for (auto& block : tetromino.blocks) {
+                // Check if the mouse click is within the bounds of the current block
+                if (event.button.x >= block.x && event.button.x <= block.x + BLOCK_SIZE &&
+                    event.button.y >= block.y && event.button.y <= block.y + BLOCK_SIZE) {
+
+                    // Set the draggedTetromino to the current tetromino
+                    draggedTetromino = &tetromino;
+
+                    // Find the top-left corner of the tetromino for accurate movement
+                    int minX = tetromino.blocks[0].x; // Initialize with the first block's position
+                    int minY = tetromino.blocks[0].y;
+                    for (auto& b : tetromino.blocks) {
+                        if (b.x < minX) minX = b.x; // Update minX if a block with a smaller x is found
+                        if (b.y < minY) minY = b.y; // Update minY if a block with a smaller y is found
+                    }
+
+                    // Calculate the offset between the mouse click and the top-left corner of the tetromino
+                    mouseOffsetX = event.button.x - minX;
+                    mouseOffsetY = event.button.y - minY;
+
+                    // Store the initial position of the top-left corner for later calculations
+                    initialX = minX;
+                    initialY = minY;
+
+                    return; // Exit the function after finding the clicked block
+                }
+            }
+        }
+    }
+
+    // Check if the mouse is moving and a tetromino is being dragged
+    if (event.type == SDL_EVENT_MOUSE_MOTION && draggedTetromino) {
+        // Calculate the new position of the tetromino based on the mouse movement
+        int newX = event.motion.x - mouseOffsetX;
+        int newY = event.motion.y - mouseOffsetY;
+
+        // Calculate the change in position (delta) from the initial position
+        int dx = newX - initialX;
+        int dy = newY - initialY;
+
+        // Move all blocks in the dragged tetromino by the delta
+        for (auto& block : draggedTetromino->blocks) {
+            block.x += dx;
+            block.y += dy;
+        }
+
+        // Update the reference point for the next movement
+        initialX = newX;
+        initialY = newY;
+    }
+
+    // Check if the left mouse button is released
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
+        // Reset the draggedTetromino pointer to stop dragging
+        draggedTetromino = nullptr;
+    }
+}
+
+
+
+
+int main(int argc, char* argv[]) {
     srand(static_cast<unsigned>(time(0)));
     SDL_Init(SDL_INIT_VIDEO);
 
     window = SDL_CreateWindow("Tetris Block Spawner", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
-
     renderer = SDL_CreateRenderer(window, nullptr);
 
     bool running = true;
@@ -138,9 +216,10 @@ int test(int argc, char* argv[]) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
+
+            DragDrop(event); // <--- Call the function here
         }
 
-        // Only spawn a Tetromino if fewer than 3 have been spawned
         if (SDL_GetTicks() - lastSpawnTime > 1000 && spawnedCount < 3) {
             SpawnTetromino();
             lastSpawnTime = SDL_GetTicks();
