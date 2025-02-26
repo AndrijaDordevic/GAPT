@@ -27,6 +27,7 @@ struct Tetromino {
 };
 
 std::vector<Tetromino> tetrominos;
+std::vector<Tetromino*> placedTetrominos;
 
 // Define 3 fixed spawn positions on the right side
 const int spawnX = SCREEN_WIDTH - BLOCK_SIZE - 130;  // Moved further to the left
@@ -60,6 +61,7 @@ void SpawnTetromino() {
         {{0, 0}, {1, 0}, {1, 1}, {2, 1}}     // T shape
     };
 
+    // Define an array of possible colors
     SDL_Color colors[] = {
         {255, 0, 0, 255},    // Red
         {0, 255, 0, 255},    // Green
@@ -68,9 +70,13 @@ void SpawnTetromino() {
         {255, 165, 0, 255}   // Orange
     };
 
-    int randomIndex = rand() % shapes.size(); // Select random Tetromino shape
+    // Select a random index for the color
+    int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
+
+    // Randomly choose a tetromino shape
+    int randomIndex = rand() % shapes.size();
     Tetromino newTetromino;
-    newTetromino.color = colors[randomIndex];
+    newTetromino.color = colors[randomColorIndex]; // Set the color randomly
 
     // Find the first free position starting from the top
     int spawnY = -1;
@@ -98,6 +104,7 @@ void SpawnTetromino() {
     tetrominos.push_back(newTetromino); // Add the new Tetromino to the list
     spawnedCount++; // Increment spawned counter
 }
+
 
 // Function to release positions once Tetrominoes move down
 void ReleaseOccupiedPositions() {
@@ -128,74 +135,89 @@ void RenderTetrominos() {
 }
 
 void DragDrop(SDL_Event& event) {
+    static Tetromino* draggedTetromino = nullptr; // Pointer to track dragged tetromino
+    static int mouseOffsetX = 0, mouseOffsetY = 0; // Offset between mouse click and block position
+    static int initialSpawnIndex = -1; // Track the original spawn position index
 
-    // Static variables to track the dragged tetromino and mouse offsets
-    static Tetromino* draggedTetromino = nullptr; // Pointer to the currently dragged tetromino
-    static int mouseOffsetX = 0, mouseOffsetY = 0; // Offset between mouse click and top-left corner of the tetromino
-    static int initialX, initialY; // Store the original position of the first block (top-left corner)
-
-    // Check if the left mouse button is pressed
+    // Handle mouse press (start dragging)
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
-        // Iterate through all tetrominos to find the one being clicked
         for (auto& tetromino : tetrominos) {
-            // Iterate through all blocks in the current tetromino
+            // Skip dragging if the tetromino is already placed
+            if (std::find(placedTetrominos.begin(), placedTetrominos.end(), &tetromino) != placedTetrominos.end()) {
+                continue; // Skip this tetromino, it's already placed
+            }
+
             for (auto& block : tetromino.blocks) {
-                // Check if the mouse click is within the bounds of the current block
                 if (event.button.x >= block.x && event.button.x <= block.x + BLOCK_SIZE &&
                     event.button.y >= block.y && event.button.y <= block.y + BLOCK_SIZE) {
 
-                    // Set the draggedTetromino to the current tetromino
-                    draggedTetromino = &tetromino;
+                    draggedTetromino = &tetromino; // Set dragged tetromino
 
-                    // Find the top-left corner of the tetromino for accurate movement
-                    int minX = tetromino.blocks[0].x; // Initialize with the first block's position
-                    int minY = tetromino.blocks[0].y;
-                    for (auto& b : tetromino.blocks) {
-                        if (b.x < minX) minX = b.x; // Update minX if a block with a smaller x is found
-                        if (b.y < minY) minY = b.y; // Update minY if a block with a smaller y is found
+                    // Check if the block was in a spawn position
+                    for (int i = 0; i < 3; ++i) {
+                        if (block.x == spawnX && block.y == spawnYPositions[i]) {
+                            initialSpawnIndex = i; // Store the index of the occupied spawn position
+                            positionsOccupied[i] = false; // Free the spawn position
+                            spawnedCount--; // Decrease spawned count to allow new Tetromino spawn
+                        }
                     }
 
-                    // Calculate the offset between the mouse click and the top-left corner of the tetromino
-                    mouseOffsetX = event.button.x - minX;
-                    mouseOffsetY = event.button.y - minY;
-
-                    // Store the initial position of the top-left corner for later calculations
-                    initialX = minX;
-                    initialY = minY;
-
-                    return; // Exit the function after finding the clicked block
+                    // Store mouse offset for smooth dragging
+                    mouseOffsetX = event.button.x - block.x;
+                    mouseOffsetY = event.button.y - block.y;
+                    return;
                 }
             }
         }
     }
 
-    // Check if the mouse is moving and a tetromino is being dragged
+    // Handle mouse movement (dragging)
     if (event.type == SDL_EVENT_MOUSE_MOTION && draggedTetromino) {
-        // Calculate the new position of the tetromino based on the mouse movement
+        if (draggedTetromino->blocks.empty()) return;  // Ensure there are blocks to move
+
         int newX = event.motion.x - mouseOffsetX;
         int newY = event.motion.y - mouseOffsetY;
 
-        // Calculate the change in position (delta) from the initial position
-        int dx = newX - initialX;
-        int dy = newY - initialY;
+        // Move the whole Tetromino (adjusting every block based on new mouse position)
+        int dx = newX - draggedTetromino->blocks[0].x;
+        int dy = newY - draggedTetromino->blocks[0].y;
 
-        // Move all blocks in the dragged tetromino by the delta
         for (auto& block : draggedTetromino->blocks) {
             block.x += dx;
             block.y += dy;
         }
-
-        // Update the reference point for the next movement
-        initialX = newX;
-        initialY = newY;
     }
 
-    // Check if the left mouse button is released
+    // Handle mouse release (stop dragging)
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
-        // Reset the draggedTetromino pointer to stop dragging
-        draggedTetromino = nullptr;
+        if (draggedTetromino) {
+            placedTetrominos.push_back(draggedTetromino); // Add tetromino to placed array
+
+            draggedTetromino = nullptr; // Stop dragging and reset tetromino pointer
+
+            // Update spawn positions
+            ReleaseOccupiedPositions();
+            spawnedCount = spawnedCount - 1; //Reduce count to spawn more
+
+            // **After releasing a Tetromino, spawn a new one if needed**
+            if (initialSpawnIndex != -1 && !positionsOccupied[initialSpawnIndex]) {
+                positionsOccupied[initialSpawnIndex] = true; // Mark position as occupied
+                SpawnTetromino(); // Spawn a new Tetromino in an available position
+            }
+
+            initialSpawnIndex = -1; // Reset the spawn tracking index
+        }
     }
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -212,6 +234,7 @@ int main(int argc, char* argv[]) {
     Uint32 lastSpawnTime = SDL_GetTicks();
 
     while (running) {
+        //SDL_Log("Spawned Count: %d", spawnedCount);
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
