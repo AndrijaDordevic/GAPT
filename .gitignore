@@ -25,3 +25,19 @@ obj/
 
 # Windows Installer temporary files
 Thumbs.db
+/main/main/x64/Debug/main.tlog/unsuccessfulbuild
+/main/main/x64/Debug/main.tlog/link.11152.read.4.tlog
+/main/main/x64/Debug/main.tlog/link.read.4.tlog
+/main/main/x64/Debug/main.tlog/link.read.3.tlog
+/main/main/x64/Debug/main.tlog/link.read.2.tlog
+*.tlog
+/main/main/x64/Debug
+/main/main/x64/Debug/main.tlog/main.lastbuildstate
+/main/main/x64/Debug/main.tlog/CL.command.1.tlog
+/main/main/x64/Debug/main.tlog/Cl.items.tlog
+/main/main/x64/Debug/main.tlog/CL.read.1.tlog
+/main/main/x64/Debug/main.tlog/CL.write.1.tlog
+/main/main/x64/Debug/main.tlog/link.command.1.tlog
+/main/main/x64/Debug/main.tlog/link.read.1.tlog
+/main/main/x64/Debug/main.tlog/link.secondary.1.tlog
+/main/main/x64/Debug/main.tlog/link.write.1.tlog
