@@ -2,17 +2,15 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include "Blocks.hpp"
+
 
 
 using namespace std;
 
-
-const int SCREEN_WIDTH = 1000;   // Fixed width
-const int SCREEN_HEIGHT = 600;   // Fixed height
 const int BLOCK_SIZE = 40;       // Block size
 
-SDL_Window* window = nullptr;
-SDL_Renderer* renderer = nullptr;
+
 
 
 struct Block {
@@ -30,8 +28,8 @@ std::vector<Tetromino> tetrominos;
 std::vector<Tetromino*> placedTetrominos;
 
 // Define 3 fixed spawn positions on the right side
-const int spawnX = SCREEN_WIDTH - BLOCK_SIZE - 130;  // Moved further to the left
-const int spawnYPositions[] = { 90, SCREEN_HEIGHT / 2 - BLOCK_SIZE / 2, SCREEN_HEIGHT - BLOCK_SIZE - 100 }; // Further left adjustment
+ int spawnX;  // Moved further to the left
+ int spawnYPositions[3]; // Further left adjustment
 
 bool positionsOccupied[] = { false, false, false }; // Track if top, middle, and bottom positions are occupied
 
@@ -124,12 +122,12 @@ void ReleaseOccupiedPositions() {
     }
 }
 
-void RenderTetrominos() {
+void RenderTetrominos(SDL_Renderer* ren) {
     for (const auto& tetromino : tetrominos) {
         for (const auto& block : tetromino.blocks) {
-            SDL_SetRenderDrawColor(renderer, block.color.r, block.color.g, block.color.b, block.color.a);
+            SDL_SetRenderDrawColor(ren, block.color.r, block.color.g, block.color.b, block.color.a);
             SDL_FRect rect = { static_cast<float>(block.x), static_cast<float>(block.y), static_cast<float>(BLOCK_SIZE), static_cast<float>(BLOCK_SIZE) };
-            SDL_RenderFillRect(renderer, &rect);
+            SDL_RenderFillRect(ren, &rect);
         }
     }
 }
@@ -211,36 +209,26 @@ void DragDrop(SDL_Event& event) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-int main(int argc, char* argv[]) {
+void RunBlocks(SDL_Window* win, SDL_Renderer* ren, int screen_width, int screen_height) 
+{
     srand(static_cast<unsigned>(time(0)));
-    SDL_Init(SDL_INIT_VIDEO);
-
-    window = SDL_CreateWindow("Tetris Block Spawner", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
-    renderer = SDL_CreateRenderer(window, nullptr);
 
     bool running = true;
     SDL_Event event;
     Uint32 lastSpawnTime = SDL_GetTicks();
 
+    //Set Dimentions
+    spawnX = screen_width - BLOCK_SIZE - 130;  // Moved further to the left
+    spawnYPositions[0] = 90;
+    spawnYPositions[1] = screen_height / 2 - BLOCK_SIZE / 2;
+    spawnYPositions[2] = screen_height - BLOCK_SIZE - 100;
+
     while (running) {
-        //SDL_Log("Spawned Count: %d", spawnedCount);
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
-
-            DragDrop(event); // <--- Call the function here
+            DragDrop(event);
         }
 
         if (SDL_GetTicks() - lastSpawnTime > 1000 && spawnedCount < 3) {
@@ -248,17 +236,16 @@ int main(int argc, char* argv[]) {
             lastSpawnTime = SDL_GetTicks();
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_RenderClear(ren);
 
-        RenderTetrominos();
+        RenderTetrominos(ren);
 
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16); // ~60 FPS
+        SDL_RenderPresent(ren);
+        SDL_Delay(16);
     }
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 0;
 }
+
+
+
+

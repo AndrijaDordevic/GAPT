@@ -1,2 +1,12 @@
-﻿  Menu.cpp
-  main.vcxproj -> C:\Users\User\source\repos\GAPT\main\x64\Debug\main.exe
+﻿  Blocks.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(167,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(168,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(179,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(180,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(221,26): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(240,41): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
+  Window.cpp
+  main.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\main.cpp(13,15): warning C4101: 'event': unreferenced local variable
+  Generating Code...
+  main.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe

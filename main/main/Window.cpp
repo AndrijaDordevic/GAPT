@@ -30,6 +30,7 @@ bool initializeSDL(SDL_Window*& window, SDL_Renderer*& renderer) {
     return true; // Return success if both window and renderer are created successfully
 }
 
+
 /**
  * Handles user input events such as quitting the application.
  *

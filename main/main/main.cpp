@@ -1,6 +1,7 @@
 #include "Window.hpp"  // Includes drawGrid() declaration
+#include "Blocks.hpp"
 
-int mai() {
+int main() {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
 
@@ -17,6 +18,8 @@ int mai() {
         drawGrid(renderer);  // Call grid to drawGrid to each frame
 
         SDL_Delay(100);  // Control the frame rate
+
+        RunBlocks(window, renderer, WINDOW_WIDTH, WINDOW_HEIGHT); //Spawn Blocks
     }
 
     cleanupSDL(window, renderer);
