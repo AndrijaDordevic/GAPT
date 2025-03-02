@@ -1,7 +1,6 @@
 #include "Window.hpp"
+#include "Menu.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <SDL3_ttf/SDL_ttf.h>
 #include <iostream>
 #include <vector>
 
@@ -35,7 +34,7 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
         mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
-int main(int argc, char* argv[]) {
+int runMenu() {
     // Initialise SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL Init Error: " << SDL_GetError() << "\n";
@@ -80,9 +79,8 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Draw menu
+        // Render menu
         renderMenu(renderer);
-
         SDL_RenderPresent(renderer);
     }
 

@@ -1,5 +1,7 @@
 #include "Window.hpp"  // Includes drawGrid() declaration
 #include "Blocks.hpp"
+#include "Menu.hpp"
+
 
 int main() {
     SDL_Window* window = nullptr;
@@ -18,6 +20,8 @@ int main() {
         drawGrid(renderer);  // Call grid to drawGrid to each frame
 
         SDL_Delay(100);  // Control the frame rate
+
+        runMenu(); // Create the menu
 
         RunBlocks(window, renderer, WINDOW_WIDTH, WINDOW_HEIGHT); //Spawn Blocks
     }
