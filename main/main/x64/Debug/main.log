@@ -1,2 +1,24 @@
-﻿  Menu.cpp
-  main.vcxproj -> C:\Users\User\source\repos\GAPT\main\x64\Debug\main.exe
+﻿  Blocks.cpp
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(164,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(165,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(176,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(177,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(218,26): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Blocks.cpp(236,41): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
+  DragAndDrop.cpp
+  Grid.cpp
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(26,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(32,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  main.cpp
+C:\Users\andri\source\repos\GAPT\main\main\main.cpp(15,15): warning C4101: 'event': unreferenced local variable
+  Menu.cpp
+  Window.cpp
+  Generating Code...
+  LINK : C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe not found or not built by the last incremental link; performing full link
+  main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe
