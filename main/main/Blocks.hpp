@@ -4,6 +4,6 @@
 
 #include <SDL3/SDL.h>
 
-void RunBlocks(SDL_Window* win, SDL_Renderer* ren, int screen_width, int screen_height);
+void RunBlocks(SDL_Renderer* renderer);
 
 #endif // BLOCKS_H

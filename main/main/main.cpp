@@ -23,7 +23,7 @@ int main() {
 
         runMenu(); // Create the menu
 
-        RunBlocks(window, renderer, WINDOW_WIDTH, WINDOW_HEIGHT); //Spawn Blocks
+        RunBlocks(renderer); //Spawn Blocks
     }
 
     cleanupSDL(window, renderer);

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "Blocks.hpp"
+#include "Window.hpp"
 
 
 
@@ -209,7 +210,7 @@ void DragDrop(SDL_Event& event) {
 }
 
 
-void RunBlocks(SDL_Window* win, SDL_Renderer* ren, int screen_width, int screen_height) 
+void RunBlocks(SDL_Renderer* renderer) 
 {
     srand(static_cast<unsigned>(time(0)));
 
@@ -218,10 +219,10 @@ void RunBlocks(SDL_Window* win, SDL_Renderer* ren, int screen_width, int screen_
     Uint32 lastSpawnTime = SDL_GetTicks();
 
     //Set Dimentions
-    spawnX = screen_width - BLOCK_SIZE - 130;  // Moved further to the left
+    spawnX = WINDOW_WIDTH - BLOCK_SIZE - 130;  // Moved further to the left
     spawnYPositions[0] = 90;
-    spawnYPositions[1] = screen_height / 2 - BLOCK_SIZE / 2;
-    spawnYPositions[2] = screen_height - BLOCK_SIZE - 100;
+    spawnYPositions[1] = WINDOW_HEIGHT / 2 - BLOCK_SIZE / 2;
+    spawnYPositions[2] = WINDOW_HEIGHT - BLOCK_SIZE - 100;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
@@ -236,12 +237,12 @@ void RunBlocks(SDL_Window* win, SDL_Renderer* ren, int screen_width, int screen_
             lastSpawnTime = SDL_GetTicks();
         }
 
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
-        SDL_RenderClear(ren);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
 
-        RenderTetrominos(ren);
+        RenderTetrominos(renderer);
 
-        SDL_RenderPresent(ren);
+        SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
 }
