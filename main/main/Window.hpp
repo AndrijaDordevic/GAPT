@@ -14,8 +14,8 @@ using namespace std; // Avoids the need to use "std::" before standard functions
 // ==========================
 
 // Constants defining the window size
-const int WINDOW_WIDTH = 1400;  // The width of the window in pixels
-const int WINDOW_HEIGHT = 900;  // The height of the window in pixels
+const int WINDOW_WIDTH = 1600;  // The width of the window in pixels
+const int WINDOW_HEIGHT = 1000;  // The height of the window in pixels
 
 // Constants defining the grid layout inside the window
 const int GRID_ROWS = 10;       // Number of rows in the grid
@@ -53,6 +53,6 @@ void handleEvents(bool& running);
 void cleanupSDL(SDL_Window* window, SDL_Renderer* renderer);
 
 // Function to draw the game grid
-void drawGrid(SDL_Renderer* renderer);
+void DrawGrid(SDL_Renderer* renderer);
 
 #endif // WINDOW_H
