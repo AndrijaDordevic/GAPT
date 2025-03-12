@@ -1,10 +1,76 @@
 ﻿  Grid.cpp
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,84): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,43): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,35): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
+  (compiling source file 'Grid.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103):
+      the template instantiation context (the oldest one first) is
+          C:\Users\andri\source\repos\GAPT\main\main\Grid.hpp(32,21):
+          see reference to function template instantiation 'void std::vector<Cell,std::allocator<Cell>>::emplace_back<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+              C:\Users\andri\source\repos\GAPT\main\main\Grid.hpp(32,33):
+              see the first reference to 'std::vector<Cell,std::allocator<Cell>>::emplace_back' in 'Grid::Grid'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(909,24):
+          see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Ty=Cell
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(830,20):
+          see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Ty=Cell
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(848,27):
+          see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,int,int,const int&,const int&>(_Alloc &,_Objty *const ,int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<Cell>,
+              _Ty=Cell,
+              _Objty=Cell
+          ]
+  
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:             _Ty=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         ]
+  (compiling source file 'Grid.cpp')
+  
+  Main.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
+  (compiling source file 'Main.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103):
+      the template instantiation context (the oldest one first) is
+          C:\Users\andri\source\repos\GAPT\main\main\Grid.hpp(32,21):
+          see reference to function template instantiation 'void std::vector<Cell,std::allocator<Cell>>::emplace_back<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+              C:\Users\andri\source\repos\GAPT\main\main\Grid.hpp(32,33):
+              see the first reference to 'std::vector<Cell,std::allocator<Cell>>::emplace_back' in 'Grid::Grid'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(909,24):
+          see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Ty=Cell
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(830,20):
+          see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<int,int,const int&,const int&>(int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Ty=Cell
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(848,27):
+          see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,int,int,const int&,const int&>(_Alloc &,_Objty *const ,int &&,int &&,const int &,const int &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<Cell>,
+              _Ty=Cell,
+              _Objty=Cell
+          ]
+  
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:             _Ty=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\xmemory(732,103): warning C4244:         ]
+  (compiling source file 'Main.cpp')
+  
+  Generating Code...
   main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe

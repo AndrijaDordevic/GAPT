@@ -53,5 +53,6 @@ void handleEvents(bool& running);
 void cleanupSDL(SDL_Window* window, SDL_Renderer* renderer);
 
 // Function to draw the game grid
+void DrawGrid(SDL_Renderer* renderer);
 
 #endif // WINDOW_H
