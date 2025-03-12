@@ -1,16 +1,10 @@
 ﻿  Grid.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(43,59): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(43,49): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(43,41): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(43,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(49,87): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(49,56): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(49,46): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(49,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(216,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(217,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(228,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(229,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(265,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.cpp(276,37): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
-  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,37): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(24,34): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,84): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,43): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\main\Grid.cpp(30,35): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe

@@ -130,12 +130,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Blocks.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Blocks.hpp" />
+    <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Menu.hpp" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
