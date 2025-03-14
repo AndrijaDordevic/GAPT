@@ -8,6 +8,8 @@
 
 const int BLOCK_SIZE = 80;
 const int Columns = 10;
+bool draggingInProgress = false; // Prevents spawning while dragging
+bool CanDrag = false;
 
 struct Block {
     int x, y;
@@ -45,6 +47,7 @@ bool IsPositionFree(int spawnY) {
 
 void SpawnTetromino() {
     if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
+    if (draggingInProgress) return;
 
     // Tetromino shapes (4 blocks in each configuration)
     std::vector<std::vector<SDL_Point>> shapes = {
@@ -134,6 +137,7 @@ int SnapToGrid(int value, int gridStart) {
 }
 
 void DragDrop(SDL_Event& event) {
+    if (!CanDrag) return;
     static Tetromino* draggedTetromino = nullptr; // Pointer to track the dragged Tetromino
     static int mouseOffsetX = 0, mouseOffsetY = 0; // Store offset between mouse click and block position
     static int initialSpawnIndex = -1; // Track the original spawn position index
@@ -151,6 +155,7 @@ void DragDrop(SDL_Event& event) {
                 if (event.button.x >= block.x && event.button.x <= block.x + BLOCK_SIZE &&
                     event.button.y >= block.y && event.button.y <= block.y + BLOCK_SIZE) {
 
+                    draggingInProgress = true;
                     draggedTetromino = &tetromino; // Store reference to the dragged Tetromino
 
                     // Check if the block was in a spawn position
@@ -208,6 +213,7 @@ void DragDrop(SDL_Event& event) {
 
             // Update spawn positions (to allow new Tetrominoes to spawn)
             ReleaseOccupiedPositions();
+            draggingInProgress = false;
             spawnedCount--;
 
             // If the original spawn position is now free, spawn a new Tetromino
@@ -236,6 +242,9 @@ void RunBlocks(SDL_Renderer* renderer) {
     if (SDL_GetTicks() - lastSpawnTime > 1000 && spawnedCount < 3) {
         SpawnTetromino();
         lastSpawnTime = SDL_GetTicks();
+    }
+    if(spawnedCount == 3){
+        CanDrag = true;
     }
 }
 
