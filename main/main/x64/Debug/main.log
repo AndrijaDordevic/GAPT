@@ -1,8 +1,8 @@
 ﻿  Blocks.cpp
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(171,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(172,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(184,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(185,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(233,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(244,37): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(195,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(196,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(205,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(206,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(252,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Blocks.cpp(263,37): warning C4244: '=': conversion from 'Uint64' to 'Uint32', possible loss of data
   main.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe
