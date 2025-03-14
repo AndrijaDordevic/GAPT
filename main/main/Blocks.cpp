@@ -7,6 +7,7 @@
 #include <ctime>
 
 const int BLOCK_SIZE = 80;
+const int Columns = 10;
 
 struct Block {
     int x, y;
@@ -127,36 +128,41 @@ void RenderTetrominos(SDL_Renderer* ren) {
         }
     }
 }
+// Function to snap a value to the nearest multiple of BLOCK_SIZE
+int SnapToGrid(int value, int gridStart) {
+    return gridStart + ((value - gridStart + BLOCK_SIZE / 2) / BLOCK_SIZE) * BLOCK_SIZE;
+}
 
 void DragDrop(SDL_Event& event) {
-    static Tetromino* draggedTetromino = nullptr; // Pointer to track dragged tetromino
-    static int mouseOffsetX = 0, mouseOffsetY = 0; // Offset between mouse click and block position
+    static Tetromino* draggedTetromino = nullptr; // Pointer to track the dragged Tetromino
+    static int mouseOffsetX = 0, mouseOffsetY = 0; // Store offset between mouse click and block position
     static int initialSpawnIndex = -1; // Track the original spawn position index
 
     // Handle mouse press (start dragging)
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
         for (auto& tetromino : tetrominos) {
-            // Skip dragging if the tetromino is already placed
+            // Skip dragging if the Tetromino is already placed
             if (std::find(placedTetrominos.begin(), placedTetrominos.end(), &tetromino) != placedTetrominos.end()) {
-                continue; // Skip this tetromino, it's already placed
+                continue;
             }
 
+            // Check if the mouse is clicking on any block of a Tetromino
             for (auto& block : tetromino.blocks) {
                 if (event.button.x >= block.x && event.button.x <= block.x + BLOCK_SIZE &&
                     event.button.y >= block.y && event.button.y <= block.y + BLOCK_SIZE) {
 
-                    draggedTetromino = &tetromino; // Set dragged tetromino
+                    draggedTetromino = &tetromino; // Store reference to the dragged Tetromino
 
                     // Check if the block was in a spawn position
                     for (int i = 0; i < 3; ++i) {
                         if (block.x == spawnX && block.y == spawnYPositions[i]) {
                             initialSpawnIndex = i; // Store the index of the occupied spawn position
                             positionsOccupied[i] = false; // Free the spawn position
-                            spawnedCount--; // Decrease spawned count to allow new Tetromino spawn
+                            spawnedCount--; // Decrease spawned count to allow a new Tetromino to spawn
                         }
                     }
 
-                    // Store mouse offset for smooth dragging
+                    // Store the offset between mouse position and block position for smooth dragging
                     mouseOffsetX = event.button.x - block.x;
                     mouseOffsetY = event.button.y - block.y;
                     return;
@@ -167,42 +173,54 @@ void DragDrop(SDL_Event& event) {
 
     // Handle mouse movement (dragging)
     if (event.type == SDL_EVENT_MOUSE_MOTION && draggedTetromino) {
-        if (draggedTetromino->blocks.empty()) return;  // Ensure there are blocks to move
+        if (draggedTetromino->blocks.empty()) return; // Ensure there are blocks to move
 
+        // Calculate new positions based on mouse movement
         int newX = event.motion.x - mouseOffsetX;
         int newY = event.motion.y - mouseOffsetY;
 
-        // Move the whole Tetromino (adjusting every block based on new mouse position)
         int dx = newX - draggedTetromino->blocks[0].x;
         int dy = newY - draggedTetromino->blocks[0].y;
 
+        // Move the entire Tetromino by adjusting each block's position
         for (auto& block : draggedTetromino->blocks) {
             block.x += dx;
             block.y += dy;
         }
     }
 
-    // Handle mouse release (stop dragging)
+    // Handle mouse release (stop dragging and snap to grid)
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         if (draggedTetromino) {
-            placedTetrominos.push_back(draggedTetromino); // Add tetromino to placed array
+            // Define the grid's starting position
+            int gridStartX = (WINDOW_WIDTH - (Columns * CELL_WIDTH)) / 2 - 100;
+            int gridStartY = OFFSET;
 
-            draggedTetromino = nullptr; // Stop dragging and reset tetromino pointer
-
-            // Update spawn positions
-            ReleaseOccupiedPositions();
-            spawnedCount = spawnedCount - 1; //Reduce count to spawn more
-
-            // **After releasing a Tetromino, spawn a new one if needed**
-            if (initialSpawnIndex != -1 && !positionsOccupied[initialSpawnIndex]) {
-                positionsOccupied[initialSpawnIndex] = true; // Mark position as occupied
-                SpawnTetromino(); // Spawn a new Tetromino in an available position
+            // Snap each block of the Tetromino to the nearest grid cell
+            for (auto& block : draggedTetromino->blocks) {
+                block.x = SnapToGrid(block.x, gridStartX);
+                block.y = SnapToGrid(block.y, gridStartY);
             }
 
-            initialSpawnIndex = -1; // Reset the spawn tracking index
+            // Mark the Tetromino as placed
+            placedTetrominos.push_back(draggedTetromino);
+            draggedTetromino = nullptr; // Stop dragging
+
+            // Update spawn positions (to allow new Tetrominoes to spawn)
+            ReleaseOccupiedPositions();
+            spawnedCount--;
+
+            // If the original spawn position is now free, spawn a new Tetromino
+            if (initialSpawnIndex != -1 && !positionsOccupied[initialSpawnIndex]) {
+                positionsOccupied[initialSpawnIndex] = true;
+                SpawnTetromino();
+            }
+
+            initialSpawnIndex = -1; // Reset spawn tracking index
         }
     }
 }
+
 
 
 void RunBlocks(SDL_Renderer* renderer) {
