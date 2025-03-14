@@ -11,6 +11,8 @@ int main() {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
 
+    runMenu(window, renderer);
+
     if (!initializeSDL(window, renderer)) {
         cerr << "Failed to initialize SDL." << endl;
         return 1;
@@ -18,7 +20,6 @@ int main() {
     srand(static_cast<unsigned>(time(0)));
         
     
-   
 
     while (running) {
         while (SDL_PollEvent(&event)) {

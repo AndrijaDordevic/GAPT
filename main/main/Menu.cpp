@@ -19,6 +19,11 @@ std::vector<MenuItem> menuItems = {
     {{300, 340, 200, 50}, "Exit", false}  // Exit
 };
 
+// Create window 
+SDL_Window* window = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+// Create renderer for window
+SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+
 // Function to render menu
 void renderMenu(SDL_Renderer* renderer) {
     for (size_t i = 0; i < menuItems.size(); i++) {
@@ -34,20 +39,17 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
         mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
-int runMenu() {
+int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
     // Initialise SDL
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL Init Error: " << SDL_GetError() << "\n";
+    if (SDL_Init(SDL_INIT_EVENTS) != 0) {
+        cerr << "SDL Init Error: " << SDL_GetError() << "\n";
         return 1;
     }
-    // Create window 
-    SDL_Window* window = SDL_CreateWindow("Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
-    // Create renderer for window
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+
     if (!window || !renderer) {
-        std::cerr << "Window/Renderer Creation Error: " << SDL_GetError() << "\n";
+        cerr << "Window/Renderer Creation Error: " << SDL_GetError() << "\n";
         SDL_Quit();
-        return 1;
+        return 2;
     }
 
     bool running = true;
