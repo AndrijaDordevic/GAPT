@@ -1,26 +1,7 @@
-﻿  Grid.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(37,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(37,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(40,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(39,17): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(46,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(46,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(49,27): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(48,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-  (compiling source file 'Grid.cpp')
-  
+﻿  Blocks.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(191,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(192,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(201,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(202,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(247,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

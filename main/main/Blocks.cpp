@@ -20,10 +20,13 @@ struct Block {
 struct Tetromino {
     std::vector<Block> blocks;
     SDL_Color color;
+    bool canBeDragged = true; // Flag to control drag state
 };
 
 std::vector<Tetromino> tetrominos;
 std::vector<Tetromino*> placedTetrominos;
+// Track locked Tetrominos that can't be moved
+std::vector<Tetromino*> lockedTetrominos;
 
 // Define 3 fixed spawn positions on the right side
 int spawnX;  // Moved further to the left
@@ -151,8 +154,7 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& place
     return false;
 }
 
-// Track locked Tetrominos that can't be moved
-std::vector<Tetromino*> lockedTetrominos;
+
 
 // Helper function to check if Tetromino is fully inside the grid
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
@@ -173,8 +175,7 @@ void DragDrop(SDL_Event& event) {
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
         // Check if any draggable tetromino was clicked
         for (auto& tetromino : tetrominos) {
-            // Skip locked Tetrominos
-            if (std::find(lockedTetrominos.begin(), lockedTetrominos.end(), &tetromino) != lockedTetrominos.end()) {
+            if (!tetromino.canBeDragged) { // Skip if not draggable
                 continue;
             }
 
@@ -208,6 +209,7 @@ void DragDrop(SDL_Event& event) {
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         if (draggedTetromino) {
+            // Place the Tetromino and disable dragging once placed
             int gridStartX = (WINDOW_WIDTH - (Columns * CELL_WIDTH)) / 2 - 100;
             int gridStartY = OFFSET;
 
@@ -224,10 +226,8 @@ void DragDrop(SDL_Event& event) {
                 }
             }
             else {
-                // Successfully placed without collision and inside grid, lock the Tetromino
-                if (std::find(lockedTetrominos.begin(), lockedTetrominos.end(), draggedTetromino) == lockedTetrominos.end()) {
-                    lockedTetrominos.push_back(draggedTetromino);
-                }
+                // Successfully placed, set canBeDragged to false
+                draggedTetromino->canBeDragged = false; // Disable dragging after placement
                 placedTetrominos.push_back(draggedTetromino);
                 spawnedCount--; // Decrement spawned count on successful placement
             }
@@ -255,10 +255,9 @@ void RunBlocks(SDL_Renderer* renderer) {
     // Spawn new tetromino if conditions are met
     if (SDL_GetTicks() - lastSpawnTime > 1000 && spawnedCount < 3) {
         SpawnTetromino();
-        lastSpawnTime = SDL_GetTicks();
-    }
+        
+    } 
     if(spawnedCount == 3){
         CanDrag = true;
     }
 }
-
