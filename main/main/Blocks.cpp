@@ -137,11 +137,6 @@ int SnapToGrid(int value, int gridStart) {
 }
 
 // Function to check if a Tetromino overlaps any placed Tetromino
-// Improved DragDrop logic with simplified handling and reset
-
-// Improved DragDrop logic with simplified handling and reset
-
-// Improved DragDrop logic with simplified handling and reset
 
 bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& placedTetrominos) {
     for (const auto& placed : placedTetrominos) {
