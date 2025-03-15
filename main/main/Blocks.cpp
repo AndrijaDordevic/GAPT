@@ -45,63 +45,43 @@ bool IsPositionFree(int spawnY) {
     return true; // Position is free
 }
 
-void SpawnTetromino() {
-    if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
-    if (draggingInProgress) return;
+void SpawnTetrominos() {
+    if (!tetrominos.empty()) return; // Do not spawn if there are still active tetrominoes
 
-    // Tetromino shapes (4 blocks in each configuration)
+    // Tetromino shapes
     std::vector<std::vector<SDL_Point>> shapes = {
-        {{0, 0}, {1, 0}, {2, 0}, {3, 0}},    // I shape
-        {{0, 0}, {0, 1}, {1, 1}, {2, 1}},    // O shape
-        {{0, 0}, {1, 0}, {2, 0}, {2, 1}},    // L shape
-        {{0, 0}, {0, 1}, {1, 1}, {2, 1}},    // Z shape
-        {{0, 0}, {1, 0}, {1, 1}, {2, 1}}     // T shape
+        {{0, 0}, {1, 0}, {2, 0}, {3, 0}}, // I shape
+        {{0, 0}, {0, 1}, {1, 1}, {2, 1}}, // O shape
+        {{0, 0}, {1, 0}, {2, 0}, {2, 1}}, // L shape
+        {{0, 0}, {0, 1}, {1, 1}, {2, 1}}, // Z shape
+        {{0, 0}, {1, 0}, {1, 1}, {2, 1}}  // T shape
     };
 
-    // Define an array of possible colors
+    // Define colours
     SDL_Color colors[] = {
-        {255, 0, 0, 255},    // Red
-        {0, 255, 0, 255},    // Green
-        {0, 0, 255, 255},    // Blue
-        {255, 255, 0, 255},  // Yellow
-        {255, 165, 0, 255}   // Orange
+        {255, 0, 0, 255}, {0, 255, 0, 255}, {0, 0, 255, 255}, {255, 255, 0, 255}, {255, 165, 0, 255}
     };
 
-    // Select a random index for the color
-    int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
-
-    // Randomly choose a tetromino shape
-    int randomIndex = rand() % shapes.size();
-    Tetromino newTetromino;
-    newTetromino.color = colors[randomColorIndex]; // Set the color randomly
-
-    // Find the first free position starting from the top
-    int spawnY = -1;
     for (int i = 0; i < 3; ++i) {
-        if (IsPositionFree(spawnYPositions[i])) {
-            spawnY = spawnYPositions[i];
-            break; // Exit once a free spot is found
+        Tetromino newTetromino;
+        int randomShape = rand() % shapes.size();
+        int randomColor = rand() % (sizeof(colors) / sizeof(colors[0]));
+
+        newTetromino.color = colors[randomColor];
+
+        // Assign blocks to the tetromino
+        for (const auto& point : shapes[randomShape]) {
+            Block block = { spawnX + point.x * BLOCK_SIZE, spawnYPositions[i] + point.y * BLOCK_SIZE, newTetromino.color };
+            newTetromino.blocks.push_back(block);
         }
+
+        tetrominos.push_back(newTetromino);
     }
 
-    if (spawnY == -1) {
-        // If all positions are occupied, return without spawning
-        return;
-    }
-
-
-    // Mark the chosen spawn position as occupied
-    positionsOccupied[spawnY == spawnYPositions[0] ? 0 : spawnY == spawnYPositions[1] ? 1 : 2] = true;
-
-    // Position the tetromino at the fixed X (right side) and the chosen Y (based on spawn logic)
-    for (const auto& point : shapes[randomIndex]) {
-        Block block = { spawnX + point.x * BLOCK_SIZE, spawnY + point.y * BLOCK_SIZE, newTetromino.color };
-        newTetromino.blocks.push_back(block);
-    }
-
-    tetrominos.push_back(newTetromino); // Add the new Tetromino to the list
-    spawnedCount++; // Increment spawned counter
+    spawnedCount = 3; // Ensure three tetrominoes are tracked
+    CanDrag = true; // Allow dragging after spawning
 }
+
 
 
 // Function to release positions once Tetrominoes move down
@@ -217,25 +197,31 @@ void DragDrop(SDL_Event& event) {
             }
 
             if (CheckCollision(*draggedTetromino, placedTetrominos) || !IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
-                // Reset position if collision or outside grid
+                // Reset position if collision or out of bounds
                 for (size_t i = 0; i < draggedTetromino->blocks.size(); ++i) {
                     draggedTetromino->blocks[i].x = originalPosition[i].x;
                     draggedTetromino->blocks[i].y = originalPosition[i].y;
                 }
             }
             else {
-                // Successfully placed without collision and inside grid, lock the Tetromino
                 if (std::find(lockedTetrominos.begin(), lockedTetrominos.end(), draggedTetromino) == lockedTetrominos.end()) {
                     lockedTetrominos.push_back(draggedTetromino);
                 }
                 placedTetrominos.push_back(draggedTetromino);
-                spawnedCount--; // Decrement spawned count on successful placement
+                spawnedCount--;
+
+                if (spawnedCount == 0) { // If all are placed, reset
+                    tetrominos.clear();
+                    placedTetrominos.clear();
+                    lockedTetrominos.clear();
+                }
             }
 
             draggedTetromino = nullptr;
             draggingInProgress = false;
         }
     }
+
 }
 
 
@@ -244,21 +230,14 @@ void DragDrop(SDL_Event& event) {
 
 
 void RunBlocks(SDL_Renderer* renderer) {
-    static Uint32 lastSpawnTime = SDL_GetTicks();
-
-    // Set spawn positions (ensure these are initialized once if possible)
     spawnX = WINDOW_WIDTH - BLOCK_SIZE - 250;
     spawnYPositions[0] = 180;
     spawnYPositions[1] = 180 + BLOCK_SIZE + 200;
     spawnYPositions[2] = 180 + 2 * (BLOCK_SIZE + 180);
 
-    // Spawn new tetromino if conditions are met
-    if (SDL_GetTicks() - lastSpawnTime > 1000 && spawnedCount < 3) {
-        SpawnTetromino();
-        lastSpawnTime = SDL_GetTicks();
-    }
-    if(spawnedCount == 3){
-        CanDrag = true;
+    if (spawnedCount == 0) { // All tetrominoes placed
+        SpawnTetrominos();
     }
 }
+
 
