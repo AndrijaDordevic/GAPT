@@ -1,7 +1,3 @@
-﻿  Blocks.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(191,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(192,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(201,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(202,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Blocks.cpp(247,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+﻿  Tetromino.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Tetromino.cpp(170,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

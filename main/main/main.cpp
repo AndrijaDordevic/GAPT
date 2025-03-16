@@ -1,8 +1,8 @@
 #include "Window.hpp"  // Includes drawGrid() declaration
 #include "Menu.hpp"
-#include "Blocks.hpp"  
 #include "Grid.hpp"
-
+#include "Tetromino.hpp"
+#include "DragBlock.hpp"
 
 int main() {
     bool running = true;

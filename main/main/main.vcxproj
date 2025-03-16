@@ -130,17 +130,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Blocks.cpp" />
+    <ClCompile Include="DragBlock.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="Tetromino.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Blocks.hpp" />
     <ClInclude Include="Cell.hpp" />
+    <ClInclude Include="DragBlock.hpp" />
     <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Menu.hpp" />
+    <ClInclude Include="Tetromino.hpp" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
