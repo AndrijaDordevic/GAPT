@@ -9,11 +9,8 @@ void DragDrop(SDL_Event& event) {
     static SDL_Point originalPosition[4]; // Store original block positions
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
-        // Check if any draggable tetromino was clicked
         for (auto& tetromino : tetrominos) {
-            if (!tetromino.canBeDragged) { // Skip if not draggable
-                continue;
-            }
+            if (!tetromino.canBeDragged) continue; // Skip if not draggable
 
             for (size_t i = 0; i < tetromino.blocks.size(); ++i) {
                 auto& block = tetromino.blocks[i];
@@ -24,9 +21,14 @@ void DragDrop(SDL_Event& event) {
                     for (size_t j = 0; j < tetromino.blocks.size(); ++j) {
                         originalPosition[j] = { tetromino.blocks[j].x, tetromino.blocks[j].y };
                     }
+
                     mouseOffsetX = event.button.x - block.x;
                     mouseOffsetY = event.button.y - block.y;
                     draggingInProgress = true;
+
+                    // **Increase layer so it's drawn on top**
+                    draggedTetromino->layer = 1;
+
                     return;
                 }
             }
@@ -45,21 +47,18 @@ void DragDrop(SDL_Event& event) {
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         if (draggedTetromino) {
-            // Place the Tetromino and disable dragging once placed
             int gridStartX = (WINDOW_WIDTH - (GRID_COLUMNS * CELL_WIDTH)) / 2 - 100;
             int gridStartY = OFFSET;
 
-
             if (IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
-
                 for (auto& block : draggedTetromino->blocks) {
                     block.x = SnapToGrid(block.x, gridStartX);
                     block.y = SnapToGrid(block.y, gridStartY);
                 }
-
             }
 
-            if (CheckCollision(*draggedTetromino, placedTetrominos) || !IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
+            if (CheckCollision(*draggedTetromino, placedTetrominos) ||
+                !IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
                 // Reset position if collision or outside grid
                 for (size_t i = 0; i < draggedTetromino->blocks.size(); ++i) {
                     draggedTetromino->blocks[i].x = originalPosition[i].x;
@@ -67,10 +66,13 @@ void DragDrop(SDL_Event& event) {
                 }
             }
             else {
-                // Successfully placed, set canBeDragged to false
-                draggedTetromino->canBeDragged = false; // Disable dragging after placement
+                // Successfully placed, disable dragging
+                draggedTetromino->canBeDragged = false;
                 placedTetrominos.push_back(draggedTetromino);
-                spawnedCount--; // Decrement spawned count on successful placement
+                spawnedCount--;
+
+                // **Reset layer after placement**
+                draggedTetromino->layer = 0;
             }
 
             draggedTetromino = nullptr;
@@ -78,4 +80,3 @@ void DragDrop(SDL_Event& event) {
         }
     }
 }
-

@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
 
 
 
@@ -21,6 +22,7 @@ struct Tetromino {
     std::vector<Block> blocks;
     SDL_Color color;
     bool canBeDragged = true; // Flag to control drag state
+    int layer = 0; // Default layer for placed tetrominoes
 };
 
 std::vector<Tetromino> tetrominos;
@@ -126,14 +128,33 @@ void ReleaseOccupiedPositions() {
 }
 
 void RenderTetrominos(SDL_Renderer* ren) {
-    for (const auto& tetromino : tetrominos) {
-        for (const auto& block : tetromino.blocks) {
+    std::vector<Tetromino*> allTetrominos;
+
+    // Collect all Tetromino pointers (both active and placed)
+    for (auto& t : tetrominos) {
+        allTetrominos.push_back(&t);
+    }
+    for (auto& t : placedTetrominos) {
+        allTetrominos.push_back(t);
+    }
+
+    // Sort Tetrominos by layer value (lower layers render first, higher layers render last)
+    // This ensures that Tetrominos with higher layers (e.g., the one being dragged) appear on top.
+    std::sort(allTetrominos.begin(), allTetrominos.end(), [](Tetromino* a, Tetromino* b) {
+        return a->layer < b->layer;
+        });
+
+    // Render Tetrominos in sorted order (from lowest to highest layer)
+    for (const auto& tetromino : allTetrominos) {
+        for (const auto& block : tetromino->blocks) {
             SDL_SetRenderDrawColor(ren, block.color.r, block.color.g, block.color.b, block.color.a);
-            SDL_FRect rect = { static_cast<float>(block.x), static_cast<float>(block.y), static_cast<float>(BLOCK_SIZE), static_cast<float>(BLOCK_SIZE) };
-            SDL_RenderFillRect(ren, &rect);
+            SDL_FRect rect = { static_cast<float>(block.x), static_cast<float>(block.y),
+                               static_cast<float>(BLOCK_SIZE), static_cast<float>(BLOCK_SIZE) };
+            SDL_RenderFillRect(ren, &rect); // Draw each block of the Tetromino
         }
     }
 }
+
 // Function to snap a value to the nearest multiple of BLOCK_SIZE
 int SnapToGrid(int value, int gridStart) {
 
@@ -148,7 +169,10 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& place
             for (const auto& block : tetro.blocks) {
                 if (block.x == placedBlock.x && block.y == placedBlock.y) {
                     return true; // Precise overlap detection
+                    printf("Tetromino placed at (%d, %d)\n", block.x, block.y);
+
                 }
+
             }
         }
     }

@@ -19,6 +19,7 @@ struct Tetromino {
     std::vector<Block> blocks;
     SDL_Color color;
     bool canBeDragged = true;
+    int layer = 0;
 };
 
 extern std::vector<Tetromino> tetrominos;
