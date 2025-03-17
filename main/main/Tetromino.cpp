@@ -136,6 +136,7 @@ void RenderTetrominos(SDL_Renderer* ren) {
 }
 // Function to snap a value to the nearest multiple of BLOCK_SIZE
 int SnapToGrid(int value, int gridStart) {
+
     return gridStart + ((value - gridStart + BLOCK_SIZE / 2) / BLOCK_SIZE) * BLOCK_SIZE;
 }
 
@@ -159,7 +160,7 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& place
 // Helper function to check if Tetromino is fully inside the grid
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
     for (const auto& block : tetro.blocks) {
-        if (block.x < gridStartX || block.y < gridStartY || block.x >= gridStartX + Columns * BLOCK_SIZE || block.y >= gridStartY + Columns * BLOCK_SIZE) {
+        if (block.x < gridStartX - 10|| block.y < gridStartY - 10 || block.x >= gridStartX + Columns * BLOCK_SIZE + 10|| block.y >= gridStartY + Columns * BLOCK_SIZE + 10) {
             return false;
         }
     }

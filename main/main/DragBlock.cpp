@@ -49,9 +49,14 @@ void DragDrop(SDL_Event& event) {
             int gridStartX = (WINDOW_WIDTH - (GRID_COLUMNS * CELL_WIDTH)) / 2 - 100;
             int gridStartY = OFFSET;
 
-            for (auto& block : draggedTetromino->blocks) {
-                block.x = SnapToGrid(block.x, gridStartX);
-                block.y = SnapToGrid(block.y, gridStartY);
+
+            if (IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
+
+                for (auto& block : draggedTetromino->blocks) {
+                    block.x = SnapToGrid(block.x, gridStartX);
+                    block.y = SnapToGrid(block.y, gridStartY);
+                }
+
             }
 
             if (CheckCollision(*draggedTetromino, placedTetrominos) || !IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
