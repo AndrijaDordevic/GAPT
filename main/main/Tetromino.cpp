@@ -160,7 +160,7 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& place
 // Helper function to check if Tetromino is fully inside the grid
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
     for (const auto& block : tetro.blocks) {
-        if (block.x < gridStartX - 10|| block.y < gridStartY - 10 || block.x >= gridStartX + Columns * BLOCK_SIZE + 10|| block.y >= gridStartY + Columns * BLOCK_SIZE + 10) {
+        if (block.x < gridStartX - 5|| block.y < gridStartY - 5 || block.x > gridStartX + (Columns * BLOCK_SIZE) - 20|| block.y > gridStartY + (Columns * BLOCK_SIZE) -20 ) {
             return false;
         }
     }
