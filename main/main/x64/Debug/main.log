@@ -1,3 +1,2 @@
-﻿  Tetromino.cpp
-C:\Users\Jurgen Cauchi\Documents\GitHub\GAPT\main\main\Tetromino.cpp(171,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  main.vcxproj -> C:\Users\Jurgen Cauchi\Documents\GitHub\GAPT\main\x64\Debug\main.exe
+﻿  Menu.cpp
+  main.vcxproj -> C:\Users\User\source\repos\GAPT\main\x64\Debug\main.exe
