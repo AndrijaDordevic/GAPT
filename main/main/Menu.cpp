@@ -13,12 +13,12 @@ struct MenuItem {
     bool isHovered;
 };
 
-
 // Create window 
-SDL_Window* window = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
 
 // Create renderer for window
-SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
+
 
 // Initialize menu items: Rect size and pos, text and initial isHovered value.
 vector<MenuItem> menuItems = {
@@ -49,6 +49,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
     //  While the window is open, this handles events like mouse motion and clicks.
     while (running) {
+
+
+ 
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
@@ -65,23 +68,33 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
                     if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                         if (i == 2) running = false; // Exit menu if exit is clicked
-                        else cout << "Menu Item " << i + 1 << " clicked!\n";
+                        
+						else if (i == 0) {
+							// Start game
+							cout << "Starting Game" << endl;
+                            
+						}
+						else if (i == 1) {
+							// Options
+							cout << "Options..." << endl;
+						}
                     }
                 }
             }
         }
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(rendererm, 255, 255, 255, 255);
+        SDL_RenderClear(rendererm);
 
         // Render menu
-        renderMenu(renderer);
-        SDL_RenderPresent(renderer);
+        renderMenu(rendererm);
+        SDL_RenderPresent(rendererm);
+		SDL_Delay(16);
     }
 
     // Cleanup
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(rendererm);
+    SDL_DestroyWindow(windowm);
     SDL_Quit();
     return 0;
 }
