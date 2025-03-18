@@ -51,7 +51,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
     while (running) {
 
 
- 
+
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
@@ -68,16 +68,16 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
                     if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                         if (i == 2) running = false; // Exit menu if exit is clicked
-                        
-						else if (i == 0) {
-							// Start game
-							cout << "Starting Game" << endl;
-                            
-						}
-						else if (i == 1) {
-							// Options
-							cout << "Options..." << endl;
-						}
+
+                        else if (i == 0) {
+                            // Start game
+                            cout << "Starting Game" << endl;
+
+                        }
+                        else if (i == 1) {
+                            // Options
+                            cout << "Options..." << endl;
+                        }
                     }
                 }
             }
@@ -89,7 +89,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
         // Render menu
         renderMenu(rendererm);
         SDL_RenderPresent(rendererm);
-		SDL_Delay(16);
+        SDL_Delay(16);
     }
 
     // Cleanup
