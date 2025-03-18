@@ -73,6 +73,9 @@ void DragDrop(SDL_Event& event) {
 
                 // **Reset layer after placement**
                 draggedTetromino->layer = 0;
+
+                // **Track individual blocks for collision handling**
+                AddToIndividualBlocks(*draggedTetromino);
             }
 
             draggedTetromino = nullptr;

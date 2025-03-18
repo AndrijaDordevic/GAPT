@@ -29,6 +29,7 @@ std::vector<Tetromino> tetrominos;
 std::vector<Tetromino*> placedTetrominos;
 // Track locked Tetrominos that can't be moved
 std::vector<Tetromino*> lockedTetrominos;
+std::vector<Block> placedIndividualBlocks; // New array to track individual blocks
 
 // Define 3 fixed spawn positions on the right side
 int spawnX;  // Moved further to the left
@@ -176,6 +177,14 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& place
             }
         }
     }
+
+    for (const auto& block : tetro.blocks) { //Checks Individual blocks to prevent block by block 
+        for (const auto& placedBlock : placedIndividualBlocks) {
+            if (block.x == placedBlock.x && block.y == placedBlock.y) {
+                return true; // Collision detected
+            }
+        }
+    }
     return false;
 }
 
@@ -189,6 +198,12 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
         }
     }
     return true;
+}
+
+void AddToIndividualBlocks(const Tetromino& tetro) {  //Splits Blocks
+    for (const auto& block : tetro.blocks) {
+        placedIndividualBlocks.push_back(block);
+    }
 }
 
 void RunBlocks(SDL_Renderer* renderer) {

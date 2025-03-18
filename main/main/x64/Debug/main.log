@@ -1,35 +1,34 @@
 ﻿  DragBlock.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(25,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(26,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(39,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(40,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragBlock.cpp(25,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragBlock.cpp(26,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragBlock.cpp(39,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\DragBlock.cpp(40,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
   Main.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(37,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(37,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(37,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(37,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(40,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(40,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(39,17): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(39,17): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(46,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(46,36): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(46,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(46,27): warning C4244: 'initializing': conversion from 'int' to 'const float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(49,27): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(49,27): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\main\Grid.hpp(48,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Grid.hpp(48,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
   Tetromino.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Tetromino.cpp(192,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Tetromino.cpp(210,33): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   Generating Code...
-Menu.obj : warning LNK4099: PDB '' was not found with 'Menu.obj' or at ''; linking object as if no debug info
-  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+  main.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe

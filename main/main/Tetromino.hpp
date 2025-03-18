@@ -39,5 +39,6 @@ int SnapToGrid(int value, int gridStart);
 bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino*>& placedTetrominos);
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY);
 void RunBlocks(SDL_Renderer* renderer);
+void AddToIndividualBlocks(const Tetromino& tetro);
 
 #endif
