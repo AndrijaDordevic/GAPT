@@ -14,6 +14,8 @@ int spawnX = 0;
 int spawnYPositions[3] = { 0, 0, 0 };
 bool positionsOccupied[3] = { false, false, false };
 int spawnedCount = 0;
+int score = 0;
+int POINTS_PER_BLOCK = 10;
 
 // Store tetrominos by value instead of pointers.
 // Make sure these are defined only once in your project.
@@ -205,4 +207,98 @@ void RunBlocks(SDL_Renderer* renderer) {
     while (tetrominos.size() < 3) {
         SpawnTetromino();
     }
+}
+
+void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows) {
+    // Create an occupancy grid for rows and columns.
+    std::vector<std::vector<bool>> occupancy(gridRows, std::vector<bool>(gridCols, false));
+
+    // Lambda to mark occupancy for a given tetromino container.
+    auto markOccupancy = [&](const std::vector<Tetromino>& tetrominoContainer) {
+        for (const auto& tetro : tetrominoContainer) {
+            for (const auto& block : tetro.blocks) {
+                int col = (block.x - gridStartX) / BLOCK_SIZE;
+                int row = (block.y - gridStartY) / BLOCK_SIZE;
+                if (col >= 0 && col < gridCols && row >= 0 && row < gridRows)
+                    occupancy[row][col] = true;
+            }
+        }
+        };
+
+    // Mark occupancy from both placed and locked tetrominos.
+    markOccupancy(placedTetrominos);
+    markOccupancy(lockedTetrominos);
+
+    // Determine which rows and columns are completely filled.
+    std::vector<bool> completeRows(gridRows, true);
+    std::vector<bool> completeCols(gridCols, true);
+
+    // Check each row.
+    for (int r = 0; r < gridRows; r++) {
+        for (int c = 0; c < gridCols; c++) {
+            if (!occupancy[r][c]) {
+                completeRows[r] = false;
+                break;
+            }
+        }
+    }
+
+    // Check each column.
+    for (int c = 0; c < gridCols; c++) {
+        for (int r = 0; r < gridRows; r++) {
+            if (!occupancy[r][c]) {
+                completeCols[c] = false;
+                break;
+            }
+        }
+    }
+
+    // Count how many rows and columns are completely filled.
+    int numRowsCleared = 0, numColsCleared = 0;
+    for (bool rowComplete : completeRows) {
+        if (rowComplete) numRowsCleared++;
+    }
+    for (bool colComplete : completeCols) {
+        if (colComplete) numColsCleared++;
+    }
+    int totalClearedLines = numRowsCleared + numColsCleared;
+
+    // Calculate bonus multiplier:
+    // For example, 1 line cleared gives 1.0x, 2 lines give 1.5x, 3 lines give 2.0x, etc.
+    double multiplier = 1.0;
+    if (totalClearedLines > 1) {
+        multiplier = 1.0 + 0.5 * (totalClearedLines - 1);
+    }
+
+    // Remove blocks that are in any complete row or column and accumulate the removed block count.
+    int removedTotal = 0;
+    auto removeClearedBlocks = [&](std::vector<Tetromino>& container) {
+        for (auto& tetro : container) {
+            auto it = std::remove_if(tetro.blocks.begin(), tetro.blocks.end(),
+                [&](const Block& block) {
+                    int col = (block.x - gridStartX) / BLOCK_SIZE;
+                    int row = (block.y - gridStartY) / BLOCK_SIZE;
+                    bool removeRow = (row >= 0 && row < gridRows && completeRows[row]);
+                    bool removeCol = (col >= 0 && col < gridCols && completeCols[col]);
+                    return removeRow || removeCol;
+                });
+            int removedCount = std::distance(it, tetro.blocks.end());
+            removedTotal += removedCount;
+            tetro.blocks.erase(it, tetro.blocks.end());
+        }
+        // Remove any tetromino that has lost all of its blocks.
+        container.erase(std::remove_if(container.begin(), container.end(),
+            [](const Tetromino& t) { return t.blocks.empty(); }),
+            container.end());
+        };
+
+    // Remove cleared blocks from both containers.
+    removeClearedBlocks(placedTetrominos);
+    removeClearedBlocks(lockedTetrominos);
+
+    // Update score: Apply the bonus multiplier if multiple lines were cleared.
+    int baseScore = removedTotal * POINTS_PER_BLOCK;
+    int scoreGain = static_cast<int>(baseScore * multiplier);
+    score += scoreGain;
+	cout << "Score: " << score << endl;
 }

@@ -45,5 +45,6 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino>& placed
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY);
 void RunBlocks(SDL_Renderer* renderer);
 void AddToIndividualBlocks(const Tetromino& tetro);
+void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows);
 
 #endif // TETROMINO_HPP

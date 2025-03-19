@@ -1,2 +1,3 @@
 ﻿  Tetromino.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Tetromino.cpp(285,30): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

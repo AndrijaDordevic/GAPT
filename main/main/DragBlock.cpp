@@ -92,6 +92,8 @@ void DragDrop(SDL_Event& event) {
             // End dragging
             draggedTetromino = nullptr;
             draggingInProgress = false;
+
+            ClearSpanningTetrominos(gridStartX, gridStartY, Columns, Columns);
         }
     }
 }
