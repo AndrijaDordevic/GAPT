@@ -42,11 +42,24 @@ void SpawnTetromino() {
 
     // Tetromino shapes (each shape is a vector of 4 SDL_Points)
     std::vector<std::vector<SDL_Point>> shapes = {
-        {{0, 0}, {1, 0}, {2, 0}, {3, 0}},    // I shape
-        {{0, 0}, {0, 1}, {1, 1}, {2, 1}},    // O shape
-        {{0, 0}, {1, 0}, {2, 0}, {2, 1}},    // L shape
-        {{0, 0}, {0, 1}, {1, 1}, {2, 1}},    // Z shape
-        {{0, 0}, {1, 0}, {1, 1}, {2, 1}}     // T shape
+        {{0, 0}, {1, 0}, {2, 0}, {2, 0}},    //Horizontal Line
+        {{0, 0}, {0, 1}, {1, 1}, {1, 1}},    // Smaller Bottom Left shape
+        {{0, 0}, {0, 1}, {1, 1}, {2, 1}},    // Bottom Left shape
+        {{0, 0}, {1, 0}, {1, 0}, {1, 1}},    // Smaller Right Top shape
+        {{0, 0}, {1, 0}, {2, 0}, {2, 1}},    // Right Top shape
+        {{0, 0}, {1, 0}, {1, 1}, {2, 1}},    // Z shape
+        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},    // Square shape
+        {{0, 0}, {1, 0}, {0, 1}, {0, 2}},    // Upside Down L 
+        {{0, 0}, {1, 0}, {0, 1}, {0, 1}},    // Smaller Upside Down L shape
+        {{0, 0}, {1, 0}, {1, 1}, {1, 2}},    // Mirrored Upside Down L shape
+        {{0, 0}, {1, 0}, {2, 0}, {0, 1}},    // Left Top  shape
+        {{0, 0}, {1, 0}, {1, 0}, {0, 1}},    // Smaller Left Top  shape
+        {{0, 0}, {0, 1}, {0, 2}, {0, 1}},    // 3 blocks i shape
+        {{0, 0}, {0, 1}, {0, 1}, {0, 1}},    // 2 blocks i shape
+        {{0, 0}, {0, 1}, {0, 2}, {1, 2}},    // L shape
+        {{0, 0}, {0, 1}, {1, 1}, {1, 2}},    // 4 shape
+		{{0, 0}, {0, 0}, {0, 0}, {0, 0}},    // Dot shape
+
     };
 
     // Define an array of possible colors
@@ -55,7 +68,12 @@ void SpawnTetromino() {
         {0, 255, 0, 255},    // Green
         {0, 0, 255, 255},    // Blue
         {255, 255, 0, 255},  // Yellow
-        {255, 165, 0, 255}   // Orange
+        {255, 165, 0, 255},   // Orange
+		{100, 65,  0, 200},   // Brown
+		{0, 255, 255, 255},  // Cyan
+		{128, 0, 128, 255},  // Purple
+		{255, 0, 255, 255},  // Magenta
+
     };
 
     int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
@@ -188,11 +206,11 @@ void AddToIndividualBlocks(const Tetromino& tetro) {
 void RunBlocks(SDL_Renderer* renderer) {
     static bool initialized = false;
 
-    // Set spawn positions (initialize these as needed)
+    // Set spawn positions
     spawnX = WINDOW_WIDTH - BLOCK_SIZE - 250;
-    spawnYPositions[0] = 180;
-    spawnYPositions[1] = 180 + BLOCK_SIZE + 200;
-    spawnYPositions[2] = 180 + 2 * (BLOCK_SIZE + 180);
+    spawnYPositions[0] = WINDOW_HEIGHT/3 - 250;
+    spawnYPositions[1] = 2 * (WINDOW_HEIGHT / 3) - 300;
+    spawnYPositions[2] = WINDOW_HEIGHT - 300;
 
     // Spawn a new tetromino if conditions are met.
     if (!initialized) {
