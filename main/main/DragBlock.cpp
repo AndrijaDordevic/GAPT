@@ -83,7 +83,6 @@ void DragDrop(SDL_Event& event) {
                     [&](const Tetromino& t) { return &t == draggedTetromino; });
                 tetrominos.erase(it, tetrominos.end());
                 // 4. Add individual blocks for collision handling if needed.
-                AddToIndividualBlocks(*draggedTetromino);
                 // Decrement the spawned count since it has been placed.
                 spawnedCount--;
                 // Do not reset the layer here; leave it as the high value assigned.

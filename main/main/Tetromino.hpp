@@ -28,7 +28,7 @@ struct Tetromino {
 // Change from pointers to objects:
 extern std::vector<Tetromino> tetrominos;
 extern std::vector<Tetromino> placedTetrominos;
-extern std::vector<Tetromino> lockedTetrominos;
+
 
 extern int spawnX;
 extern int spawnYPositions[3];

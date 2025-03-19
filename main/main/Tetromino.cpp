@@ -15,14 +15,12 @@ int spawnYPositions[3] = { 0, 0, 0 };
 bool positionsOccupied[3] = { false, false, false };
 int spawnedCount = 0;
 int score = 0;
-int POINTS_PER_BLOCK = 10;
+const int POINTS_PER_LINE = 100;
 
 // Store tetrominos by value instead of pointers.
 // Make sure these are defined only once in your project.
 std::vector<Tetromino> tetrominos;         // Active tetrominos (for drag, etc.)
 std::vector<Tetromino> placedTetrominos;     // Tetrominos that have been placed
-std::vector<Tetromino> lockedTetrominos;     // Tetrominos that are locked in place
-std::vector<Block> placedIndividualBlocks;   // For individual block collision logic
 
 // Function to check if a spawn position is free
 bool IsPositionFree(int spawnY) {
@@ -141,9 +139,6 @@ void RenderTetrominos(SDL_Renderer* ren) {
     for (const auto& t : placedTetrominos) {
         allTetrominos.push_back(std::cref(t));
     }
-    for (const auto& t : lockedTetrominos) {
-        allTetrominos.push_back(std::cref(t));
-    }
 
     // Sort tetrominos by their layer value.
     std::sort(allTetrominos.begin(), allTetrominos.end(), [](const Tetromino& a, const Tetromino& b) {
@@ -194,12 +189,7 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
     return true;
 }
 
-// Add blocks from tetromino to the individual blocks container.
-void AddToIndividualBlocks(const Tetromino& tetro) {
-    for (const auto& block : tetro.blocks) {
-        placedIndividualBlocks.push_back(block);
-    }
-}
+
 
 // This function is called in your main loop to handle tetromino spawning.
 void RunBlocks(SDL_Renderer* renderer) {
@@ -242,9 +232,8 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
         }
         };
 
-    // Mark occupancy from both placed and locked tetrominos.
+    // Mark occupancy from placed tetrominos.
     markOccupancy(placedTetrominos);
-    markOccupancy(lockedTetrominos);
 
     // Determine which rows and columns are completely filled.
     std::vector<bool> completeRows(gridRows, true);
@@ -273,22 +262,28 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
     // Count how many rows and columns are completely filled.
     int numRowsCleared = 0, numColsCleared = 0;
     for (bool rowComplete : completeRows) {
-        if (rowComplete) numRowsCleared++;
+        if (rowComplete)
+            numRowsCleared++;
     }
     for (bool colComplete : completeCols) {
-        if (colComplete) numColsCleared++;
+        if (colComplete)
+            numColsCleared++;
     }
     int totalClearedLines = numRowsCleared + numColsCleared;
 
-    // Calculate bonus multiplier:
-    // For example, 1 line cleared gives 1.0x, 2 lines give 1.5x, 3 lines give 2.0x, etc.
+    // Calculate multiplier:
+    // For one cleared line multiplier is 1.0, for each additional line add 0.5.
     double multiplier = 1.0;
     if (totalClearedLines > 1) {
         multiplier = 1.0 + 0.5 * (totalClearedLines - 1);
     }
 
-    // Remove blocks that are in any complete row or column and accumulate the removed block count.
-    int removedTotal = 0;
+    // New scoring: Points per cleared line multiplied by the bonus multiplier.
+    int scoreGain = static_cast<int>(totalClearedLines * POINTS_PER_LINE * multiplier);
+    score += scoreGain;
+    std::cout << "Score: " << score << std::endl;
+
+    // Remove blocks that are in any complete row or column.
     auto removeClearedBlocks = [&](std::vector<Tetromino>& container) {
         for (auto& tetro : container) {
             auto it = std::remove_if(tetro.blocks.begin(), tetro.blocks.end(),
@@ -299,8 +294,6 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
                     bool removeCol = (col >= 0 && col < gridCols && completeCols[col]);
                     return removeRow || removeCol;
                 });
-            int removedCount = std::distance(it, tetro.blocks.end());
-            removedTotal += removedCount;
             tetro.blocks.erase(it, tetro.blocks.end());
         }
         // Remove any tetromino that has lost all of its blocks.
@@ -309,13 +302,6 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
             container.end());
         };
 
-    // Remove cleared blocks from both containers.
+    // Remove cleared blocks from the placed tetrominos.
     removeClearedBlocks(placedTetrominos);
-    removeClearedBlocks(lockedTetrominos);
-
-    // Update score: Apply the bonus multiplier if multiple lines were cleared.
-    int baseScore = removedTotal * POINTS_PER_BLOCK;
-    int scoreGain = static_cast<int>(baseScore * multiplier);
-    score += scoreGain;
-	cout << "Score: " << score << endl;
 }
