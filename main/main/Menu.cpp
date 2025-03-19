@@ -3,15 +3,22 @@
 #include <SDL3/SDL.h>
 #include <iostream>
 #include <vector>
+#include <SDL3_ttf/SDL_ttf.h>
 
 using namespace std;
+
+TTF_Font* font = nullptr;
 
 // Menu item structure
 struct MenuItem {
     SDL_FRect rect;
     string label;
     bool isHovered;
+    SDL_Texture* textTexture;
+	int textWidth;
+	int textHeight;
 };
+
 
 // Create window 
 SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
@@ -22,10 +29,53 @@ SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 
 // Initialize menu items: Rect size and pos, text and initial isHovered value.
 vector<MenuItem> menuItems = {
-    {{300, 200, 200, 50}, "Start Game", false}, // Start Game
-    {{300, 270, 200, 50}, "Options", false}, // Settings
-    {{300, 340, 200, 50}, "Exit", false}  // Exit
+    {{300, 200, 200, 50}, "Start Game", false, nullptr, 0, 0}, // Start Game
+    {{300, 270, 200, 50}, "Options", false, nullptr, 0, 0}, // Options
+    {{300, 340, 200, 50}, "Exit", false, nullptr, 0, 0}  // Exit
 };
+
+bool loadFontTexture() {
+
+    TTF_Font* font = TTF_OpenFont("C:/Users/User/source/repos/GAPT/main/main/External/Arial.ttf", 24);
+
+	if (!font) {
+		cerr << "Failed to load font." << SDL_GetError << endl;
+		return false;
+	}
+
+	SDL_Color textColor = { 0, 0, 0, 255 };
+
+    for (auto& item : menuItems) {
+
+        SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), 10, textColor);
+        if (!textSurface) {
+            cerr << "Failed to create text surface." << SDL_GetError() << endl;
+            return false;
+        }
+
+		item.textTexture = SDL_CreateTextureFromSurface(rendererm, textSurface);
+		item.textWidth = textSurface->w;
+		item.textHeight = textSurface->h;
+		SDL_DestroySurface(textSurface);
+
+		if (!item.textTexture) {
+			cerr << "Failed to create text texture." << SDL_GetError() << endl;
+			return false;
+		}
+
+    }
+	return true;
+
+}
+
+void cleanupTextures() {
+	for (auto& item : menuItems) {
+		if (item.textTexture) {
+			SDL_DestroyTexture(item.textTexture);
+			item.textTexture = nullptr;
+		}
+	}
+}   
 
 // Function to render menu
 void renderMenu(SDL_Renderer* renderer) {
@@ -33,6 +83,16 @@ void renderMenu(SDL_Renderer* renderer) {
         SDL_Color color = item.isHovered ? SDL_Color{ 0, 255, 0, 255 } : SDL_Color{ 255, 0, 0, 255 };
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderFillRect(renderer, &item.rect);
+
+        if (item.textTexture) {
+            SDL_FRect textRect = {
+                item.rect.x + (item.rect.w - item.textWidth) / 2,
+                item.rect.y + (item.rect.h - item.textHeight) / 2,
+                static_cast<float>(item.textWidth),
+                static_cast<float>(item.textHeight)
+            };
+            SDL_RenderTexture(renderer, item.textTexture, nullptr, &textRect);
+        }
     }
 }
 
@@ -46,6 +106,16 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
     bool running = true;
     SDL_Event event;
+
+	//if (!loadFontTexture()) {
+	//	cerr << "Failed to load font texture." << SDL_GetError() << endl;
+	//	return 1;
+	//}
+
+	//if (TTF_Init() == -1) {
+	//	cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
+	//	return 1;
+	//}
 
     //  While the window is open, this handles events like mouse motion and clicks.
     while (running) {
@@ -93,6 +163,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
     }
 
     // Cleanup
+	cleanupTextures();
+    TTF_CloseFont(font);
+	TTF_Quit();
     SDL_DestroyRenderer(rendererm);
     SDL_DestroyWindow(windowm);
     SDL_Quit();
