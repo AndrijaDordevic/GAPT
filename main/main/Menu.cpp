@@ -9,6 +9,7 @@
 using namespace std;
 
 TTF_Font* font = nullptr;
+SDL_Color textColor = { 0, 0, 0, 255 };
 
 bool closed = false;
 
@@ -21,7 +22,6 @@ struct MenuItem {
 	int textWidth;
 	int textHeight;
 };
-
 bool running = true;
 
 // Create window 
@@ -31,23 +31,21 @@ SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT,
 SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 
 
-// Initialize menu items: Rect size and pos, text and initial isHovered value.
+// Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
-    {{300, 200, 200, 50}, "Start Game", false, nullptr, 0, 0}, // Start Game
-    {{300, 270, 200, 50}, "Options", false, nullptr, 0, 0}, // Options
-    {{300, 340, 200, 50}, "Exit", false, nullptr, 0, 0}  // Exit
+    {{(WINDOW_WIDTH - 400 )/2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
+    {{(WINDOW_WIDTH - 400)/2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
+    {{(WINDOW_WIDTH - 400)/2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
 };
 
 bool loadFontTexture() {
 
-    TTF_Font* font = TTF_OpenFont("C:/Users/User/source/repos/GAPT/main/main/External/Arial.ttf", 24);
+    TTF_Font* font = TTF_OpenFont("C:\\Arial.ttf", 24);
 
 	if (!font) {
 		cerr << "Failed to load font." << SDL_GetError << endl;
 		return false;
 	}
-
-	SDL_Color textColor = { 0, 0, 0, 255 };
 
     for (auto& item : menuItems) {
 
@@ -118,10 +116,10 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 	//	return 1;
 	//}
 
-	//if (TTF_Init() == -1) {
-	//	cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
-	//	return 1;
-	//}
+	if (TTF_Init() == false) {
+		cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
+		return 1;
+	}
 
     //  While the window is open, this handles events like mouse motion and clicks.
     while (running) {
