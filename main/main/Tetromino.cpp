@@ -10,11 +10,13 @@
 // Global flags and spawn data
 bool draggingInProgress = false;
 bool CanDrag = false;
+bool positionsOccupied[3] = { false, false, false };
+
 int spawnX = 0;
 int spawnYPositions[3] = { 0, 0, 0 };
-bool positionsOccupied[3] = { false, false, false };
 int spawnedCount = 0;
 int score = 0;
+
 const int POINTS_PER_LINE = 100;
 
 // Store tetrominos by value instead of pointers.
@@ -73,9 +75,11 @@ void SpawnTetromino() {
 
     };
 
+    //Creating a random shape/Color from the vector
     int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
     int randomShapeIndex = rand() % shapes.size();
 
+    //Creaging tetromino object and assiging a color
     Tetromino newTetromino;
     newTetromino.color = colors[randomColorIndex]; // Random color
 
@@ -179,6 +183,7 @@ bool CheckCollision(const Tetromino &tetro, const std::vector<Tetromino>& placed
 // Check if tetromino is inside grid boundaries.
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
     for (const auto& block : tetro.blocks) {
+        //the -5 and -20 is so the blocks can be placed slightly outside the grid using the cursor.
         if (block.x < gridStartX - 5 || block.y < gridStartY - 5 ||
             block.x > gridStartX + (Columns * BLOCK_SIZE) - 20 ||
             block.y > gridStartY + (Columns * BLOCK_SIZE) - 20)

@@ -1,6 +1,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+extern bool closed;
+
 // Function declaration
 int runMenu(SDL_Window* window, SDL_Renderer* renderer);
 
