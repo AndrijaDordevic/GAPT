@@ -106,13 +106,6 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
         mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
-void closeAllWindows() {
-    SDL_DestroyRenderer(rendererm);
-    SDL_DestroyWindow(windowm);
-    SDL_Quit();
-    running = false;
-    closed = true;
-}
 
 
 // This fn 
@@ -150,12 +143,11 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
                     menuItems[i].isHovered = isMouseOver(mouseX, mouseY, menuItems[i].rect);
 
                     if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                        if (i == 2) closeAllWindows(); // Exit menu if exit is clicked
+                        if (i == 2) exit(EXIT_SUCCESS); // Exit menu if exit is clicked
 
                         else if (i == 0) {
                             // Start game
                             running = false;
-  
 
                         }
                         else if (i == 1) {
