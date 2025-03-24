@@ -13,8 +13,8 @@
  * @param renderer SDL_Renderer instance used to draw the grid.
  */
 void DrawGrid(SDL_Renderer* renderer) {  // Renamed from Draw -> DrawGrid
-    int startX = (WINDOW_WIDTH - (Grid::COLUMNS * Grid::CELL_WIDTH)) / 2-100;
-    int startY = OFFSET;
+    int startX = 112;
+    int startY = 119;
 
     Grid grid(startX, startY); // Create a Grid object
     grid.Draw(renderer); // Call the Grid's Draw() function to render it

@@ -58,3 +58,4 @@ void cleanupSDL(SDL_Window* window, SDL_Renderer* renderer) {
     SDL_DestroyWindow(window); // Destroy the window to free memory
     SDL_Quit(); // Quit SDL and clean up all initialized subsystems
 }
+

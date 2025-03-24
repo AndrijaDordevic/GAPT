@@ -14,6 +14,7 @@ void DragDrop(SDL_Event& event) {
 
     // Start drag: on mouse button down
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
+		//cout << "Mouse button down at (" << event.button.x << ", " << event.button.y << ")\n";
         for (auto& tetromino : tetrominos) {
             if (!tetromino.canBeDragged) continue; // Skip if not draggable
 
@@ -52,8 +53,8 @@ void DragDrop(SDL_Event& event) {
     // End drag: on mouse button up
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         if (draggedTetromino) {
-            int gridStartX = (WINDOW_WIDTH - (GRID_COLUMNS * CELL_WIDTH)) / 2 - 100;
-            int gridStartY = OFFSET;
+            int gridStartX = 112;
+            int gridStartY = 125;
 
             // Snap blocks to grid if inside the grid
             if (IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {

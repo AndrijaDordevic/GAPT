@@ -8,7 +8,7 @@
 struct Block;
 
 const int BLOCK_SIZE = 80;
-const int Columns = 10;
+const int Columns = 9;
 extern bool draggingInProgress;
 extern bool CanDrag;
 
@@ -16,6 +16,7 @@ struct Block {
     int x, y;
     SDL_Color color;
     bool dragging = false;
+    SDL_Texture* texture = nullptr;
 };
 
 struct Tetromino {
@@ -46,5 +47,7 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY);
 void RunBlocks(SDL_Renderer* renderer);
 void AddToIndividualBlocks(const Tetromino& tetro);
 void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows);
+bool LoadBlockTextures(SDL_Renderer* ren);
+bool IsColorEqual(const SDL_Color& a, const SDL_Color& b);
 
 #endif // TETROMINO_HPP

@@ -9,10 +9,10 @@
  */
 class Grid {
 public:
-    static const int COLUMNS = 10;
-    static const int ROWS = 10;
-    static const int CELL_WIDTH = 80;
-    static const int CELL_HEIGHT = 80;
+    static const int COLUMNS = 9;
+    static const int ROWS = 9;
+    static const int CELL_WIDTH = 81;
+    static const int CELL_HEIGHT = 81;
 
 private:
     int startX, startY; // Top-left corner of the grid
