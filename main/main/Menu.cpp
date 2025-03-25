@@ -25,7 +25,7 @@ struct MenuItem {
 bool running = true;
 
 // Create window 
-SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
 // Create renderer for window
 SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
