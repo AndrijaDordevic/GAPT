@@ -9,7 +9,7 @@
  */
 bool initializeSDL(SDL_Window*& window, SDL_Renderer*& renderer) {
     // Create SDL Window with specified title, width, height, and resizable property
-    window = SDL_CreateWindow("Block Game", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Block Game", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     // Check if window creation failed
     if (!window) {
