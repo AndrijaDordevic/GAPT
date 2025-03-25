@@ -1,0 +1,4 @@
+﻿  Server.cpp
+C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(61,23): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(91,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+  Server.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\Server.exe

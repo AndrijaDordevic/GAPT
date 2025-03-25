@@ -1,0 +1,4 @@
+﻿  Client.cpp
+C:\Users\andri\source\repos\GAPT\main\Client\Client.cpp(55,27): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\andri\source\repos\GAPT\main\Client\Client.cpp(82,56): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Client.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\Client.exe
