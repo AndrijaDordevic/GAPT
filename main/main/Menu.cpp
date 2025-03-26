@@ -4,7 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <SDL3_ttf/SDL_ttf.h>
-
+#include <thread>  // For running client in a separate thread
+#include "Client.hpp"
 
 using namespace std;
 
@@ -19,8 +20,8 @@ struct MenuItem {
     string label;
     bool isHovered;
     SDL_Texture* textTexture;
-	int textWidth;
-	int textHeight;
+    int textWidth;
+    int textHeight;
 };
 bool running = true;
 
@@ -30,56 +31,52 @@ SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT,
 // Create renderer for window
 SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 
-
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
-    {{(WINDOW_WIDTH - 400 )/2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
-    {{(WINDOW_WIDTH - 400)/2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
-    {{(WINDOW_WIDTH - 400)/2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
+    {{(WINDOW_WIDTH - 400) / 2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
+    {{(WINDOW_WIDTH - 400) / 2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
+    {{(WINDOW_WIDTH - 400) / 2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
 };
 
+// Function to load font texture
 bool loadFontTexture() {
-
     TTF_Font* font = TTF_OpenFont("C:\\Arial.ttf", 24);
-
-	if (!font) {
-		cerr << "Failed to load font." << SDL_GetError << endl;
-		return false;
-	}
+    if (!font) {
+        cerr << "Failed to load font." << SDL_GetError << endl;
+        return false;
+    }
 
     for (auto& item : menuItems) {
-
         SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), 10, textColor);
         if (!textSurface) {
             cerr << "Failed to create text surface." << SDL_GetError() << endl;
             return false;
         }
 
-		item.textTexture = SDL_CreateTextureFromSurface(rendererm, textSurface);
-		item.textWidth = textSurface->w;
-		item.textHeight = textSurface->h;
-		SDL_DestroySurface(textSurface);
+        item.textTexture = SDL_CreateTextureFromSurface(rendererm, textSurface);
+        item.textWidth = textSurface->w;
+        item.textHeight = textSurface->h;
+        SDL_DestroySurface(textSurface);
 
-		if (!item.textTexture) {
-			cerr << "Failed to create text texture." << SDL_GetError() << endl;
-			return false;
-		}
-
+        if (!item.textTexture) {
+            cerr << "Failed to create text texture." << SDL_GetError() << endl;
+            return false;
+        }
     }
-	return true;
-
+    return true;
 }
 
+// Cleanup textures
 void cleanupTextures() {
-	for (auto& item : menuItems) {
-		if (item.textTexture) {
-			SDL_DestroyTexture(item.textTexture);
-			item.textTexture = nullptr;
-		}
-	}
-}   
+    for (auto& item : menuItems) {
+        if (item.textTexture) {
+            SDL_DestroyTexture(item.textTexture);
+            item.textTexture = nullptr;
+        }
+    }
+}
 
-// Function to render menu
+// Render menu
 void renderMenu(SDL_Renderer* renderer) {
     for (const auto& item : menuItems) {
         SDL_Color color = item.isHovered ? SDL_Color{ 0, 255, 0, 255 } : SDL_Color{ 255, 0, 0, 255 };
@@ -98,64 +95,64 @@ void renderMenu(SDL_Renderer* renderer) {
     }
 }
 
-// Function to check if mouse is within a rectangle
+// Check if mouse is over a rectangle
 bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
     return (mouseX >= rect.x && mouseX <= rect.x + rect.w &&
         mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
+// Function to run the client code (in a separate thread)
+void runClient() {
+    std::string server_ip = "127.0.0.1";  // Replace with the actual server IP
+    start_client(server_ip);  // Call your client start function here
+}
 
-
-// This fn 
+// Main menu loop
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
-
     SDL_Event event;
 
-	//if (!loadFontTexture()) {
-	//	cerr << "Failed to load font texture." << SDL_GetError() << endl;
-	//	return 1;
-	//}
+    // Initialize TTF
+    if (TTF_Init() == false) {
+        cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
+        return 1;
+    }
 
-	if (TTF_Init() == false) {
-		cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
-		return 1;
-	}
-
-    //  While the window is open, this handles events like mouse motion and clicks.
+    // Main loop
     while (running) {
-
-
-
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
             else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                // Get mouse coords as flt
+                // Get mouse coordinates
                 float mouseX = static_cast<float>(event.motion.x);
                 float mouseY = static_cast<float>(event.motion.y);
 
-                // Loop through menu items to check hover and clicks
+                // Check menu items
                 for (size_t i = 0; i < menuItems.size(); i++) {
-                    // Check if mouse is over an item in the menu
                     menuItems[i].isHovered = isMouseOver(mouseX, mouseY, menuItems[i].rect);
 
                     if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                        if (i == 2) exit(EXIT_SUCCESS); // Exit menu if exit is clicked
-
+                        if (i == 2) {
+                            exit(EXIT_SUCCESS); // Exit
+                        }
                         else if (i == 0) {
                             // Start game
-                            running = false;
-
+                            std::cout << "Starting game..." << std::endl;
+                            // Start the client in a separate thread
+                            std::thread clientThread(runClient);
+                            clientThread.detach(); // Detach the thread to keep running
+                            running = false; // Close the menu after starting the game
                         }
                         else if (i == 1) {
                             // Options
-                            cout << "Options..." << endl;
+                            std::cout << "Options..." << std::endl;
                         }
                     }
                 }
             }
         }
+
         // Clear screen
         SDL_SetRenderDrawColor(rendererm, 255, 255, 255, 255);
         SDL_RenderClear(rendererm);
@@ -167,9 +164,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
     }
 
     // Cleanup
-	cleanupTextures();
+    cleanupTextures();
     TTF_CloseFont(font);
-	TTF_Quit();
+    TTF_Quit();
     SDL_DestroyRenderer(rendererm);
     SDL_DestroyWindow(windowm);
     SDL_Quit();

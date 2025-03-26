@@ -2,85 +2,96 @@
 #include <cstring>  // For memset
 #include <cstdlib>  // For exit()
 #include <thread>   // For multi-threading
+#include <chrono>   // For sleep_for
 #include <string>
+#include "Client.hpp"
+#include <atomic>
 
-#ifdef _WIN32
+#ifdef _WIN32  // Windows-specific headers
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
+#pragma comment(lib, "ws2_32.lib")  // Link with Windows sockets library
+#else  // Linux/macOS headers
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <unistd.h>  // For close()
 #endif
 
-#define SERVER_IP "127.0.0.1"  // Change if connecting to another machine
-#define SERVER_PORT 12345
+#define PORT 12345  // Port to connect to
 
-void receive_messages(int client_socket) {
+// Global atomic flag to manage client shutdown
+std::atomic<bool> client_running(true);
+
+// Function to handle receiving messages from the server
+void handle_server(int client_socket) {
     char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));  // Clear buffer
 
-    while (true) {
-        memset(buffer, 0, sizeof(buffer));
-
-        // Receive data from server
-        int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytes_received <= 0) {
-            std::cout << "Disconnected from server\n";
-            break;
-        }
-
-        std::cout << "Server: " << buffer << "\n";  // Print received message
+    // Receive a message from the server
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_received > 0) {
+        buffer[bytes_received] = '\0';  // Ensure null termination
+        std::cout << "Server says: " << buffer;  // Print server message
     }
-
-#ifdef _WIN32
-    closesocket(client_socket);
-    WSACleanup();
-#else
-    close(client_socket);
-#endif
+    else if (bytes_received == 0) {
+        std::cout << "Server disconnected.\n";
+    }
+    else {
+        std::cerr << "Failed to receive data from server\n";
+    }
 }
 
-int main() {
+// Function to initiate a connection to the server
+void start_client(const std::string& server_ip) {
 #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-    int client_socket;
+    int client_fd;
     struct sockaddr_in server_addr;
 
     // Create socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_socket == -1) {
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_fd == -1) {
         std::cerr << "Socket creation failed\n";
-        return -1;
+        return;
     }
 
     // Configure server address
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SERVER_PORT);
-    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
+    server_addr.sin_port = htons(PORT);
 
-    // Connect to server
-    if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-        std::cerr << "Connection to server failed\n";
-        return -1;
+    // Convert server IP address to binary
+    if (inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address\n";
+        return;
     }
 
-    std::cout << "Connected to server!\n";
-
-    // Start receiving messages in a separate thread
-    std::thread recv_thread(receive_messages, client_socket);
-    recv_thread.detach();
-
-    // Send messages to the server
-    std::string input;
-    while (true) {
-        std::getline(std::cin, input);
-        send(client_socket, input.c_str(), input.length(), 0);
+    // Connect to the server
+    std::cout << "Connecting to server...\n";
+    if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+        std::cerr << "Connection failed\n";
+        return;
     }
 
-    return 0;
+    std::cout << "Connected to server\n";
+
+    // Start a thread to handle communication
+    std::thread handle_thread(handle_server, client_fd);
+
+    // Keep the client running
+    while (client_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    std::cout << "Disconnecting...\n";
+    closesocket(client_fd);
+    client_running = false;
+    handle_thread.join();
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }
