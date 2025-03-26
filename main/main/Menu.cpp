@@ -6,6 +6,10 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <thread>  // For running client in a separate thread
 #include "Client.hpp"
+#include <string>
+#include <fstream>
+
+#define OUTPUT_FILE "server_ip.txt"  // File to store server IP
 
 using namespace std;
 
@@ -101,9 +105,37 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
         mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
+
+// Function to read the server IP from the saved file
+std::string readServerIP() {
+    std::ifstream infile(OUTPUT_FILE);  // Open the file in input mode
+    if (!infile) {
+        std::cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << std::endl;
+        return "";  // Return empty string if file can't be read
+    }
+
+    std::string serverIP;
+    std::getline(infile, serverIP);  // Read the IP address as a string
+
+    infile.close();  // Close the file after reading
+    return serverIP;
+}
+
 // Function to run the client code (in a separate thread)
 void runClient() {
-    std::string server_ip = "127.0.0.1";  // Replace with the actual server IP
+    // Read the server IP from the file
+    std::string server_ip = readServerIP();
+
+    // If the IP is empty, print an error and stop the client
+    if (server_ip.empty()) {
+        std::cerr << "Client: No server IP found. Please ensure the listener has saved it." << std::endl;
+        return;
+    }
+
+    // At this point, we have a valid server IP, so we can call start_client() with the IP
+    std::cout << "Client: Using server IP: " << server_ip << "\n";
+
+    // Start the client with the IP address
     start_client(server_ip);  // Call your client start function here
 }
 
@@ -113,7 +145,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
     // Initialize TTF
     if (TTF_Init() == false) {
-        cerr << "Failed to initialize TTF." << SDL_GetError() << endl;
+        std::cerr << "Failed to initialize TTF." << SDL_GetError << std::endl;
         return 1;
     }
 

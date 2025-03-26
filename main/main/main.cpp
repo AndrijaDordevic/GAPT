@@ -7,6 +7,8 @@
 #include <SDL3_image/SDL_image.h>
 #include "Client.hpp"
 #include "Texture.hpp"
+#include "Listener.hpp"
+#include <thread>
 
 
 
@@ -16,18 +18,20 @@
 int main() {
     bool running = true;
     SDL_Event event;
-
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
-	SDL_Texture* texture = nullptr;
+    SDL_Texture* texture = nullptr;
+
+    // Start the listener in a separate thread to capture the server's IP
+    std::thread listenerThread(listenForServerIP);
+    listenerThread.detach();  // Let it run in the background
 
     // Run menu and handle the client's thread (start it when "Start Game" is clicked)
     runMenu(window, renderer);
 
     if (closed == false) {
-
         if (!initializeSDL(window, renderer)) {
-            cerr << "Failed to initialize SDL." << endl;
+            std::cerr << "Failed to initialize SDL." << std::endl;
             return 1;
         }
         srand(static_cast<unsigned>(time(0)));
@@ -52,32 +56,26 @@ int main() {
             // If the client is no longer running, stop the game
             if (!client_running) {
                 std::cout << "Client disconnected, closing game..." << std::endl;
-                running = false; // Stop the game loop
+                running = false;
             }
 
             // Clear screen
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             SDL_RenderClear(renderer);
-
             SDL_RenderTexture(renderer, texture, NULL, NULL);
 
-            // Call DrawGrid() to draw a grid
-            //DrawGrid(renderer);
-            // Update game state (spawn tetrominos)
             RunBlocks(renderer);
-
-            // Render all tetrominos every frame
             RenderTetrominos(renderer);
 
             // Update screen
             SDL_RenderPresent(renderer);
-            SDL_Delay(16);  // Sleep for a bit to limit frame rate
+            SDL_Delay(16);
         }
 
         cleanupSDL(window, renderer);
-        return 0;
     }
 
+    return 0;
 }
 
 

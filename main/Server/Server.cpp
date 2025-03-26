@@ -1,26 +1,28 @@
 #include <iostream>
-#include <cstring>  // For memset
-#include <cstdlib>  // For exit()
-#include <thread>   // For multi-threading
-#include <vector>   // To store client sockets
+#include <cstring>
+#include <cstdlib>
+#include <thread>
+#include <chrono>
+#include <atomic>
 
-#ifdef _WIN32  // Windows-specific headers
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")  // Link with Windows sockets library
-#else  // Linux/macOS headers
+#pragma comment(lib, "ws2_32.lib")
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>  // For close()
+#include <unistd.h>
 #endif
 
-#define PORT 12345      // Port the server listens on
-#define MAX_CLIENTS 10  // Maximum number of simultaneous clients
+#define PORT 12345          // Port used for broadcasting the IP
+#define CONTROL_PORT 12346  // Port used for control messages (e.g., STOP command)
+#define BROADCAST_INTERVAL 1  // Seconds between broadcasts
 
-std::vector<int> clients;  // Store connected client sockets
+std::atomic<bool> stopBroadcast{ false };
 
-// Function to dynamically retrieve the local IP address
+// Function to retrieve the local IP address
 std::string getLocalIP() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
@@ -30,8 +32,8 @@ std::string getLocalIP() {
 
     sockaddr_in addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(0);  // Port 0 means any available port
-    inet_pton(AF_INET, "8.8.8.8", &addr.sin_addr);  // Google DNS server as an external address
+    addr.sin_port = htons(0);  // Any available port
+    inet_pton(AF_INET, "8.8.8.8", &addr.sin_addr);  // Use Google's DNS as destination
 
     if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         std::cerr << "Connection failed!" << std::endl;
@@ -63,109 +65,171 @@ std::string getLocalIP() {
 
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &name.sin_addr, ip_str, sizeof(ip_str));
-
     return std::string(ip_str);
 }
 
-// Function to handle communication with a client
-void handle_client(int client_socket, const std::string& server_ip) {
-    char buffer[1024];
+// Thread function to broadcast the IP continuously until stopped
+void broadcastIP(const std::string& ip) {
+    int udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (udp_socket < 0) {
+        std::cerr << "UDP socket creation failed!" << std::endl;
+        return;
+    }
 
-    // Send the server's IP address to the client
-    std::string msg = server_ip + "\n";
-    send(client_socket, msg.c_str(), msg.length(), 0);
+    // Enable broadcasting option
+    int broadcastEnable = 1;
+    if (setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, (char*)&broadcastEnable, sizeof(broadcastEnable)) < 0) {
+        std::cerr << "Failed to set socket option for broadcast!" << std::endl;
+#ifdef _WIN32
+        closesocket(udp_socket);
+#else
+        close(udp_socket);
+#endif
+        return;
+    }
 
-    while (true) {
-        memset(buffer, 0, sizeof(buffer));  // Clear the buffer
+    sockaddr_in broadcast_addr;
+    memset(&broadcast_addr, 0, sizeof(broadcast_addr));
+    broadcast_addr.sin_family = AF_INET;
+    broadcast_addr.sin_port = htons(PORT);
+    broadcast_addr.sin_addr.s_addr = INADDR_BROADCAST;  // 255.255.255.255
 
-        // Receive data from the client
-        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received <= 0) {
-            std::cout << "Client disconnected\n";
-            break;  // Exit the loop if the client disconnects
+    while (!stopBroadcast.load()) {
+        int sent_bytes = sendto(udp_socket, ip.c_str(), ip.length(), 0,
+            (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr));
+        if (sent_bytes < 0) {
+            std::cerr << "Broadcast send failed!" << std::endl;
         }
-
-        buffer[bytes_received] = '\0';  // Null-terminate the string
-        std::cout << "Client says: " << buffer << "\n";
-
-        // Echo the message back to the client
-        send(client_socket, buffer, bytes_received, 0);
+        else {
+            std::cout << "Broadcasted IP (" << ip << ") to the local network.\n";
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(BROADCAST_INTERVAL));
     }
 
 #ifdef _WIN32
-    closesocket(client_socket);
+    closesocket(udp_socket);
 #else
-    close(client_socket);
+    close(udp_socket);
+#endif
+}
+
+// Thread function to listen for a STOP command on CONTROL_PORT
+void controlListener() {
+    int ctrl_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (ctrl_socket < 0) {
+        std::cerr << "Control socket creation failed!" << std::endl;
+        return;
+    }
+
+    sockaddr_in ctrl_addr;
+    memset(&ctrl_addr, 0, sizeof(ctrl_addr));
+    ctrl_addr.sin_family = AF_INET;
+    ctrl_addr.sin_port = htons(CONTROL_PORT);
+    ctrl_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(ctrl_socket, (struct sockaddr*)&ctrl_addr, sizeof(ctrl_addr)) < 0) {
+        std::cerr << "Binding control socket failed!" << std::endl;
+#ifdef _WIN32
+        closesocket(ctrl_socket);
+#else
+        close(ctrl_socket);
+#endif
+        return;
+    }
+
+    char buffer[1024];
+    while (!stopBroadcast.load()) {
+        memset(buffer, 0, sizeof(buffer));
+        socklen_t addr_len = sizeof(ctrl_addr);
+        int bytes_received = recvfrom(ctrl_socket, buffer, sizeof(buffer) - 1, 0,
+            (struct sockaddr*)&ctrl_addr, &addr_len);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            if (std::string(buffer) == "STOP") {
+                std::cout << "Received STOP command. Stopping broadcast.\n";
+                stopBroadcast.store(true);
+                break;
+            }
+        }
+    }
+
+#ifdef _WIN32
+    closesocket(ctrl_socket);
+#else
+    close(ctrl_socket);
 #endif
 }
 
 int main() {
 #ifdef _WIN32
     WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);  // Initialize Windows networking API
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-    int server_fd;
-    struct sockaddr_in server_addr;
-
-    // Get the server's local IP address
     std::string localIP = getLocalIP();
-    if (!localIP.empty()) {
-        std::cout << "Server's local IP address: " << localIP << std::endl;
-    }
-    else {
+    if (localIP.empty()) {
         std::cerr << "Failed to retrieve local IP address!" << std::endl;
         return -1;
     }
+    std::cout << "Server's local IP address: " << localIP << std::endl;
 
-    // Create a TCP socket
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    // Start the broadcaster and control listener threads
+    std::thread broadcaster(broadcastIP, localIP);
+    std::thread ctrlThread(controlListener);
+
+    // Setup server TCP listener
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
         std::cerr << "Socket creation failed\n";
         return -1;
     }
 
-    // Configure server address settings
+    sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;  // Accept connections from any address
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_port = htons(PORT);  // The same port client uses
+    server_addr.sin_addr.s_addr = INADDR_ANY;
 
-    // Bind the socket to the specified address and port
-    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         std::cerr << "Binding failed\n";
         return -1;
     }
 
-    // Listen for incoming connections
-    if (listen(server_fd, MAX_CLIENTS) == -1) {
-        std::cerr << "Listening failed\n";
+    if (listen(server_fd, 1) < 0) {
+        std::cerr << "Listen failed\n";
         return -1;
     }
 
     std::cout << "Server listening on port " << PORT << "...\n";
 
-    while (true) {
-        struct sockaddr_in client_addr;
-        socklen_t client_len = sizeof(client_addr);
+    // Accept incoming connection from the client
+    int client_socket;
+    sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
 
-        // Accept new client connections
-        int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-        if (client_socket == -1) {
-            std::cerr << "Client accept failed\n";
-            continue;  // Keep accepting clients even if one fails
-        }
-
-        std::cout << "New client connected!\n";
-
-        // Start a new thread to handle the client
-        std::thread(handle_client, client_socket, localIP).detach();
+    if (client_socket < 0) {
+        std::cerr << "Connection failed\n";
+        return -1;
     }
+
+    std::cout << "Client connected\n";
+
+    // Handle the client connection
+    // You can now add code here to handle communication with the client
+
+    // Wait for the threads to finish (they will end after receiving STOP)
+    broadcaster.join();
+    ctrlThread.join();
 
 #ifdef _WIN32
     closesocket(server_fd);
-    WSACleanup();
 #else
     close(server_fd);
+#endif
+
+#ifdef _WIN32
+    WSACleanup();
 #endif
 
     return 0;

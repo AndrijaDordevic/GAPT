@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{d522c451-25e1-47bd-9e2d-266eb10ba1dd}</ProjectGuid>
-    <RootNamespace>main</RootNamespace>
+    <ProjectGuid>{37bb93af-454d-40d0-a486-d91f33f38489}</ProjectGuid>
+    <RootNamespace>Listener</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -104,13 +104,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)External\SDL\SDL3-3.2.4\include;$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\Client</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\lib\x64;$(ProjectDir)External\SDL\SDL3-3.2.4\lib\x64;$(ProjectDir)External\SDL\SDL3_image-3.2.4\lib\x64;$(ProjectDir)..\Client\x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL3.lib;SDL3_test.lib;SDL3_ttf.lib;SDL3_image.lib;Client.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,28 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Listener.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="DragBlock.cpp" />
-    <ClCompile Include="Grid.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Menu.cpp" />
-    <ClCompile Include="Tetromino.cpp" />
-    <ClCompile Include="Window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Listener.hpp" />
-    <ClInclude Include="Texture.hpp" />
-    <ClInclude Include="Cell.hpp" />
-    <ClInclude Include="DragBlock.hpp" />
-    <ClInclude Include="Grid.hpp" />
-    <ClInclude Include="Menu.hpp" />
-    <ClInclude Include="Tetromino.hpp" />
-    <ClInclude Include="Window.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Client\Client.vcxproj">
-      <Project>{82919b66-faa3-4427-86c3-68f6d2c5320c}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

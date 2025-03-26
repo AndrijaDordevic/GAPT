@@ -44,6 +44,8 @@ void handle_server(int client_socket) {
 
 // Function to initiate a connection to the server
 void start_client(const std::string& server_ip) {
+
+    std::cout << "*Server IP:  " << server_ip << std::endl;
 #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
