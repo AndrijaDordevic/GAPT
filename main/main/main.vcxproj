@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />
     <ClInclude Include="DragBlock.hpp" />
     <ClInclude Include="Grid.hpp" />

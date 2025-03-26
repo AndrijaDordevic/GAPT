@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 #include "Tetromino.hpp"
+#include "Texture.hpp"
 #include <SDL3_image/SDL_image.h>
 
 // Global flags and spawn data
@@ -23,15 +24,6 @@ int score = 0;
 const int POINTS_PER_LINE = 100;
 
 
-SDL_Texture* redTexture = nullptr;
-SDL_Texture* blueTexture = nullptr;
-SDL_Texture* greenTexture = nullptr;
-SDL_Texture* yellowTexture = nullptr;
-SDL_Texture* orangeTexture = nullptr;
-SDL_Texture* purpleTexture = nullptr;
-SDL_Texture* MagentaTexture = nullptr;
-SDL_Texture* cyanTexture = nullptr;
-
 // Store tetrominos by value instead of pointers.
 // Make sure these are defined only once in your project.
 std::vector<Tetromino> tetrominos;         // Active tetrominos (for drag, etc.)
@@ -48,21 +40,6 @@ bool IsPositionFree(int spawnY) {
     }
     return true; // Position is free
 }
-
-bool LoadBlockTextures(SDL_Renderer* ren) {
-    redTexture = IMG_LoadTexture(ren, "Assets/BlockRed.png");
-    blueTexture = IMG_LoadTexture(ren, "Assets/BlockBlue.png");
-    greenTexture = IMG_LoadTexture(ren, "Assets/BlockGreen.png");
-    yellowTexture = IMG_LoadTexture(ren, "Assets/BlockYellow.png");
-    orangeTexture = IMG_LoadTexture(ren, "Assets/BlockOrange.png");
-    cyanTexture = IMG_LoadTexture(ren, "Assets/BlockCyan.png");
-    purpleTexture = IMG_LoadTexture(ren, "Assets/BlockPurple.png");
-    MagentaTexture = IMG_LoadTexture(ren, "Assets/BlockMagenta.png");
-
-
-	return (redTexture && blueTexture && greenTexture && yellowTexture && orangeTexture && cyanTexture && purpleTexture && MagentaTexture);
-}
-
 
 void SpawnTetromino() {
     if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
@@ -110,10 +87,6 @@ void SpawnTetromino() {
     //Creaging tetromino object and assiging a color
     Tetromino newTetromino;
     newTetromino.color = colors[randomColorIndex]; // Random color
-
-
-
-   
     
 
     // Find a free spawn position among the three possible ones.
@@ -148,37 +121,17 @@ void SpawnTetromino() {
 
         block.color = newTetromino.color;
 
-        if (IsColorEqual(block.color, { 255,0,0,255 })) {
-            block.texture = redTexture;
-        }
-        else if (IsColorEqual(block.color, { 0, 0, 255, 255 })) {
-            block.texture = redTexture;
-        }
-        else if (IsColorEqual(block.color, { 0, 255, 0, 255 })) {
-            block.texture = greenTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 255, 0, 255 })) {
-            block.texture = yellowTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 165, 0, 255 })) {
-            block.texture = orangeTexture;
-        }
-        else  if (IsColorEqual(block.color, { 0, 255, 255, 255 })) {
-            block.texture = cyanTexture;
-        }
-        else if (IsColorEqual(block.color, { 128, 0, 128, 255 })) {
-            block.texture = purpleTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 0, 255, 255 })) {
-            block.texture = MagentaTexture;
-        }
+		//The texture returned from the ApplyTexture function is assigned to a texture variable
+        SDL_Texture* textureChosen = ApplyTexture(block);
+
+        //Applies the texture
+		block.texture = textureChosen; 
        
     }
 
     // Add the new tetromino to the active container.
     tetrominos.push_back(newTetromino);
     spawnedCount++;
-
 
 }
 
@@ -199,9 +152,7 @@ void ReleaseOccupiedPositions() {
     }
 }
 
-bool IsColorEqual(const SDL_Color& a, const SDL_Color& b) {
-    return (a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a);
-}
+
 
 // Render function that now works with objects only.
 void RenderTetrominos(SDL_Renderer* ren) {

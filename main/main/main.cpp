@@ -6,7 +6,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include "Client.hpp"
-
+#include "Texture.hpp"
 
 
 
@@ -19,6 +19,7 @@ int main() {
 
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
+	SDL_Texture* texture = nullptr;
 
     // Run menu and handle the client's thread (start it when "Start Game" is clicked)
     runMenu(window, renderer);
@@ -32,12 +33,7 @@ int main() {
         srand(static_cast<unsigned>(time(0)));
 
         // Load image
-        const char* path = "Assets/GameUI.png";
-
-        SDL_Texture* texture = IMG_LoadTexture(renderer, path);
-        if (!texture) {
-            printf("CreateTextureFromSurface failed: %s\n", SDL_GetError());
-        }
+        texture = LoadGameTexture(renderer);
 
         if (!LoadBlockTextures(renderer)) {
             std::cerr << "Failed to load textures!\n";
