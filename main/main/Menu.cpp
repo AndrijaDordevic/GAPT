@@ -8,12 +8,14 @@
 #include "Client.hpp"
 #include <string>
 #include <fstream>
+#include "Texture.hpp"
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
 
 using namespace std;
 
 TTF_Font* font = nullptr;
+
 SDL_Color textColor = { 0, 0, 0, 255 };
 
 bool closed = false;
@@ -37,14 +39,14 @@ SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
-	{{(WINDOW_WIDTH - 400) / 2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
-	{{(WINDOW_WIDTH - 400) / 2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
-	{{(WINDOW_WIDTH - 400) / 2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
+	{{(WINDOW_WIDTH - 400) / 2, 500, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
+	{{(WINDOW_WIDTH - 400) / 2, 650, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
+	{{(WINDOW_WIDTH - 400) / 2, 800, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
 };
 
 // Function to load font texture
 bool loadFontTexture() {
-	TTF_Font* font = TTF_OpenFont("Assets\\Arial.ttf", 24);
+	TTF_Font* font = TTF_OpenFont("Assets\\Sterion-BLLld.ttf", 24);
 	if (!font) {
 		cerr << "Failed to load font." << SDL_GetError << endl;
 		return false;
@@ -82,10 +84,13 @@ void cleanupTextures() {
 
 // Render menu
 void renderMenu(SDL_Renderer* renderer) {
+	SDL_Texture* menuTexture = LoadMenuTexture(renderer);
+	SDL_Texture* menuOptionTexture = LoadMenuOptionTexture(renderer);
+	SDL_Texture* menuOptionTextureS = LoadMenuOptionTextureSelected(renderer);
+	SDL_RenderTexture(renderer, menuTexture, nullptr, nullptr);
 	for (const auto& item : menuItems) {
-		SDL_Color color = item.isHovered ? SDL_Color{ 0, 255, 0, 255 } : SDL_Color{ 255, 0, 0, 255 };
-		SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-		SDL_RenderFillRect(renderer, &item.rect);
+		item.isHovered ? SDL_RenderTexture(renderer, menuOptionTextureS, nullptr, &item.rect) : SDL_RenderTexture(renderer, menuOptionTexture, nullptr, &item.rect);
+
 
 		if (item.textTexture) {
 			SDL_FRect textRect = {
@@ -95,6 +100,7 @@ void renderMenu(SDL_Renderer* renderer) {
 				static_cast<float>(item.textHeight)
 			};
 			SDL_RenderTexture(renderer, item.textTexture, nullptr, &textRect);
+
 		}
 	}
 }

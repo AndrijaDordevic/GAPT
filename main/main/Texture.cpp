@@ -27,6 +27,45 @@ SDL_Texture* LoadGameTexture(SDL_Renderer* ren) {
 
 }
 
+SDL_Texture* LoadMenuTexture(SDL_Renderer* ren) {
+
+	const char* path = "Assets/Menu.png";
+
+	SDL_Texture* texture = IMG_LoadTexture(ren, path);
+	if (!texture) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
+
+	return texture;
+
+}
+
+SDL_Texture* LoadMenuOptionTexture(SDL_Renderer* ren) {
+
+	const char* path = "Assets/MenuOption.png";
+
+	SDL_Texture* texture = IMG_LoadTexture(ren, path);
+	if (!texture) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
+	
+
+	return texture;
+
+}
+
+SDL_Texture* LoadMenuOptionTextureSelected(SDL_Renderer* ren) {
+
+	const char* path = "Assets/MenuOptionS.png";
+
+	SDL_Texture* textureS = IMG_LoadTexture(ren, path);
+	if (!textureS) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
+
+	return textureS;
+
+}
 
 //Loads all the textures
 bool LoadBlockTextures(SDL_Renderer* ren) {
