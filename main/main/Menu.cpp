@@ -20,12 +20,12 @@ bool closed = false;
 
 // Menu item structure
 struct MenuItem {
-    SDL_FRect rect;
-    string label;
-    bool isHovered;
-    SDL_Texture* textTexture;
-    int textWidth;
-    int textHeight;
+	SDL_FRect rect;
+	string label;
+	bool isHovered;
+	SDL_Texture* textTexture;
+	int textWidth;
+	int textHeight;
 };
 bool running = true;
 
@@ -37,170 +37,177 @@ SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
-    {{(WINDOW_WIDTH - 400) / 2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
-    {{(WINDOW_WIDTH - 400) / 2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
-    {{(WINDOW_WIDTH - 400) / 2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
+	{{(WINDOW_WIDTH - 400) / 2, 250, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
+	{{(WINDOW_WIDTH - 400) / 2, 400, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
+	{{(WINDOW_WIDTH - 400) / 2, 550, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
 };
 
 // Function to load font texture
 bool loadFontTexture() {
-    TTF_Font* font = TTF_OpenFont("C:\\Arial.ttf", 24);
-    if (!font) {
-        cerr << "Failed to load font." << SDL_GetError << endl;
-        return false;
-    }
+	TTF_Font* font = TTF_OpenFont("C:\\Arial.ttf", 24);
+	if (!font) {
+		cerr << "Failed to load font." << SDL_GetError << endl;
+		return false;
+	}
 
-    for (auto& item : menuItems) {
-        SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), 10, textColor);
-        if (!textSurface) {
-            cerr << "Failed to create text surface." << SDL_GetError() << endl;
-            return false;
-        }
+	for (auto& item : menuItems) {
+		SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), 10, textColor);
+		if (!textSurface) {
+			cerr << "Failed to create text surface." << SDL_GetError() << endl;
+			return false;
+		}
 
-        item.textTexture = SDL_CreateTextureFromSurface(rendererm, textSurface);
-        item.textWidth = textSurface->w;
-        item.textHeight = textSurface->h;
-        SDL_DestroySurface(textSurface);
+		item.textTexture = SDL_CreateTextureFromSurface(rendererm, textSurface);
+		item.textWidth = textSurface->w;
+		item.textHeight = textSurface->h;
+		SDL_DestroySurface(textSurface);
 
-        if (!item.textTexture) {
-            cerr << "Failed to create text texture." << SDL_GetError() << endl;
-            return false;
-        }
-    }
-    return true;
+		if (!item.textTexture) {
+			cerr << "Failed to create text texture." << SDL_GetError() << endl;
+			return false;
+		}
+	}
+	return true;
 }
 
 // Cleanup textures
 void cleanupTextures() {
-    for (auto& item : menuItems) {
-        if (item.textTexture) {
-            SDL_DestroyTexture(item.textTexture);
-            item.textTexture = nullptr;
-        }
-    }
+	for (auto& item : menuItems) {
+		if (item.textTexture) {
+			SDL_DestroyTexture(item.textTexture);
+			item.textTexture = nullptr;
+		}
+	}
 }
 
 // Render menu
 void renderMenu(SDL_Renderer* renderer) {
-    for (const auto& item : menuItems) {
-        SDL_Color color = item.isHovered ? SDL_Color{ 0, 255, 0, 255 } : SDL_Color{ 255, 0, 0, 255 };
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &item.rect);
+	for (const auto& item : menuItems) {
+		SDL_Color color = item.isHovered ? SDL_Color{ 0, 255, 0, 255 } : SDL_Color{ 255, 0, 0, 255 };
+		SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+		SDL_RenderFillRect(renderer, &item.rect);
 
-        if (item.textTexture) {
-            SDL_FRect textRect = {
-                item.rect.x + (item.rect.w - item.textWidth) / 2,
-                item.rect.y + (item.rect.h - item.textHeight) / 2,
-                static_cast<float>(item.textWidth),
-                static_cast<float>(item.textHeight)
-            };
-            SDL_RenderTexture(renderer, item.textTexture, nullptr, &textRect);
-        }
-    }
+		if (item.textTexture) {
+			SDL_FRect textRect = {
+				item.rect.x + (item.rect.w - item.textWidth) / 2,
+				item.rect.y + (item.rect.h - item.textHeight) / 2,
+				static_cast<float>(item.textWidth),
+				static_cast<float>(item.textHeight)
+			};
+			SDL_RenderTexture(renderer, item.textTexture, nullptr, &textRect);
+		}
+	}
 }
 
 // Check if mouse is over a rectangle
 bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
-    return (mouseX >= rect.x && mouseX <= rect.x + rect.w &&
-        mouseY >= rect.y && mouseY <= rect.y + rect.h);
+	return (mouseX >= rect.x && mouseX <= rect.x + rect.w &&
+		mouseY >= rect.y && mouseY <= rect.y + rect.h);
 }
 
 
 // Function to read the server IP from the saved file
 std::string readServerIP() {
-    std::ifstream infile(OUTPUT_FILE);  // Open the file in input mode
-    if (!infile) {
-        std::cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << std::endl;
-        return "";  // Return empty string if file can't be read
-    }
+	std::ifstream infile(OUTPUT_FILE);  // Open the file in input mode
+	if (!infile) {
+		std::cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << std::endl;
+		return "";  // Return empty string if file can't be read
+	}
 
-    std::string serverIP;
-    std::getline(infile, serverIP);  // Read the IP address as a string
+	std::string serverIP;
+	std::getline(infile, serverIP);  // Read the IP address as a string
 
-    infile.close();  // Close the file after reading
-    return serverIP;
+	infile.close();  // Close the file after reading
+	return serverIP;
 }
 
 // Function to run the client code (in a separate thread)
 void runClient() {
-    // Read the server IP from the file
-    std::string server_ip = readServerIP();
+	// Read the server IP from the file
+	std::string server_ip = discoverServer();
+	if (!server_ip.empty()) {
+		start_client(server_ip);
+	}
+	else {
+		std::cerr << "Could not find server automatically!\n";
+	}
 
-    // If the IP is empty, print an error and stop the client
-    if (server_ip.empty()) {
-        std::cerr << "Client: No server IP found. Please ensure the listener has saved it." << std::endl;
-        return;
-    }
 
-    // At this point, we have a valid server IP, so we can call start_client() with the IP
-    std::cout << "Client: Using server IP: " << server_ip << "\n";
+	// If the IP is empty, print an error and stop the client
+	if (server_ip.empty()) {
+		std::cerr << "Client: No server IP found. Please ensure the listener has saved it." << std::endl;
+		return;
+	}
 
-    // Start the client with the IP address
-    start_client(server_ip);  // Call your client start function here
+	// At this point, we have a valid server IP, so we can call start_client() with the IP
+	std::cout << "Client: Using server IP: " << server_ip << "\n";
+
+	// Start the client with the IP address
+	start_client(server_ip);  // Call your client start function here
 }
 
 // Main menu loop
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
-    SDL_Event event;
+	SDL_Event event;
 
-    // Initialize TTF
-    if (TTF_Init() == false) {
-        std::cerr << "Failed to initialize TTF." << SDL_GetError << std::endl;
-        return 1;
-    }
+	// Initialize TTF
+	if (TTF_Init() == false) {
+		std::cerr << "Failed to initialize TTF." << SDL_GetError << std::endl;
+		return 1;
+	}
 
-    // Main loop
-    while (running) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
-            else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                // Get mouse coordinates
-                float mouseX = static_cast<float>(event.motion.x);
-                float mouseY = static_cast<float>(event.motion.y);
+	// Main loop
+	while (running) {
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_QUIT) {
+				running = false;
+			}
+			else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+				// Get mouse coordinates
+				float mouseX = static_cast<float>(event.motion.x);
+				float mouseY = static_cast<float>(event.motion.y);
 
-                // Check menu items
-                for (size_t i = 0; i < menuItems.size(); i++) {
-                    menuItems[i].isHovered = isMouseOver(mouseX, mouseY, menuItems[i].rect);
+				// Check menu items
+				for (size_t i = 0; i < menuItems.size(); i++) {
+					menuItems[i].isHovered = isMouseOver(mouseX, mouseY, menuItems[i].rect);
 
-                    if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                        if (i == 2) {
-                            exit(EXIT_SUCCESS); // Exit
-                        }
-                        else if (i == 0) {
-                            // Start game
-                            std::cout << "Starting game..." << std::endl;
-                            // Start the client in a separate thread
-                            std::thread clientThread(runClient);
-                            clientThread.detach(); // Detach the thread to keep running
-                            running = false; // Close the menu after starting the game
-                        }
-                        else if (i == 1) {
-                            // Options
-                            std::cout << "Options..." << std::endl;
-                        }
-                    }
-                }
-            }
-        }
+					if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+						if (i == 2) {
+							exit(EXIT_SUCCESS); // Exit
+						}
+						else if (i == 0) {
+							// Start game
+							std::cout << "Starting game..." << std::endl;
+							// Start the client in a separate thread
+							std::thread clientThread(runClient);
+							clientThread.detach(); // Detach the thread to keep running
+							running = false; // Close the menu after starting the game
+						}
+						else if (i == 1) {
+							// Options
+							std::cout << "Options..." << std::endl;
+						}
+					}
+				}
+			}
+		}
 
-        // Clear screen
-        SDL_SetRenderDrawColor(rendererm, 255, 255, 255, 255);
-        SDL_RenderClear(rendererm);
+		// Clear screen
+		SDL_SetRenderDrawColor(rendererm, 255, 255, 255, 255);
+		SDL_RenderClear(rendererm);
 
-        // Render menu
-        renderMenu(rendererm);
-        SDL_RenderPresent(rendererm);
-        SDL_Delay(16);
-    }
+		// Render menu
+		renderMenu(rendererm);
+		SDL_RenderPresent(rendererm);
+		SDL_Delay(16);
+	}
 
-    // Cleanup
-    cleanupTextures();
-    TTF_CloseFont(font);
-    TTF_Quit();
-    SDL_DestroyRenderer(rendererm);
-    SDL_DestroyWindow(windowm);
-    SDL_Quit();
-    return 0;
+	// Cleanup
+	cleanupTextures();
+	TTF_CloseFont(font);
+	TTF_Quit();
+	SDL_DestroyRenderer(rendererm);
+	SDL_DestroyWindow(windowm);
+	SDL_Quit();
+	return 0;
 }

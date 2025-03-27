@@ -16,66 +16,67 @@
 
 
 int main() {
-    bool running = true;
-    SDL_Event event;
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
-    SDL_Texture* texture = nullptr;
 
-    // Start the listener in a separate thread to capture the server's IP
-    std::thread listenerThread(listenForServerIP);
-    listenerThread.detach();  // Let it run in the background
+	bool running = true;
+	SDL_Event event;
+	SDL_Window* window = nullptr;
+	SDL_Renderer* renderer = nullptr;
+	SDL_Texture* texture = nullptr;
 
-    // Run menu and handle the client's thread (start it when "Start Game" is clicked)
-    runMenu(window, renderer);
+	// Start the listener in a separate thread to capture the server's IP
+	std::thread listenerThread(listenForServerIP);
+	listenerThread.detach();  // Let it run in the background
 
-    if (closed == false) {
-        if (!initializeSDL(window, renderer)) {
-            std::cerr << "Failed to initialize SDL." << std::endl;
-            return 1;
-        }
-        srand(static_cast<unsigned>(time(0)));
+	// Run menu and handle the client's thread (start it when "Start Game" is clicked)
+	runMenu(window, renderer);
 
-        // Load image
-        texture = LoadGameTexture(renderer);
+	if (closed == false) {
+		if (!initializeSDL(window, renderer)) {
+			std::cerr << "Failed to initialize SDL." << std::endl;
+			return 1;
+		}
+		srand(static_cast<unsigned>(time(0)));
 
-        if (!LoadBlockTextures(renderer)) {
-            std::cerr << "Failed to load textures!\n";
-            return -1;
-        }
+		// Load image
+		texture = LoadGameTexture(renderer);
 
-        // Main game loop
-        while (running) {
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_EVENT_QUIT) {
-                    running = false;
-                }
-                DragDrop(event); // Handle events here
-            }
+		if (!LoadBlockTextures(renderer)) {
+			std::cerr << "Failed to load textures!\n";
+			return -1;
+		}
 
-            // If the client is no longer running, stop the game
-            if (!client_running) {
-                std::cout << "Client disconnected, closing game..." << std::endl;
-                running = false;
-            }
+		// Main game loop
+		while (running) {
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_EVENT_QUIT) {
+					running = false;
+				}
+				DragDrop(event); // Handle events here
+			}
 
-            // Clear screen
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            SDL_RenderClear(renderer);
-            SDL_RenderTexture(renderer, texture, NULL, NULL);
+			// If the client is no longer running, stop the game
+			if (!client_running) {
+				std::cout << "Client disconnected, closing game..." << std::endl;
+				running = false;
+			}
 
-            RunBlocks(renderer);
-            RenderTetrominos(renderer);
+			// Clear screen
+			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+			SDL_RenderClear(renderer);
+			SDL_RenderTexture(renderer, texture, NULL, NULL);
 
-            // Update screen
-            SDL_RenderPresent(renderer);
-            SDL_Delay(16);
-        }
+			RunBlocks(renderer);
+			RenderTetrominos(renderer);
 
-        cleanupSDL(window, renderer);
-    }
+			// Update screen
+			SDL_RenderPresent(renderer);
+			SDL_Delay(16);
+		}
 
-    return 0;
+		cleanupSDL(window, renderer);
+	}
+
+	return 0;
 }
 
 

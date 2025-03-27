@@ -16,12 +16,12 @@ SDL_Texture* cyanTexture = nullptr;
 
 SDL_Texture* LoadGameTexture(SDL_Renderer* ren) {
 
-    const char* path = "Assets/GameUI.png";
+	const char* path = "Assets/GameUI.png";
 
-    SDL_Texture* texture = IMG_LoadTexture(ren, path);
-    if (!texture) {
-        printf("Create Texture failed: %s\n", SDL_GetError());
-    }
+	SDL_Texture* texture = IMG_LoadTexture(ren, path);
+	if (!texture) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
 
 	return texture;
 
@@ -30,51 +30,51 @@ SDL_Texture* LoadGameTexture(SDL_Renderer* ren) {
 
 //Loads all the textures
 bool LoadBlockTextures(SDL_Renderer* ren) {
-    redTexture = IMG_LoadTexture(ren, "Assets/BlockRed.png");
-    blueTexture = IMG_LoadTexture(ren, "Assets/BlockBlue.png");
-    greenTexture = IMG_LoadTexture(ren, "Assets/BlockGreen.png");
-    yellowTexture = IMG_LoadTexture(ren, "Assets/BlockYellow.png");
-    orangeTexture = IMG_LoadTexture(ren, "Assets/BlockOrange.png");
-    cyanTexture = IMG_LoadTexture(ren, "Assets/BlockCyan.png");
-    purpleTexture = IMG_LoadTexture(ren, "Assets/BlockPurple.png");
-    MagentaTexture = IMG_LoadTexture(ren, "Assets/BlockMagenta.png");
+	redTexture = IMG_LoadTexture(ren, "Assets/BlockRed.png");
+	blueTexture = IMG_LoadTexture(ren, "Assets/BlockBlue.png");
+	greenTexture = IMG_LoadTexture(ren, "Assets/BlockGreen.png");
+	yellowTexture = IMG_LoadTexture(ren, "Assets/BlockYellow.png");
+	orangeTexture = IMG_LoadTexture(ren, "Assets/BlockOrange.png");
+	cyanTexture = IMG_LoadTexture(ren, "Assets/BlockCyan.png");
+	purpleTexture = IMG_LoadTexture(ren, "Assets/BlockPurple.png");
+	MagentaTexture = IMG_LoadTexture(ren, "Assets/BlockMagenta.png");
 
 
-    return (redTexture && blueTexture && greenTexture && yellowTexture && orangeTexture && cyanTexture && purpleTexture && MagentaTexture);
+	return (redTexture && blueTexture && greenTexture && yellowTexture && orangeTexture && cyanTexture && purpleTexture && MagentaTexture);
 }
 
 
 //Compares two colors
 bool IsColorEqual(const SDL_Color& a, const SDL_Color& b) {
-    return (a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a);
+	return (a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a);
 }
 
 
 //returns the texture of the block depending on the color
 SDL_Texture* ApplyTexture(Block block) {
 
-    if (IsColorEqual(block.color, { 255,0,0,255 })) {
-            return  redTexture;
-        }
-        else if (IsColorEqual(block.color, { 0, 0, 255, 255 })) {
-            return blueTexture;
-        }
-        else if (IsColorEqual(block.color, { 0, 255, 0, 255 })) {
-            return greenTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 255, 0, 255 })) {
-            return yellowTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 165, 0, 255 })) {
-            return orangeTexture;
-        }
-        else  if (IsColorEqual(block.color, { 0, 255, 255, 255 })) {
-            return cyanTexture;
-        }
-        else if (IsColorEqual(block.color, { 128, 0, 128, 255 })) {
-            return purpleTexture;
-        }
-        else if (IsColorEqual(block.color, { 255, 0, 255, 255 })) {
-            return MagentaTexture;
-        }
+	if (IsColorEqual(block.color, { 255,0,0,255 })) {
+		return  redTexture;
+	}
+	else if (IsColorEqual(block.color, { 0, 0, 255, 255 })) {
+		return blueTexture;
+	}
+	else if (IsColorEqual(block.color, { 0, 255, 0, 255 })) {
+		return greenTexture;
+	}
+	else if (IsColorEqual(block.color, { 255, 255, 0, 255 })) {
+		return yellowTexture;
+	}
+	else if (IsColorEqual(block.color, { 255, 165, 0, 255 })) {
+		return orangeTexture;
+	}
+	else  if (IsColorEqual(block.color, { 0, 255, 255, 255 })) {
+		return cyanTexture;
+	}
+	else if (IsColorEqual(block.color, { 128, 0, 128, 255 })) {
+		return purpleTexture;
+	}
+	else if (IsColorEqual(block.color, { 255, 0, 255, 255 })) {
+		return MagentaTexture;
+	}
 }
