@@ -8,95 +8,80 @@
 #include "Client.hpp"
 #include "Texture.hpp"
 #include "Listener.hpp"
+#include "Timer.hpp"
 #include "TextRender.hpp"
 #include <thread>
 
 int main() {
-    bool running = true;
-    SDL_Event event;
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
-    SDL_Texture* texture = nullptr;
+	bool running = true;
+	SDL_Event event;
+	SDL_Window* window = nullptr;
+	SDL_Renderer* renderer = nullptr;
+	SDL_Texture* texture = nullptr;
 
-    // Start the listener in a separate thread to capture the server's IP
-    std::thread listenerThread(listenForServerIP);
-    listenerThread.detach();  // Let it run in the background
+	// Start the listener in a separate thread to capture the server's IP
+	std::thread listenerThread(listenForServerIP);
+	listenerThread.detach();  // Let it run in the background
 
-    // Run menu and handle the client's thread (start it when "Start Game" is clicked)
-    runMenu(window, renderer);
+	// Run menu and handle the client's thread (start it when "Start Game" is clicked)
+	runMenu(window, renderer);
 
-    if (closed == false) {
-        if (!initializeSDL(window, renderer)) {
-            std::cerr << "Failed to initialize SDL." << std::endl;
-            return 1;
-        }
-        srand(static_cast<unsigned>(time(0)));
+	if (closed == false) {
+		if (!initializeSDL(window, renderer)) {
+			std::cerr << "Failed to initialize SDL." << std::endl;
+			return 1;
+		}
+		srand(static_cast<unsigned>(time(0)));
 
-        // Load game background texture
-        texture = LoadGameTexture(renderer);
+		// Load game background texture
+		texture = LoadGameTexture(renderer);
 
-        if (!LoadBlockTextures(renderer)) {
-            std::cerr << "Failed to load textures!\n";
-            return -1;
-        }
+		if (!LoadBlockTextures(renderer)) {
+			std::cerr << "Failed to load textures!\n";
+			return -1;
+		}
 
-        // Load font and create TextRender object
-        SDL_Color white = { 255, 255, 255, 255 };
-        TextRender timerText(renderer, "arial.ttf", 28);
+		// Load font and create TextRender object
+		SDL_Color white = { 255, 255, 255, 255 };
+		TextRender timerText(renderer, "arial.ttf", 28);
 
-        int timeLeft = 180;  // 3-minute countdown
-        Uint32 lastUpdateTime = 0;
+		// Main game loop
+		while (running) {
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_EVENT_QUIT) {
+					running = false;
+				}
+				DragDrop(event); // Handle drag events
+			}
 
-        // Main game loop
-        while (running) {
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_EVENT_QUIT) {
-                    running = false;
-                }
-                DragDrop(event); // Handle drag events
-            }
+			// If the client is no longer running, stop the game
+			if (!client_running) {
+				std::cout << "Client disconnected, closing game..." << std::endl;
+				running = false;
+			}
 
-            // If the client is no longer running, stop the game
-            if (!client_running) {
-                std::cout << "Client disconnected, closing game..." << std::endl;
-                running = false;
-            }
+			std::string timeStr = UpdateTime();
+			timerText.updateText(timeStr, white);
+			GameOverCheck();
 
-            // Update timer every second
-            Uint32 currentTime = SDL_GetTicks();
-            if (currentTime > lastUpdateTime + 1000) {
-                lastUpdateTime = currentTime;
-                if (timeLeft > 0) timeLeft--;
+			// Clear screen (but don't set a background color)
+			SDL_RenderClear(renderer);
 
-                // Convert seconds to MM:SS format
-                std::string timeStr = std::to_string(timeLeft / 60) + ":" +
-                    (timeLeft % 60 < 10 ? "0" : "") + std::to_string(timeLeft % 60);
-                timerText.updateText(timeStr, white);
-            }
+			// Render game elements
+			SDL_RenderTexture(renderer, texture, NULL, NULL);
+			RunBlocks(renderer);
+			RenderTetrominos(renderer);
 
-            if (timeLeft == 0) {
-                // Example action: print message and stop the game
-                std::cout << "Time's up! The game is over!" << std::endl;
-                //running = false;  // End the game, you can change this to whatever action you prefer
-            }
-            // Clear screen (but don't set a background color)
-            SDL_RenderClear(renderer);
+			// Render text (overlay on top)
+			timerText.renderText(750, 47);
 
-            // Render game elements
-            SDL_RenderTexture(renderer, texture, NULL, NULL);
-            RunBlocks(renderer);
-            RenderTetrominos(renderer);
+			// Update screen
+			SDL_RenderPresent(renderer);
+			SDL_Delay(16);
+		}
 
-            // Render text (overlay on top)
-            timerText.renderText(50, 50);
+		cleanupSDL(window, renderer);
+	}
 
-            // Update screen
-            SDL_RenderPresent(renderer);
-            SDL_Delay(16);
-        }
-
-        cleanupSDL(window, renderer);
-    }
-
-    return 0;
+	return 0;
 }

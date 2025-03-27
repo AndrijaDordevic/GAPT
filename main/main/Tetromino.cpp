@@ -265,7 +265,7 @@ void RunBlocks(SDL_Renderer* renderer) {
 	scoreText.updateText(scoreStr, white);  // Update the score text
 
 	// Render the score at a fixed position (e.g., top-left corner)
-	scoreText.renderText(10, 10);
+	scoreText.renderText(300, 47);
 }
 
 void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows) {
