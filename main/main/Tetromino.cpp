@@ -8,6 +8,7 @@
 #include "Tetromino.hpp"
 #include "Texture.hpp"
 #include <SDL3_image/SDL_image.h>
+#include "TextRender.hpp"
 
 // Global flags and spawn data
 bool draggingInProgress = false;
@@ -22,6 +23,7 @@ int spawnedCount = 0;
 int score = 0;
 
 const int POINTS_PER_LINE = 100;
+
 
 
 // Store tetrominos by value instead of pointers.
@@ -240,6 +242,10 @@ void RunBlocks(SDL_Renderer* renderer) {
 	spawnYPositions[1] = 375;
 	spawnYPositions[2] = 630;
 
+	TextRender scoreText(renderer, "assets/Arial.ttf", 28);  // Make sure you use the correct font path
+	SDL_Color white = { 255, 255, 255, 255 };  // White color for the score text
+
+
 	// Spawn a new tetromino if conditions are met.
 	if (!initialized) {
 		// Initial spawning of 3 tetrominos
@@ -253,6 +259,12 @@ void RunBlocks(SDL_Renderer* renderer) {
 	while (tetrominos.size() < 3) {
 		SpawnTetromino();
 	}
+
+	std::string scoreStr = std::to_string(score);  // Create a string with the updated score
+	scoreText.updateText(scoreStr, white);  // Update the score text
+
+	// Render the score at a fixed position (e.g., top-left corner)
+	scoreText.renderText(10, 10);
 }
 
 void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows) {

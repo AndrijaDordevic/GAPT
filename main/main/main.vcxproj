@@ -131,6 +131,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Listener.cpp" />
+    <ClCompile Include="TextRender.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
     <ClCompile Include="Grid.cpp" />
@@ -141,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Listener.hpp" />
+    <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />
     <ClInclude Include="DragBlock.hpp" />

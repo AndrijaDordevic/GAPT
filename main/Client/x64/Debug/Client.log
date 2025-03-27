@@ -1,5 +1,5 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(520,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   Client.cpp
-C:\Users\jurge\source\repos\GAPT\main\Client\Client.cpp(56,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jurge\source\repos\GAPT\main\Client\Client.cpp(176,23): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-  Client.vcxproj -> C:\Users\jurge\source\repos\GAPT\main\Client\x64\lib\Client.lib
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Client\Client.cpp(56,17): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Client\Client.cpp(176,20): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+  Client.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Client\x64\lib\Client.lib
