@@ -261,6 +261,7 @@ void RunBlocks(SDL_Renderer* renderer) {
 	}
 
 	std::string scoreStr = std::to_string(score);  // Create a string with the updated score
+
 	scoreText.updateText(scoreStr, white);  // Update the score text
 
 	// Render the score at a fixed position (e.g., top-left corner)
@@ -332,7 +333,7 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	// New scoring: Points per cleared line multiplied by the bonus multiplier.
 	int scoreGain = static_cast<int>(totalClearedLines * POINTS_PER_LINE * multiplier);
 	score += scoreGain;
-	std::cout << "Score: " << score << std::endl;
+	std::cout << "Score: " << to_string(score) << std::endl;
 
 	// Remove blocks that are in any complete row or column.
 	auto removeClearedBlocks = [&](std::vector<Tetromino>& container) {

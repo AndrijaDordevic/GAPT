@@ -51,7 +51,7 @@ bool loadFontTexture() {
 	}
 
 	for (auto& item : menuItems) {
-		SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), 10, textColor);
+		SDL_Surface* textSurface = TTF_RenderText_Blended(font, item.label.c_str(), item.label.length(), textColor);
 		if (!textSurface) {
 			cerr << "Failed to create text surface." << SDL_GetError() << endl;
 			return false;

@@ -29,7 +29,7 @@ void TextRender::updateText(const std::string& newText, SDL_Color color) {
     clearTexture();
 
     // Correct usage of SDL_Color as the third argument
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, newText.c_str(), 10, color);
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, newText.c_str(), newText.length(), color);
     if (!textSurface) {
         std::cerr << "Text Surface Error." << std::endl;
         return;
