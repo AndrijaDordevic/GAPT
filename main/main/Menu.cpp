@@ -44,7 +44,7 @@ vector<MenuItem> menuItems = {
 
 // Function to load font texture
 bool loadFontTexture() {
-	TTF_Font* font = TTF_OpenFont("C:\\Arial.ttf", 24);
+	TTF_Font* font = TTF_OpenFont("Assets\\Arial.ttf", 24);
 	if (!font) {
 		cerr << "Failed to load font." << SDL_GetError << endl;
 		return false;
@@ -107,15 +107,15 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 
 
 // Function to read the server IP from the saved file
-std::string readServerIP() {
-	std::ifstream infile(OUTPUT_FILE);  // Open the file in input mode
+string readServerIP() {
+	ifstream infile(OUTPUT_FILE);  // Open the file in input mode
 	if (!infile) {
-		std::cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << std::endl;
+		cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << endl;
 		return "";  // Return empty string if file can't be read
 	}
 
-	std::string serverIP;
-	std::getline(infile, serverIP);  // Read the IP address as a string
+	string serverIP;
+	getline(infile, serverIP);  // Read the IP address as a string
 
 	infile.close();  // Close the file after reading
 	return serverIP;
@@ -124,23 +124,23 @@ std::string readServerIP() {
 // Function to run the client code (in a separate thread)
 void runClient() {
 	// Read the server IP from the file
-	std::string server_ip = discoverServer();
+	string server_ip = discoverServer();
 	if (!server_ip.empty()) {
 		start_client(server_ip);
 	}
 	else {
-		std::cerr << "Could not find server automatically!\n";
+		cerr << "Could not find server automatically!\n";
 	}
 
 
 	// If the IP is empty, print an error and stop the client
 	if (server_ip.empty()) {
-		std::cerr << "Client: No server IP found. Please ensure the listener has saved it." << std::endl;
+		cerr << "Client: No server IP found. Please ensure the listener has saved it." << endl;
 		return;
 	}
 
 	// At this point, we have a valid server IP, so we can call start_client() with the IP
-	std::cout << "Client: Using server IP: " << server_ip << "\n";
+	cout << "Client: Using server IP: " << server_ip << "\n";
 
 	// Start the client with the IP address
 	start_client(server_ip);  // Call your client start function here
@@ -152,10 +152,15 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
 	// Initialize TTF
 	if (TTF_Init() == false) {
-		std::cerr << "Failed to initialize TTF." << SDL_GetError << std::endl;
+		cerr << "Failed to initialize TTF." << SDL_GetError << endl;
 		return 1;
 	}
 
+	if (!loadFontTexture()) {
+		cerr << "Failed to load font textures." << endl;
+		TTF_Quit();
+		return 1;
+	}
 	// Main loop
 	while (running) {
 		while (SDL_PollEvent(&event)) {
@@ -177,15 +182,15 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 						}
 						else if (i == 0) {
 							// Start game
-							std::cout << "Starting game..." << std::endl;
+							cout << "Starting game..." << endl;
 							// Start the client in a separate thread
-							std::thread clientThread(runClient);
+							thread clientThread(runClient);
 							clientThread.detach(); // Detach the thread to keep running
 							running = false; // Close the menu after starting the game
 						}
 						else if (i == 1) {
 							// Options
-							std::cout << "Options..." << std::endl;
+							cout << "Options..." << endl;
 						}
 					}
 				}
