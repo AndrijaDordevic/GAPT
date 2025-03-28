@@ -130,7 +130,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Listener.cpp" />
     <ClCompile Include="TextRender.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
@@ -142,7 +141,6 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Listener.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />

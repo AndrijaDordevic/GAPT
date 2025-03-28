@@ -1,2 +1,7 @@
-﻿Server.obj : warning LNK4099: PDB '' was not found with 'Server.obj' or at ''; linking object as if no debug info
-  Server.vcxproj -> C:\Users\Jurgen Cauchi\Documents\GitHub\GAPT\main\x64\Debug\Server.exe
+﻿  Server.cpp
+C:\Users\Owner\source\repos\GAPTest\main\Server\Server.cpp(29,11): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPTest\main\Server\Server.cpp(83,17): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPTest\main\Server\Server.cpp(109,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPTest\main\Server\Server.cpp(193,16): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPTest\main\Server\Server.cpp(220,24): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+  Server.vcxproj -> C:\Users\Owner\source\repos\GAPTest\main\x64\Debug\Server.exe

@@ -7,7 +7,7 @@
 #include <SDL3_image/SDL_image.h>
 #include "Client.hpp"
 #include "Texture.hpp"
-#include "Listener.hpp"
+
 #include "Timer.hpp"
 #include "TextRender.hpp"
 #include <thread>
@@ -18,10 +18,6 @@ int main() {
 	SDL_Window* window = nullptr;
 	SDL_Renderer* renderer = nullptr;
 	SDL_Texture* texture = nullptr;
-
-	// Start the listener in a separate thread to capture the server's IP
-	std::thread listenerThread(listenForServerIP);
-	listenerThread.detach();  // Let it run in the background
 
 	// Run menu and handle the client's thread (start it when "Start Game" is clicked)
 	runMenu(window, renderer);

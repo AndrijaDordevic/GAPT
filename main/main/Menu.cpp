@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include "Texture.hpp"
+#include "Discovery.hpp"
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
 
@@ -112,20 +113,6 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 }
 
 
-// Function to read the server IP from the saved file
-string readServerIP() {
-	ifstream infile(OUTPUT_FILE);  // Open the file in input mode
-	if (!infile) {
-		cerr << "Client: Failed to open " << OUTPUT_FILE << " for reading." << endl;
-		return "";  // Return empty string if file can't be read
-	}
-
-	string serverIP;
-	getline(infile, serverIP);  // Read the IP address as a string
-
-	infile.close();  // Close the file after reading
-	return serverIP;
-}
 
 // Function to run the client code (in a separate thread)
 void runClient() {
@@ -167,6 +154,10 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 		TTF_Quit();
 		return 1;
 	}
+	// Connect client
+	thread clientThread(runClient);
+	clientThread.detach(); // Detach the thread to keep running
+
 	// Main loop
 	while (running) {
 		while (SDL_PollEvent(&event)) {
@@ -190,8 +181,6 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 							// Start game
 							cout << "Starting game..." << endl;
 							// Start the client in a separate thread
-							thread clientThread(runClient);
-							clientThread.detach(); // Detach the thread to keep running
 							running = false; // Close the menu after starting the game
 						}
 						else if (i == 1) {
