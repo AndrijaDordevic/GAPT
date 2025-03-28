@@ -133,7 +133,6 @@
     <ClCompile Include="TextRender.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
-    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Tetromino.cpp" />
@@ -145,7 +144,6 @@
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />
     <ClInclude Include="DragBlock.hpp" />
-    <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Menu.hpp" />
     <ClInclude Include="Tetromino.hpp" />
     <ClInclude Include="Timer.hpp" />
