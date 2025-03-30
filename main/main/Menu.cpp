@@ -163,6 +163,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) {
 				running = false;
+				closed = true;
 			}
 			else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 				// Get mouse coordinates

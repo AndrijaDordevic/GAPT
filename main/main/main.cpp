@@ -11,6 +11,9 @@
 #include "TextRender.hpp"
 #include <thread>
 
+using namespace std;
+
+
 int main() {
 	bool running = true;
 	SDL_Event event;
@@ -23,7 +26,7 @@ int main() {
 
 	if (closed == false) {
 		if (!initializeSDL(window, renderer)) {
-			std::cerr << "Failed to initialize SDL." << std::endl;
+			cerr << "Failed to initialize SDL." << endl;
 			return 1;
 		}
 		srand(static_cast<unsigned>(time(0)));
@@ -32,7 +35,7 @@ int main() {
 		texture = LoadGameTexture(renderer);
 
 		if (!LoadBlockTextures(renderer)) {
-			std::cerr << "Failed to load textures!\n";
+			cerr << "Failed to load textures!\n";
 			return -1;
 		}
 
@@ -51,11 +54,11 @@ int main() {
 
 			// If the client is no longer running, stop the game
 			if (!client_running) {
-				std::cout << "Client disconnected, closing game..." << std::endl;
+				cout << "Client disconnected, closing game..." << endl;
 				running = false;
 			}
 
-			std::string timeStr = UpdateTime();
+			string timeStr = UpdateTime();
 			timerText.updateText(timeStr, white);
 			GameOverCheck();
 
