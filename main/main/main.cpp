@@ -21,7 +21,11 @@ int main() {
 	SDL_Renderer* renderer = nullptr;
 	SDL_Texture* texture = nullptr;
 
-	// Run menu and handle the client's thread (start it when "Start Game" is clicked)
+	// Connect client
+	thread clientThread(runClient);
+	clientThread.detach(); // Detach the thread to keep running
+
+	// Run menu 
 	runMenu(window, renderer);
 
 	if (closed == false) {

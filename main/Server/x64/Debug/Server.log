@@ -1,8 +1,2 @@
-﻿  Server.cpp
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(30,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(83,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(108,74): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(129,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(160,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(188,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+﻿  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe

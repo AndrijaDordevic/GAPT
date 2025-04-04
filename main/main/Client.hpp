@@ -13,4 +13,6 @@ void start_client(const std::string& server_ip);
 // Function to handle communication with the server.
 void handle_server(int client_socket);
 
+void runClient();
+
 #endif // CLIENT_HPP

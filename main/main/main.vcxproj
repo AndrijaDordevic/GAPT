@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Discovery.cpp" />
+    <ClCompile Include="TetrominoHandler.cpp" />
     <ClCompile Include="TextRender.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="Client.hpp" />
     <ClInclude Include="Discovery.hpp" />
+    <ClInclude Include="TetrominoHandler.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />

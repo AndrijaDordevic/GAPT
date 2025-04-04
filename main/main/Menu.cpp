@@ -6,10 +6,8 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <thread>  // For running client in a separate thread
 #include "Client.hpp"
-#include <string>
-#include <fstream>
 #include "Texture.hpp"
-#include "Discovery.hpp"
+
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
 
@@ -113,32 +111,6 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 }
 
 
-
-// Function to run the client code (in a separate thread)
-void runClient() {
-	// Read the server IP from the file
-	string server_ip = discoverServer();
-	if (!server_ip.empty()) {
-		start_client(server_ip);
-	}
-	else {
-		cerr << "Could not find server automatically!\n";
-	}
-
-
-	// If the IP is empty, print an error and stop the client
-	if (server_ip.empty()) {
-		cerr << "Client: No server IP found. Please ensure the listener has saved it." << endl;
-		return;
-	}
-
-	// At this point, we have a valid server IP, so we can call start_client() with the IP
-	cout << "Client: Using server IP: " << server_ip << "\n";
-
-	// Start the client with the IP address
-	start_client(server_ip);  // Call your client start function here
-}
-
 // Main menu loop
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 	SDL_Event event;
@@ -154,9 +126,6 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 		TTF_Quit();
 		return 1;
 	}
-	// Connect client
-	thread clientThread(runClient);
-	clientThread.detach(); // Detach the thread to keep running
 
 	// Main loop
 	while (running) {
@@ -181,7 +150,6 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 						else if (i == 0) {
 							// Start game
 							cout << "Starting game..." << endl;
-							// Start the client in a separate thread
 							running = false; // Close the menu after starting the game
 						}
 						else if (i == 1) {

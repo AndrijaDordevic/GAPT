@@ -6,7 +6,9 @@
 #include <string>
 #include "Client.hpp"
 #include <atomic>
-
+#include "Discovery.hpp"  // For discoverServer()
+#include <string>
+#include <fstream>
 
 
 #ifdef _WIN32  // Windows-specific headers
@@ -21,6 +23,8 @@
 #endif
 
 #define PORT 1235  // Port to connect to
+
+using namespace std;
 
 // Global atomic flag to manage client shutdown
 std::atomic<bool> client_running(true);
@@ -42,6 +46,30 @@ void handle_server(int client_socket) {
     else {
         std::cerr << "Failed to receive data from server\n";
     }
+}
+
+void runClient() {
+    // Read the server IP from the file
+    string server_ip = discoverServer();
+    if (!server_ip.empty()) {
+        start_client(server_ip);
+    }
+    else {
+        cerr << "Could not find server automatically!\n";
+    }
+
+
+    // If the IP is empty, print an error and stop the client
+    if (server_ip.empty()) {
+        cerr << "Client: No server IP found. Please ensure the listener has saved it." << endl;
+        return;
+    }
+
+    // At this point, we have a valid server IP, so we can call start_client() with the IP
+    cout << "Client: Using server IP: " << server_ip << "\n";
+
+    // Start the client with the IP address
+    start_client(server_ip);  // Call your client start function here
 }
 
 // Function to initiate a connection to the server
