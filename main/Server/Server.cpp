@@ -23,6 +23,7 @@
 #define BROADCAST_INTERVAL 1  // Seconds between broadcasts
 
 std::atomic<bool> stopBroadcast{ false };
+std::atomic<int> clientIDCounter{ 0 };
 
 // Function to retrieve the local IP address
 std::string getLocalIP() {
@@ -125,53 +126,6 @@ void broadcastIP(const std::string& ip) {
 }
 
 
-// Thread function to listen for a STOP command on CONTROL_PORT
-//void controlListener() {
-//    int ctrl_socket = socket(AF_INET, SOCK_DGRAM, 0);
-//    if (ctrl_socket < 0) {
-//        std::cerr << "Control socket creation failed!" << std::endl;
-//        return;
-//    }
-//
-//    sockaddr_in ctrl_addr;
-//    memset(&ctrl_addr, 0, sizeof(ctrl_addr));
-//    ctrl_addr.sin_family = AF_INET;
-//    ctrl_addr.sin_port = htons(CONTROL_PORT);
-//    ctrl_addr.sin_addr.s_addr = INADDR_ANY;
-//
-//    if (bind(ctrl_socket, (struct sockaddr*)&ctrl_addr, sizeof(ctrl_addr)) < 0) {
-//        std::cerr << "Binding control socket failed!" << std::endl;
-//#ifdef _WIN32
-//        closesocket(ctrl_socket);
-//#else
-//        close(ctrl_socket);
-//#endif
-//        return;
-//    }
-//
-//    char buffer[1024];
-//    while (!stopBroadcast.load()) {
-//        memset(buffer, 0, sizeof(buffer));
-//        socklen_t addr_len = sizeof(ctrl_addr);
-//        int bytes_received = recvfrom(ctrl_socket, buffer, sizeof(buffer) - 1, 0,
-//            (struct sockaddr*)&ctrl_addr, &addr_len);
-//        if (bytes_received > 0) {
-//            buffer[bytes_received] = '\0';
-//            if (std::string(buffer) == "STOP") {
-//                std::cout << "Received STOP command. Stopping broadcast.\n";
-//                stopBroadcast.store(true);
-//                break;
-//            }
-//        }
-//    }
-//
-//#ifdef _WIN32
-//    closesocket(ctrl_socket);
-//#else
-//    close(ctrl_socket);
-//#endif
-//}
-
 int main() {
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -224,14 +178,14 @@ int main() {
 		return -1;
 	}
 
-	std::cout << "Client connected\n";
-
+	int uniqueClientID = clientIDCounter.fetch_add(1) + 1;  // Increment and get the unique client ID
+	std::cout << "Client connected with unique ID: " << uniqueClientID << std::endl;
+	std::string idMessage = "Your unique client ID is: " + std::to_string(uniqueClientID) + "\n";
+	send(client_socket, idMessage.c_str(), idMessage.size(), 0);
 	// Handle the client connection
 	// You can now add code here to handle communication with the client
 
-	// Wait for the threads to finish (they will end after receiving STOP)
 	broadcaster.join();
-	//ctrlThread.join();
 
 #ifdef _WIN32
 	closesocket(server_fd);
