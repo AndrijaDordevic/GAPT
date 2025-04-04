@@ -20,6 +20,7 @@ TTF_Font* font = nullptr;
 SDL_Color textColor = { 0, 0, 0, 255 };
 
 bool closed = false;
+bool startGame = false;
 
 // Menu item structure
 struct MenuItem {
@@ -163,7 +164,6 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 								}
 								});
 							notifyThread.detach();
-
 						}
 						else if (i == 1) {
 							// Options
