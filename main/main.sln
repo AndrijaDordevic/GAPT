@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "main", "main\main.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{C0CE8428-1D1C-4D74-9B29-B4117979F76D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{82919B66-FAA3-4427-86C3-68F6D2C5320C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,18 +41,6 @@ Global
 		{C0CE8428-1D1C-4D74-9B29-B4117979F76D}.Release|x64.Build.0 = Release|x64
 		{C0CE8428-1D1C-4D74-9B29-B4117979F76D}.Release|x86.ActiveCfg = Release|Win32
 		{C0CE8428-1D1C-4D74-9B29-B4117979F76D}.Release|x86.Build.0 = Release|Win32
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|Any CPU.Build.0 = Debug|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|x64.ActiveCfg = Debug|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|x64.Build.0 = Debug|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|x86.ActiveCfg = Debug|Win32
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Debug|x86.Build.0 = Debug|Win32
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|Any CPU.ActiveCfg = Release|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|Any CPU.Build.0 = Release|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|x64.ActiveCfg = Release|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|x64.Build.0 = Release|x64
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|x86.ActiveCfg = Release|Win32
-		{82919B66-FAA3-4427-86C3-68F6D2C5320C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

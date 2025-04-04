@@ -104,13 +104,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)External\SDL\SDL3-3.2.4\include;$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\Client</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)External\SDL\SDL3-3.2.4\include;$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)External\SDL\SDL3_image-3.2.4\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\lib\x64;$(ProjectDir)External\SDL\SDL3-3.2.4\lib\x64;$(ProjectDir)External\SDL\SDL3_image-3.2.4\lib\x64;$(ProjectDir)..\Client\x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL3.lib;SDL3_test.lib;SDL3_ttf.lib;SDL3_image.lib;Client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\lib\x64;$(ProjectDir)External\SDL\SDL3-3.2.4\lib\x64;$(ProjectDir)External\SDL\SDL3_image-3.2.4\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;SDL3_test.lib;SDL3_ttf.lib;SDL3_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,6 +130,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="Discovery.cpp" />
     <ClCompile Include="TextRender.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="DragBlock.cpp" />
@@ -140,6 +142,8 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.hpp" />
+    <ClInclude Include="Discovery.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Cell.hpp" />
@@ -148,11 +152,6 @@
     <ClInclude Include="Tetromino.hpp" />
     <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Window.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Client\Client.vcxproj">
-      <Project>{82919b66-faa3-4427-86c3-68f6d2c5320c}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
