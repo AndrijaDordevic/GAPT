@@ -1,4 +1,12 @@
-﻿  Main.cpp
+﻿  DragBlock.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(31,36): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(32,36): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(45,10): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(46,10): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+  Main.cpp
   Menu.cpp
+  Tetromino.cpp
+  Texture.cpp
   Generating Code...
+C:\Users\Owner\source\repos\GAPT\main\main\Texture.cpp(119,1): warning C4715: 'ApplyTexture': not all control paths return a value
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

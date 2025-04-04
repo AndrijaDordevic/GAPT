@@ -35,6 +35,7 @@ extern int spawnX;
 extern int spawnYPositions[3];
 extern bool positionsOccupied[3];
 extern int spawnedCount;
+extern int score;
 
 // Change CheckCollision signature:
 bool IsPositionFree(int spawnY);
@@ -49,5 +50,6 @@ void AddToIndividualBlocks(const Tetromino& tetro);
 void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows);
 bool LoadBlockTextures(SDL_Renderer* ren);
 bool IsColorEqual(const SDL_Color& a, const SDL_Color& b);
+void RenderScore(SDL_Renderer* renderer, int score);
 
 #endif // TETROMINO_HPP

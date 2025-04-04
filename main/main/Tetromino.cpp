@@ -230,6 +230,18 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
 	return true;
 }
 
+void RenderScore(SDL_Renderer* renderer, int score) {
+	// Create a TextRender instance (you might want to manage this differently in a real app)
+	TextRender scoreText(renderer, "assets/Arial.ttf", 28);
+	SDL_Color white = { 255, 255, 255, 255 };
+
+	// Convert the score to a string and update the score text
+	std::string scoreStr = std::to_string(score);
+	scoreText.updateText(scoreStr, white);
+
+	// Render the score text at a fixed position (e.g., top-left corner)
+	scoreText.renderText(300, 47);
+}
 
 
 // This function is called in your main loop to handle tetromino spawning.
@@ -241,10 +253,6 @@ void RunBlocks(SDL_Renderer* renderer) {
 	spawnYPositions[0] = 90;
 	spawnYPositions[1] = 375;
 	spawnYPositions[2] = 630;
-
-	TextRender scoreText(renderer, "assets/Arial.ttf", 28);  // Make sure you use the correct font path
-	SDL_Color white = { 255, 255, 255, 255 };  // White color for the score text
-
 
 	// Spawn a new tetromino if conditions are met.
 	if (!initialized) {
@@ -259,14 +267,8 @@ void RunBlocks(SDL_Renderer* renderer) {
 	while (tetrominos.size() < 3) {
 		SpawnTetromino();
 	}
-
-	std::string scoreStr = std::to_string(score);  // Create a string with the updated score
-
-	scoreText.updateText(scoreStr, white);  // Update the score text
-
-	// Render the score at a fixed position (e.g., top-left corner)
-	scoreText.renderText(300, 47);
 }
+
 
 void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int gridRows) {
 	// Create an occupancy grid for rows and columns.
