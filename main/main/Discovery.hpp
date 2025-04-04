@@ -8,5 +8,6 @@
 // Expose the function
 std::string discoverServer();
 
+const int serverPort = 1235;
 
 #endif

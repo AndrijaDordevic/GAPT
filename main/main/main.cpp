@@ -22,7 +22,7 @@ int main() {
 	SDL_Texture* texture = nullptr;
 
 	// Connect client
-	thread clientThread(runClient);
+	thread clientThread(Client::runClient);
 	clientThread.detach(); // Detach the thread to keep running
 
 	// Run menu 
@@ -57,7 +57,7 @@ int main() {
 			}
 
 			// If the client is no longer running, stop the game
-			if (!client_running) {
+			if (!Client::client_running) {
 				cout << "Client disconnected, closing game..." << endl;
 				running = false;
 			}

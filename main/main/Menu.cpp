@@ -7,6 +7,8 @@
 #include <thread>  // For running client in a separate thread
 #include "Client.hpp"
 #include "Texture.hpp"
+#include "Discovery.hpp"
+#include <string>
 
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
@@ -151,6 +153,17 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 							// Start game
 							cout << "Starting game..." << endl;
 							running = false; // Close the menu after starting the game
+
+
+							std::thread notifyThread([]() {
+								std::cout << "Starting thread to notify server..." << std::endl;
+								string server_ip = discoverServer();  // Assuming discoverServer() updates the global server_ip
+								if (!Client::notifyStartGame()) {  // Call without parameters
+									std::cerr << "Failed to notify server to start game session." << std::endl;
+								}
+								});
+							notifyThread.detach();
+
 						}
 						else if (i == 1) {
 							// Options
