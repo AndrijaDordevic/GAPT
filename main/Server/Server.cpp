@@ -9,7 +9,9 @@
 #include <mutex>
 #include <queue>
 #include <utility>
-#include <algorithm>  // For std::remove
+#include <algorithm>  
+#include <nlohmann/json.hpp>
+
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -24,6 +26,8 @@
 
 #define PORT 1235             // Port for broadcasting and TCP listening
 #define BROADCAST_INTERVAL 1  // Seconds between broadcasts
+
+using json = nlohmann::json;
 
 // Global atomic flag for broadcaster thread stop
 std::atomic<bool> stopBroadcast(false);

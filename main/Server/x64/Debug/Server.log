@@ -1,2 +1,14 @@
-﻿  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
+﻿  Server.cpp
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(44,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(90,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(124,74): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(149,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(150,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(162,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(173,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(227,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(228,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(239,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(271,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(298,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe

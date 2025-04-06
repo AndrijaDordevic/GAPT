@@ -104,12 +104,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)External\SDL\SDL3-3.2.4\include;$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)External\SDL\SDL3_image-3.2.4\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\External\SDL\SDL3-3.2.4\include;$(ProjectDir)..\External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)..\External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\SDL\SDL3_ttf-3.1.2\lib\x64;$(ProjectDir)External\SDL\SDL3-3.2.4\lib\x64;$(ProjectDir)External\SDL\SDL3_image-3.2.4\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\External\SDL\SDL3_ttf-3.1.2\lib\x64;$(ProjectDir)..\External\SDL\SDL3-3.2.4\lib\x64;$(ProjectDir)..\External\SDL\SDL3_image-3.2.4\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL3.lib;SDL3_test.lib;SDL3_ttf.lib;SDL3_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
