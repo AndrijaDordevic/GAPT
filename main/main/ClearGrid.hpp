@@ -2,11 +2,14 @@
 #define CLEAR_GRID_HPP
 
 #include <SDL3/SDL.h>
+#include <iostream>
 #include <vector>
 
-bool CheckHover(float mouseX, float mouseY, const SDL_FRect& rect);
-void renderClear(SDL_Renderer* renderer);
-int ClearScreenButton();
+int runClearGridButton(SDL_Renderer* renderer);
+void renderButton(SDL_Renderer* renderer);
+
+void clearTetrominos();
+
 
 
 #endif // CLEAR_GRID_HPP

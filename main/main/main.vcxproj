@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ClearGrid.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Discovery.cpp" />
     <ClCompile Include="TextRender.cpp" />
@@ -142,6 +143,7 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClearGrid.hpp" />
     <ClInclude Include="Client.hpp" />
     <ClInclude Include="Discovery.hpp" />
     <ClInclude Include="TextRender.hpp" />
