@@ -26,9 +26,8 @@ void renderButton(SDL_Renderer* renderer) {
     }
 }
 
-//Tentative
 void clearTetrominos() {
-
+    placedTetrominos.clear();
 }
 
 
