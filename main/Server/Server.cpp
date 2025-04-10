@@ -200,16 +200,40 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         // Forward the update to the other client.
                         send(clientSocket2, msg.c_str(), msg.size(), 0);
                     }
-                    else {
-                        // Forward non-drag messages.
-                        std::string forwardMsg = "Client " + std::to_string(clientID1) + ": " + msg;
-                        send(clientSocket2, forwardMsg.c_str(), forwardMsg.size(), 0);
+                    else if (j["type"] == "SCORE_REQUEST") {
+                        std::cout << "[Server] Received SCORE_REQUEST message from client " << clientID1 << ": " << j.dump() << "\n";
+
+                        std::vector<int> rows = j["rows"];
+                        std::vector<int> cols = j["columns"];
+
+                        int totalCleared = static_cast<int>(rows.size() + cols.size());
+                        double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
+                        int score = static_cast<int>(totalCleared * 100 * multiplier);
+
+                        std::cout << "[Server] Client " << clientID1 << " cleared "
+                                  << rows.size() << " rows and "
+                                  << cols.size() << " cols => Score: " << score << "\n";
+
+                        json response;
+                        response["type"] = "SCORE_RESPONSE";
+                        response["score"] = score;
+                        std::string responseStr = response.dump();
+
+                        std::cout << "[Server] Sending SCORE_RESPONSE: " << responseStr << "\n";
+                        std::cout << "[Debug] Sending on socket: " << clientSocket1 << "\n";
+                        int sent = send(clientSocket1, responseStr.c_str(), responseStr.size(), 0);
+                        std::cout << "[Server] send() returned: " << sent << "\n";
+                        if (sent <= 0) {
+                            std::cerr << "[Server] Failed to send SCORE_RESPONSE to client " << clientID1 << "\n";
+                        }
                     }
+
+
                 }
                 catch (...) {
                     // Not valid JSON; forward as text.
                     std::string forwardMsg = "Client " + std::to_string(clientID1) + ": " + msg;
-                    send(clientSocket2, forwardMsg.c_str(), forwardMsg.size(), 0);
+                    send(clientSocket1, forwardMsg.c_str(), forwardMsg.size(), 0);
                 }
             }
             else if (bytesRead == 0) {
@@ -239,17 +263,33 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                                 std::cout << "   Block: (" << x << ", " << y << ")\n";
                             }
                         }
-                        // Forward the update to client 1.
+                        // Forward the update to client 2.
                         send(clientSocket1, msg.c_str(), msg.size(), 0);
                     }
-                    else {
-                        std::string forwardMsg = "Client " + std::to_string(clientID2) + ": " + msg;
-                        send(clientSocket1, forwardMsg.c_str(), forwardMsg.size(), 0);
+                    else if (j["type"] == "SCORE_REQUEST") {
+                        std::vector<int> rows = j["rows"];
+                        std::vector<int> cols = j["columns"];
+
+                        int totalCleared = static_cast<int>(rows.size() + cols.size());
+                        double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
+                        int score = static_cast<int>(totalCleared * 100 * multiplier);
+
+                        std::cout << "Client " << clientID2 << " cleared "
+                            << rows.size() << " rows and "
+                            << cols.size() << " cols => Score: " << score << "\n";
+
+                        json response;
+                        response["type"] = "SCORE_RESPONSE";
+                        response["score"] = score;
+                        std::string responseStr = response.dump();
+
+                        send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
                     }
+
                 }
                 catch (...) {
                     std::string forwardMsg = "Client " + std::to_string(clientID2) + ": " + msg;
-                    send(clientSocket1, forwardMsg.c_str(), forwardMsg.size(), 0);
+                    send(clientSocket2, forwardMsg.c_str(), forwardMsg.size(), 0);
                 }
             }
             else if (bytesRead == 0) {
@@ -343,8 +383,12 @@ void clientHandler(int client_socket, int clientID) {
             break;
         }
         else {
-            std::cerr << "Client " << clientID << " sent an unknown command: " << message << std::endl;
+            
+                    std::cerr << "[Server] Unknown JSON type from client " << clientID << ": " << message << "\n";
+                
+
         }
+
     }
 }
 

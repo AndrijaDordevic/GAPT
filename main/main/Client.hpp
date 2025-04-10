@@ -24,6 +24,8 @@ namespace Client {
     bool notifyStartGame();
 
     bool sendDragCoordinates(const Tetromino& tetromino);
+    int sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols);
+
 }
 
 #endif // CLIENT_HPP

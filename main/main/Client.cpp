@@ -26,20 +26,22 @@ using namespace std;
 
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
+bool StopResponceTaking;
 
 namespace Client {
-
+    string ScoreBuffer;
     atomic<bool> client_running(true);
     int client_socket = -1;
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
         char buffer[1024];
-        while (client_running) {
+        while (client_running && !StopResponceTaking) {
             memset(buffer, 0, sizeof(buffer));
             int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
             if (bytes_received > 0) {
                 cout << "Server says: " << buffer << "\n";
+                ScoreBuffer = buffer;
             }
             else if (bytes_received == 0) {
                 cout << "Server disconnected.\n";
@@ -159,6 +161,54 @@ namespace Client {
         WSACleanup();
 #endif
     }
+
+    int Client::sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols) {
+        if (client_socket < 0) {
+            std::cerr << "[Client] Invalid socket before send!\n";
+            return 0;
+        }
+
+        json j;
+        j["type"] = "SCORE_REQUEST";
+        j["rows"] = rows;
+        j["columns"] = cols;
+        std::string message = j.dump();
+
+        std::cout << "[Client] Sending SCORE_REQUEST...\n";
+        std::cout << "[Debug] Sending on socket: " << client_socket << "\n";
+        std::cout << "[Debug] Message: " << message << "\n";
+
+        StopResponceTaking = true; // Optional if needed elsewhere
+        send(client_socket, message.c_str(), message.size(), 0);
+
+        // Wait briefly for ScoreBuffer to be updated
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        try {
+            std::string msg = ScoreBuffer;
+
+            // Optional: Trim to JSON
+            size_t end = msg.find("}") + 1;
+            if (end != std::string::npos && end < msg.size()) {
+                msg = msg.substr(0, end);
+            }
+
+            json response = json::parse(msg);
+            std::cout << "[Client] Parsed ScoreBuffer JSON: " << response.dump() << "\n";
+
+            if (response.contains("type") && response["type"] == "SCORE_RESPONSE") {
+                int score = response["score"].get<int>();
+                std::cout << "[Client] Extracted score: " << score << "\n";
+                return score;
+            }
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[Client] JSON parse failed from ScoreBuffer: " << e.what() << "\n";
+        }
+
+        return 0;
+    }
+
 
     // New: runClient() simply checks if the server IP was discovered and calls start_client().
     void runClient() {

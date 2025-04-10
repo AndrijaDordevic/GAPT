@@ -1,4 +1,4 @@
-#include <SDL3/SDL.h>
+﻿#include <SDL3/SDL.h>
 #include "Window.hpp"
 #include <vector>
 #include <cstdlib>
@@ -9,6 +9,7 @@
 #include "Texture.hpp"
 #include <SDL3_image/SDL_image.h>
 #include "TextRender.hpp"
+#include "Client.hpp"
 
 // Global flags and spawn data
 bool draggingInProgress = false;
@@ -109,7 +110,7 @@ void SpawnTetromino() {
 		(chosenSpawnY == spawnYPositions[1]) ? 1 : 2;
 	positionsOccupied[posIndex] = true;
 
-	// Position the tetromino�s blocks based on the chosen shape and spawn coordinates
+	// Position the tetromino’s blocks based on the chosen shape and spawn coordinates
 	for (const auto& point : shapes[randomShapeIndex]) {
 		Block block = {
 			spawnX + point.x * BLOCK_SIZE,
@@ -313,29 +314,26 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 		}
 	}
 
-	// Count how many rows and columns are completely filled.
-	int numRowsCleared = 0, numColsCleared = 0;
-	for (bool rowComplete : completeRows) {
-		if (rowComplete)
-			numRowsCleared++;
-	}
-	for (bool colComplete : completeCols) {
-		if (colComplete)
-			numColsCleared++;
-	}
-	int totalClearedLines = numRowsCleared + numColsCleared;
+	// Build vectors of cleared row and column indices
+	std::vector<int> clearedRowsVec, clearedColsVec;
+	for (int r = 0; r < gridRows; ++r)
+		if (completeRows[r]) clearedRowsVec.push_back(r);
 
-	// Calculate multiplier:
-	// For one cleared line multiplier is 1.0, for each additional line add 0.5.
-	double multiplier = 1.0;
-	if (totalClearedLines > 1) {
-		multiplier = 1.0 + 0.5 * (totalClearedLines - 1);
+	for (int c = 0; c < gridCols; ++c)
+		if (completeCols[c]) clearedColsVec.push_back(c);
+
+	// ✅ Send to server and receive score
+	std::cout << "[Client] Sending score request..." << std::endl;
+
+	int serverScore = 0;
+	if (!clearedRowsVec.empty() || !clearedColsVec.empty()) {
+		serverScore = Client::sendClearedLinesAndGetScore(clearedRowsVec, clearedColsVec);
 	}
 
-	// New scoring: Points per cleared line multiplied by the bonus multiplier.
-	int scoreGain = static_cast<int>(totalClearedLines * POINTS_PER_LINE * multiplier);
-	score += scoreGain;
-	std::cout << "Score: " << to_string(score) << std::endl;
+	score += serverScore;
+
+	std::cout << "Score (from server): " << serverScore << " | Total: " << score << std::endl;
+
 
 	// Remove blocks that are in any complete row or column.
 	auto removeClearedBlocks = [&](std::vector<Tetromino>& container) {

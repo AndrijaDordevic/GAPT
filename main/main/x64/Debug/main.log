@@ -1,6 +1,6 @@
-﻿  DragBlock.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(30,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(31,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(42,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(43,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+﻿  Client.cpp
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(73,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(104,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(130,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(182,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  main.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe
