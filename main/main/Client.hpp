@@ -4,6 +4,9 @@
 
 #include <atomic>
 #include <string>
+#include <nlohmann/json.hpp>
+#include "Tetromino.hpp"
+
 
 namespace Client {
     extern std::atomic<bool> client_running;
@@ -19,6 +22,8 @@ namespace Client {
 
     // New function to notify the server to start a game session.
     bool notifyStartGame();
+
+    bool sendDragCoordinates(const Tetromino& tetromino);
 }
 
 #endif // CLIENT_HPP
