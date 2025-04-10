@@ -42,15 +42,15 @@
     <ClCompile Include="Discovery.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ClearGrid.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Menu.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Cell.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Tetromino.hpp">
@@ -70,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="Discovery.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ClearGrid.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

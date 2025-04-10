@@ -1,4 +1,23 @@
-﻿  Main.cpp
+﻿  Client.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(108,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(139,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(165,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(217,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Discovery.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Discovery.cpp(28,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+  TextRender.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\TextRender.cpp(6,20): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Owner\source\repos\GAPT\main\main\TextRender.cpp(9,43): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Texture.cpp
+  DragBlock.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(30,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(31,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(42,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(43,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+  Main.cpp
   Menu.cpp
+  Tetromino.cpp
+  Window.cpp
   Generating Code...
-  main.vcxproj -> C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\main.exe
+C:\Users\Owner\source\repos\GAPT\main\main\Texture.cpp(119,1): warning C4715: 'ApplyTexture': not all control paths return a value
+  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

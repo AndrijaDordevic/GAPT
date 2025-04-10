@@ -1,2 +1,36 @@
-﻿  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
+﻿  Server.cpp
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Server.cpp')
+  
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Server.cpp')
+  
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(48,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(94,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(128,74): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(161,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(162,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(175,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(176,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(186,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(187,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(238,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(261,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(273,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(304,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(323,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(329,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(392,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(393,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(417,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(463,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(490,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+  Timer.cpp
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Timer.cpp')
+  
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Timer.cpp')
+  
+  Generating Code...
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe
