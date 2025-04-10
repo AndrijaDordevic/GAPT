@@ -6,6 +6,7 @@
 #include <chrono>
 #include <atomic>
 #include <fstream>
+#include <nlohmann/json.hpp>  // Make sure to include this for JSON parsing
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -32,6 +33,7 @@ namespace Client {
     string ScoreBuffer;
     atomic<bool> client_running(true);
     int client_socket = -1;
+    string TimerBuffer = "";
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
@@ -40,8 +42,41 @@ namespace Client {
             memset(buffer, 0, sizeof(buffer));
             int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
             if (bytes_received > 0) {
-                cout << "Server says: " << buffer << "\n";
-                ScoreBuffer = buffer;
+                buffer[bytes_received] = '\0';
+                string msg(buffer);
+
+                // Attempt to parse the incoming message as JSON.
+                try {
+                    json j = json::parse(msg);
+                    if (j.contains("type")) {
+                        string msgType = j["type"];
+                        if (msgType == "TIME_UPDATE") {
+                            // Timer update message from server.
+                            string timeStr = j["time"];
+                            cout << "Timer update: " << timeStr << "\n";
+                            TimerBuffer = timeStr; // Save the timer update to a shared variable.
+                        }
+                        else if (msgType == "GAME_OVER") {
+                            // Game over message from server.
+                            string gameOverMsg = j["message"];
+                            cout << "Game over: " << gameOverMsg << "\n";
+                            client_running = false;
+                            break;
+                        }
+                        else if (msgType == "SCORE_RESPONSE") {
+                            // SCORE_RESPONSE already handled below if needed.
+                            ScoreBuffer = msg;
+                        }
+                        else {
+                            // Other types of JSON messages.
+                            cout << "Received JSON message: " << j.dump() << "\n";
+                        }
+                    }
+                }
+                catch (...) {
+                    // The message isn't valid JSON, print as plain text.
+                    cout << "Server says: " << msg << "\n";
+                }
             }
             else if (bytes_received == 0) {
                 cout << "Server disconnected.\n";
@@ -208,7 +243,6 @@ namespace Client {
 
         return 0;
     }
-
 
     // New: runClient() simply checks if the server IP was discovered and calls start_client().
     void runClient() {

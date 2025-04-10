@@ -5,12 +5,11 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include "Client.hpp"
-#include "Texture.hpp"
-#include "Timer.hpp"
 #include "TextRender.hpp"
 #include <thread>
 #include <iostream>
 #include <cstdlib>
+#include "Texture.hpp"
 
 using namespace std;
 
@@ -50,10 +49,8 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
             cout << "Client disconnected, closing game..." << endl;
             running = false;
         }
-
-        string timeStr = UpdateTime();
-        timerText.updateText(timeStr, white);
-        GameOverCheck();
+        std::string displayTimer = Client::TimerBuffer.empty() ? "Starting" : Client::TimerBuffer;
+        timerText.updateText(displayTimer, white);
 
         // Clear screen (background assumed transparent or set elsewhere)
         SDL_RenderClear(renderer);
@@ -65,7 +62,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         RenderTetrominos(renderer);
 
         // Render timer text
-        timerText.renderText(750, 47);
+        timerText.renderText(735, 47);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);

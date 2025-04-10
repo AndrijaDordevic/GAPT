@@ -10,6 +10,7 @@
 
 namespace Client {
     extern std::atomic<bool> client_running;
+    extern std::string TimerBuffer;
 
     // Function to start the client.
     void start_client(const std::string& server_ip);

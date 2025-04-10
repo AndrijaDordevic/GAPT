@@ -11,6 +11,7 @@
 #include <utility>
 #include <algorithm>  
 #include <nlohmann/json.hpp>
+#include "Timer.hpp"
 
 
 #define NOMINMAX
@@ -143,6 +144,38 @@ void broadcastIP(const std::string& ip) {
 #endif
 }
 
+// Timer thread function for a session
+void timerThread(int clientSocket1, int clientSocket2) {
+    Timer sessionTimer(180);  // Create a timer instance for 3 minutes
+
+    while (!sessionTimer.isTimeUp()) {
+        std::string currentTimeStr = sessionTimer.UpdateTime();
+
+        // Package the time string in JSON so clients can handle it appropriately.
+        json j;
+        j["type"] = "TIME_UPDATE";
+        j["time"] = currentTimeStr;
+        std::string message = j.dump();
+
+        // Send the timer update to both clients.
+        send(clientSocket1, message.c_str(), message.size(), 0);
+        send(clientSocket2, message.c_str(), message.size(), 0);
+
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait approximately 1 second
+    }
+
+    // When the time is up, perform a game-over action.
+    //GameOverAction();
+
+    // Optionally notify clients that time is up.
+    json j;
+    j["type"] = "GAME_OVER";
+    j["message"] = "Time's up! The game is over!";
+    std::string gameOverMsg = j.dump();
+    send(clientSocket1, gameOverMsg.c_str(), gameOverMsg.size(), 0);
+    send(clientSocket2, gameOverMsg.c_str(), gameOverMsg.size(), 0);
+}
+
 // Session handler: handles communication between two paired clients.
 // Each session is strictly limited to 2 clients
 
@@ -153,6 +186,10 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     send(clientSocket1, sessionMessage1.c_str(), sessionMessage1.size(), 0);
     send(clientSocket2, sessionMessage2.c_str(), sessionMessage2.size(), 0);
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
+
+    // Launch the timer thread for this specific session.
+    std::thread t(timerThread, clientSocket1, clientSocket2);
+    t.detach();
 
     char buffer[1024];
     bool sessionActive = true;
@@ -211,8 +248,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         int score = static_cast<int>(totalCleared * 100 * multiplier);
 
                         std::cout << "[Server] Client " << clientID1 << " cleared "
-                                  << rows.size() << " rows and "
-                                  << cols.size() << " cols => Score: " << score << "\n";
+                            << rows.size() << " rows and "
+                            << cols.size() << " cols => Score: " << score << "\n";
 
                         json response;
                         response["type"] = "SCORE_RESPONSE";
@@ -383,9 +420,9 @@ void clientHandler(int client_socket, int clientID) {
             break;
         }
         else {
-            
-                    std::cerr << "[Server] Unknown JSON type from client " << clientID << ": " << message << "\n";
-                
+
+            std::cerr << "[Server] Unknown JSON type from client " << clientID << ": " << message << "\n";
+
 
         }
 

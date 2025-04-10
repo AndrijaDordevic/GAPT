@@ -138,7 +138,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Tetromino.cpp" />
-    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -150,7 +149,6 @@
     <ClInclude Include="DragBlock.hpp" />
     <ClInclude Include="Menu.hpp" />
     <ClInclude Include="Tetromino.hpp" />
-    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
