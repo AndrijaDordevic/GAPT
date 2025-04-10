@@ -1,6 +1,4 @@
-﻿  Client.cpp
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(73,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(104,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(130,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\Client.cpp(182,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  main.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\main.exe
+﻿  Main.cpp
+  Menu.cpp
+  Generating Code...
+  main.vcxproj -> C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\main.exe

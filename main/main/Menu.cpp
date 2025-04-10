@@ -137,6 +137,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 				running = false;
 				closed = true;
 			}
+			else if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+				exit(EXIT_SUCCESS); // Close the window
+			}
 			else if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 				// Get mouse coordinates
 				float mouseX = static_cast<float>(event.motion.x);
