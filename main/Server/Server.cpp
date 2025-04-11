@@ -32,6 +32,8 @@
 #define BROADCAST_INTERVAL 1  // Seconds between broadcasts
 
 using json = nlohmann::json;
+int score1 = 0;
+int score2 = 0;
 
 // Global atomic flag for broadcaster thread stop
 std::atomic<bool> stopBroadcast(false);
@@ -245,15 +247,21 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
                         int totalCleared = static_cast<int>(rows.size() + cols.size());
                         double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
-                        int score = static_cast<int>(totalCleared * 100 * multiplier);
-
+                        int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
+                        if (earnedScore > 400) {
+                            score1 += 400;
+                        }
+                        else {
+                            score1 += earnedScore;
+                        }
+                        std::cout << "[Server] The score of Client " << clientID1 << " Is " << score1 << "\n";
                         std::cout << "[Server] Client " << clientID1 << " cleared "
                             << rows.size() << " rows and "
-                            << cols.size() << " cols => Score: " << score << "\n";
+                            << cols.size() << " cols => Score: " << score1 << "\n";
 
                         json response;
                         response["type"] = "SCORE_RESPONSE";
-                        response["score"] = score;
+                        response["score"] = score1;
                         std::string responseStr = response.dump();
 
                         std::cout << "[Server] Sending SCORE_RESPONSE: " << responseStr << "\n";
@@ -309,15 +317,21 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
                         int totalCleared = static_cast<int>(rows.size() + cols.size());
                         double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
-                        int score = static_cast<int>(totalCleared * 100 * multiplier);
-
+                        int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
+                        if (earnedScore > 400) {
+                            score2 += 400;
+                        }
+                        else {
+                            score2 += earnedScore;
+                        }
+                        std::cout << score2;
                         std::cout << "Client " << clientID2 << " cleared "
                             << rows.size() << " rows and "
-                            << cols.size() << " cols => Score: " << score << "\n";
+                            << cols.size() << " cols => Score: " << score2 << "\n";
 
                         json response;
                         response["type"] = "SCORE_RESPONSE";
-                        response["score"] = score;
+                        response["score"] = score2;
                         std::string responseStr = response.dump();
 
                         send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);

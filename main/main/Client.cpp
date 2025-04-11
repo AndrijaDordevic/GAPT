@@ -1,4 +1,4 @@
-#include "Client.hpp"
+﻿#include "Client.hpp"
 #include "Discovery.hpp"  // Assumes discoverServer() is declared here.
 #include <iostream>
 #include <cstring>
@@ -66,6 +66,7 @@ namespace Client {
                         else if (msgType == "SCORE_RESPONSE") {
                             // SCORE_RESPONSE already handled below if needed.
                             ScoreBuffer = msg;
+                            cout <<  "Score Buffer is currently " << ScoreBuffer;
                         }
                         else {
                             // Other types of JSON messages.
@@ -117,7 +118,7 @@ namespace Client {
         return true;
     }
 
-    // Serializes a tetromino�s block coordinates as JSON and sends it to the server.
+    // Serializes a tetromino’s block coordinates as JSON and sends it to the server.
     bool sendDragCoordinates(const Tetromino& tetromino) {
         if (client_socket < 0) {
             cerr << "Client socket is not connected!" << endl;
@@ -213,7 +214,7 @@ namespace Client {
         std::cout << "[Debug] Sending on socket: " << client_socket << "\n";
         std::cout << "[Debug] Message: " << message << "\n";
 
-        StopResponceTaking = true; // Optional if needed elsewhere
+        //StopResponceTaking = true; // Optional if needed elsewhere
         send(client_socket, message.c_str(), message.size(), 0);
 
         // Wait briefly for ScoreBuffer to be updated

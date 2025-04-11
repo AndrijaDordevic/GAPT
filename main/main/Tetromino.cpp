@@ -322,15 +322,18 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	for (int c = 0; c < gridCols; ++c)
 		if (completeCols[c]) clearedColsVec.push_back(c);
 
-	// ✅ Send to server and receive score
-	std::cout << "[Client] Sending score request..." << std::endl;
-
 	int serverScore = 0;
+	// ✅ Send to server and receive score
+	std::cout << "clearedRowsVec size: " << clearedRowsVec.size() << "\n";
+	std::cout << "clearedColsVec size: " << clearedColsVec.size() << "\n";
+
 	if (!clearedRowsVec.empty() || !clearedColsVec.empty()) {
+		std::cout << "Sending score request...\n";
 		serverScore = Client::sendClearedLinesAndGetScore(clearedRowsVec, clearedColsVec);
+		score = serverScore;
 	}
 
-	score += serverScore;
+
 
 	std::cout << "Score (from server): " << serverScore << " | Total: " << score << std::endl;
 
