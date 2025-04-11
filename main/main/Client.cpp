@@ -45,44 +45,40 @@ namespace Client {
                 buffer[bytes_received] = '\0';
                 string msg(buffer);
 
-                // Attempt to parse the incoming message as JSON.
                 try {
-                    json j = json::parse(msg);
-                    if (j.contains("type")) {
-                        string msgType = j["type"];
-                        if (msgType == "TIME_UPDATE") {
-                            // Timer update message from server.
-                            string timeStr = j["time"];
-                            cout << "Timer update: " << timeStr << "\n";
-                            TimerBuffer = timeStr; // Save the timer update to a shared variable.
-                        }
-                        else if (msgType == "GAME_OVER") {
-                            // Game over message from server.
-                            string gameOverMsg = j["message"];
-                            cout << "Game over: " << gameOverMsg << "\n";
-                            client_running = false;
-                            break;
-                        }
-                        else if (msgType == "SCORE_RESPONSE") {
-                            // SCORE_RESPONSE already handled below if needed.
-                            ScoreBuffer = msg;
-                            cout <<  "Score Buffer is currently " << ScoreBuffer;
-                        }
-                        else if(msgType == "SCORE_UPDATE") {
-                            int oppScore = j["opponentScore"];
-                            cout << "Recieved Opponents score which is  " << oppScore;
-                            RecieveOpponentScore(oppScore);
-                        }
-                        else {
-                            // Other types of JSON messages.
-                            cout << "Received JSON message: " << j.dump() << "\n";
+                    size_t start = 0;
+                    while ((start = msg.find('{')) != std::string::npos) {
+                        size_t end = msg.find('}', start);
+                        if (end == std::string::npos) break;
+
+                        std::string jsonStr = msg.substr(start, end - start + 1);
+                        msg = msg.substr(end + 1);  // Move to the next JSON
+
+                        json j = json::parse(jsonStr);
+                        if (j.contains("type")) {
+                            string msgType = j["type"];
+                            if (msgType == "TIME_UPDATE") {
+                                TimerBuffer = j["time"];
+                            }
+                            else if (msgType == "GAME_OVER") {
+                                client_running = false;
+                                break;
+                            }
+                            else if (msgType == "SCORE_RESPONSE") {
+                                ScoreBuffer = jsonStr;
+                            }
+                            else if (msgType == "SCORE_UPDATE") {
+                                int oppScore = j["opponentScore"];
+                                cout << "Received Opponent's score: " << oppScore << "\n";
+                                RecieveOpponentScore(oppScore);
+                            }
                         }
                     }
                 }
-                catch (...) {
-                    // The message isn't valid JSON, print as plain text.
-                    cout << "Server says: " << msg << "\n";
+                catch (const std::exception& e) {
+                    cerr << "[Client] JSON parse error: " << e.what() << "\n";
                 }
+
             }
             else if (bytes_received == 0) {
                 cout << "Server disconnected.\n";
