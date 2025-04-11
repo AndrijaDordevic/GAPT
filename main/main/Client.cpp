@@ -25,6 +25,8 @@
 using json = nlohmann::json;
 using namespace std;
 
+
+
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
 bool StopResponceTaking;
@@ -34,6 +36,7 @@ namespace Client {
     atomic<bool> client_running(true);
     int client_socket = -1;
     string TimerBuffer = "";
+	std::vector<int> shape = {0,1,2};
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
@@ -69,8 +72,15 @@ namespace Client {
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
-                                cout << "Received Opponent's score: " << oppScore << "\n";
+                                std::cout << "Received Opponent's score: " << oppScore << "\n";
                                 RecieveOpponentScore(oppScore);
+                            }
+                            else if (msgType == "SHAPE_ASSIGN" || msgType == "NEW_SHAPE") {
+                                int shapeType = j["shapeType"];
+                                std::cout << "Received shape type: " << shapeType << "\n";
+                                shape.push_back(static_cast<int>(shapeType));
+                                // Convert to your Tetromino class or store the shape
+
                             }
                         }
                     }
@@ -81,7 +91,7 @@ namespace Client {
 
             }
             else if (bytes_received == 0) {
-                cout << "Server disconnected.\n";
+                std::cout << "Server disconnected.\n";
                 client_running = false;
                 break;
             }
@@ -100,7 +110,7 @@ namespace Client {
     }
 
     bool notifyStartGame() {
-        cout << "Attempting to notify server to start game on IP "
+        std::cout << "Attempting to notify server to start game on IP "
             << server_ip << " and port " << PORT << endl;
         if (client_socket < 0) {
             cerr << "Client socket is not connected!" << endl;
@@ -129,7 +139,7 @@ namespace Client {
         j["type"] = "DRAG_UPDATE";
         j["blocks"] = json::array();
         for (const auto& block : tetromino.blocks) {
-            j["blocks"].push_back({ {"x", block.x}, {"y", block.y} });
+            j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"block type", "d"} });
         }
         string message = j.dump();
 
@@ -176,17 +186,17 @@ namespace Client {
             cerr << "Invalid address" << endl;
             return;
         }
-        cout << "Connecting to server..." << endl;
+        std::cout << "Connecting to server..." << endl;
         if (connect(client_socket, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) == -1) {
             cerr << "Connection failed" << endl;
             return;
         }
-        cout << "Connected to server" << endl;
+        std::cout << "Connected to server" << endl;
         thread handle_thread(handle_server, client_socket);
         while (client_running) {
             this_thread::sleep_for(chrono::milliseconds(100));
         }
-        cout << "Disconnecting..." << endl;
+        std::cout << "Disconnecting..." << endl;
 #ifdef _WIN32
         closesocket(client_socket);
 #else

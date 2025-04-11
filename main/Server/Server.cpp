@@ -12,7 +12,8 @@
 #include <algorithm>  
 #include <nlohmann/json.hpp>
 #include "Timer.hpp"
-
+#include <random>
+#include "shapes.hpp"
 
 #define NOMINMAX
 #ifdef _WIN32
@@ -189,6 +190,31 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     send(clientSocket2, sessionMessage2.c_str(), sessionMessage2.size(), 0);
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
 
+    // 2. Assign random shapes
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, static_cast<int>(ShapeType::Count) - 1);
+
+    // Assign shape to clients
+    ShapeType shape1 = static_cast<ShapeType>(dist(gen));
+    ShapeType shape2 = static_cast<ShapeType>(dist(gen));
+    ShapeType shape3 = static_cast<ShapeType>(dist(gen));
+    json shapeMsg1;
+    json shapeMsg2;
+    json shapeMsg3;
+    shapeMsg1["type"] = "SHAPE_ASSIGN";
+    shapeMsg1["shapeType"] = static_cast<int>(shape1);
+    shapeMsg2["type"] = "SHAPE_ASSIGN";
+    shapeMsg2["shapeType"] = static_cast<int>(shape2);
+	shapeMsg3["type"] = "SHAPE_ASSIGN";
+	shapeMsg3["shapeType"] = static_cast<int>(shape3);
+    send(clientSocket1, shapeMsg1.dump().c_str(), shapeMsg1.dump().size(), 0);
+    send(clientSocket2, shapeMsg1.dump().c_str(), shapeMsg1.dump().size(), 0);
+	send(clientSocket1, shapeMsg2.dump().c_str(), shapeMsg2.dump().size(), 0);
+	send(clientSocket2, shapeMsg2.dump().c_str(), shapeMsg2.dump().size(), 0);
+	send(clientSocket1, shapeMsg3.dump().c_str(), shapeMsg3.dump().size(), 0);
+	send(clientSocket2, shapeMsg3.dump().c_str(), shapeMsg3.dump().size(), 0);
+
     // Launch the timer thread for this specific session.
     std::thread t(timerThread, clientSocket1, clientSocket2);
     t.detach();
@@ -229,6 +255,12 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     json j = json::parse(msg);
                     if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
                         std::cout << "Received DRAG_UPDATE from client " << clientID1 << ":\n";
+                        ShapeType shape = static_cast<ShapeType>(dist(gen));
+                        json shapeMsg;
+                        shapeMsg["type"] = "SHAPE_ASSIGN";
+                        shapeMsg["shapeType"] = static_cast<int>(shape);
+                        send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+                        send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
                         if (j.contains("blocks")) {
                             for (const auto& block : j["blocks"]) {
                                 int x = block.value("x", -1);

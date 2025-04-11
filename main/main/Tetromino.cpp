@@ -10,7 +10,7 @@
 #include <SDL3_image/SDL_image.h>
 #include "TextRender.hpp"
 #include "Client.hpp"
-
+#include "shapes.hpp"
 // Global flags and spawn data
 bool draggingInProgress = false;
 bool CanDrag = false;
@@ -49,6 +49,8 @@ void SpawnTetromino() {
 	if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
 	if (draggingInProgress) return;
 
+
+
 	// Tetromino shapes (each shape is a vector of 4 SDL_Points)
 	std::vector<std::vector<SDL_Point>> shapes = {
 		{{0, 0}, {1, 0}, {2, 0}, {2, 0}},    //Horizontal Line
@@ -71,6 +73,8 @@ void SpawnTetromino() {
 
 	};
 
+
+
 	// Define an array of possible colors
 	SDL_Color colors[] = {
 		{255, 0, 0, 255},    // Red
@@ -86,7 +90,7 @@ void SpawnTetromino() {
 
 	//Creating a random shape/Color from the vector
 	int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
-	int randomShapeIndex = rand() % shapes.size();
+	int randomShapeIndex = Client::shape.front();
 
 	//Creaging tetromino object and assiging a color
 	Tetromino newTetromino;
@@ -112,6 +116,7 @@ void SpawnTetromino() {
 	positionsOccupied[posIndex] = true;
 
 	// Position the tetromino’s blocks based on the chosen shape and spawn coordinates
+
 	for (const auto& point : shapes[randomShapeIndex]) {
 		Block block = {
 			spawnX + point.x * BLOCK_SIZE,
@@ -136,7 +141,7 @@ void SpawnTetromino() {
 	// Add the new tetromino to the active container.
 	tetrominos.push_back(newTetromino);
 	spawnedCount++;
-
+	Client::shape.erase(Client::shape.begin());
 }
 
 void ReleaseOccupiedPositions() {

@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 
+
 int currentMaxLayer = 0;
 
 void DragDrop(SDL_Event& event) {
@@ -31,6 +32,7 @@ void DragDrop(SDL_Event& event) {
                     mouseOffsetY = event.button.y - block.y;
                     draggingInProgress = true;
                     draggedTetromino->layer = ++currentMaxLayer;
+					//Client::shape.erase(Client::shape.begin());
                     return;
                 }
             }

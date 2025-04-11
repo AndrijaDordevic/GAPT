@@ -9,6 +9,7 @@
 
 
 namespace Client {
+    extern std::vector<int> shape;
     extern std::atomic<bool> client_running;
     extern std::string TimerBuffer;
 
