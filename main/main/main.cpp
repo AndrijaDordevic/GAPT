@@ -6,6 +6,7 @@
 #include <SDL3_image/SDL_image.h>
 #include "Client.hpp"
 #include "TextRender.hpp"
+#include "ClearGrid.hpp"
 #include <thread>
 #include <iostream>
 #include <cstdlib>
@@ -42,6 +43,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
                 running = false;
             }
             DragDrop(event); // Handle drag events
+            updateClearGridButton(event);
         }
 
         // Check client connection status

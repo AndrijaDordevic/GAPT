@@ -18,13 +18,6 @@ vector<ClearGridButton> clrButton = {
     {{(WINDOW_WIDTH + 210) / 2, 40, 90, 90}, "Clear Screen", false}
 };
 
-void renderButton(SDL_Renderer* renderer) {
-    for (const auto& button : clrButton) {
-        SDL_Color clrcolour = button.isHovered ? SDL_Color{ 255, 0, 0, 0 } : SDL_Color{ 0, 0, 255, 0 };
-        SDL_SetRenderDrawColor(renderer, clrcolour.r, clrcolour.g, clrcolour.b, clrcolour.a);
-        SDL_RenderFillRect(renderer, &button.rect);
-    }
-}
 
 void clearTetrominos() {
     placedTetrominos.clear();
@@ -55,14 +48,24 @@ int runClearGridButton(SDL_Renderer* renderer) {
 
             }
         }
-
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-        // Render the button
-        for (const auto& button : clrButton) {
-            renderButton(renderer);
-        }
-        renderButton(renderer);
-        SDL_RenderPresent(renderer);
     }
     return 0;
 }
+
+// Function to update the button state based on mouse events.
+void updateClearGridButton(const SDL_Event& event) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        // Get mouse coords as float
+        float mouseX = static_cast<float>(event.motion.x);
+        float mouseY = static_cast<float>(event.motion.y);
+
+        for (auto& button : clrButton) {
+            button.isHovered = isMouseOver(mouseX, mouseY, button.rect);
+            if (button.isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                // Clear the tetrominos when clicked.
+                clearTetrominos();
+            }
+        }
+    }
+}
+

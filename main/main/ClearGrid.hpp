@@ -6,9 +6,9 @@
 #include <vector>
 
 int runClearGridButton(SDL_Renderer* renderer);
-void renderButton(SDL_Renderer* renderer);
 
 void clearTetrominos();
+void updateClearGridButton(const SDL_Event& event);
 
 
 
