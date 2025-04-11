@@ -1,5 +1,6 @@
 ﻿#include "Client.hpp"
 #include "Discovery.hpp"  // Assumes discoverServer() is declared here.
+#include "Tetromino.hpp"
 #include <iostream>
 #include <cstring>
 #include <thread>
@@ -7,7 +8,6 @@
 #include <atomic>
 #include <fstream>
 #include <nlohmann/json.hpp>  // Make sure to include this for JSON parsing
-
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -67,6 +67,11 @@ namespace Client {
                             // SCORE_RESPONSE already handled below if needed.
                             ScoreBuffer = msg;
                             cout <<  "Score Buffer is currently " << ScoreBuffer;
+                        }
+                        else if(msgType == "SCORE_UPDATE") {
+                            int oppScore = j["opponentScore"];
+                            cout << "Recieved Opponents score which is  " << oppScore;
+                            RecieveOpponentScore(oppScore);
                         }
                         else {
                             // Other types of JSON messages.

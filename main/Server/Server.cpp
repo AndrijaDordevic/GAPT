@@ -268,6 +268,15 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         std::cout << "[Debug] Sending on socket: " << clientSocket1 << "\n";
                         int sent = send(clientSocket1, responseStr.c_str(), responseStr.size(), 0);
                         std::cout << "[Server] send() returned: " << sent << "\n";
+
+                        //Send Score to Opponent
+                        json updateMsg;
+                        updateMsg["type"] = "SCORE_UPDATE";
+                        updateMsg["opponentScore"] = score1;  
+
+                        std::string updateStr = updateMsg.dump();
+                        send(clientSocket2, updateStr.c_str(), updateStr.size(), 0); 
+
                         if (sent <= 0) {
                             std::cerr << "[Server] Failed to send SCORE_RESPONSE to client " << clientID1 << "\n";
                         }
@@ -335,6 +344,15 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         std::string responseStr = response.dump();
 
                         send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
+
+                        //Send Score to Opponent
+                        json updateMsg;
+                        updateMsg["type"] = "SCORE_UPDATE";
+                        updateMsg["opponentScore"] = score2;  
+
+                        std::string updateStr = updateMsg.dump();
+                        send(clientSocket1, updateStr.c_str(), updateStr.size(), 0);  
+
                     }
 
                 }

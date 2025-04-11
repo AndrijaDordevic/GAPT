@@ -22,6 +22,7 @@ int spawnX = 0;
 int spawnYPositions[3] = { 0, 0, 0 };
 int spawnedCount = 0;
 int score = 0;
+int OpponentScore = 0;
 
 const int POINTS_PER_LINE = 100;
 
@@ -231,18 +232,15 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
 	return true;
 }
 
-void RenderScore(SDL_Renderer* renderer, int score) {
-	// Create a TextRender instance (you might want to manage this differently in a real app)
-	TextRender scoreText(renderer, "assets/Arial.ttf", 28);
-	SDL_Color white = { 255, 255, 255, 255 };
+void RenderScore(SDL_Renderer* renderer, int localScore, int opponentScore) {
+    TextRender scoreText(renderer, "assets/Arial.ttf", 28);
+    SDL_Color white = { 255, 255, 255, 255 };
 
-	// Convert the score to a string and update the score text
-	std::string scoreStr = std::to_string(score);
-	scoreText.updateText(scoreStr, white);
-
-	// Render the score text at a fixed position (e.g., top-left corner)
-	scoreText.renderText(300, 47);
+    std::string combinedScore = "You: " + std::to_string(localScore) + " | Opponent: " + std::to_string(opponentScore);
+    scoreText.updateText(combinedScore, white);
+    scoreText.renderText(300, 47);
 }
+
 
 
 // This function is called in your main loop to handle tetromino spawning.
@@ -323,7 +321,7 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 		if (completeCols[c]) clearedColsVec.push_back(c);
 
 	int serverScore = 0;
-	// ✅ Send to server and receive score
+
 	std::cout << "clearedRowsVec size: " << clearedRowsVec.size() << "\n";
 	std::cout << "clearedColsVec size: " << clearedColsVec.size() << "\n";
 
@@ -359,4 +357,9 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 
 	// Remove cleared blocks from the placed tetrominos.
 	removeClearedBlocks(placedTetrominos);
+}
+
+
+void RecieveOpponentScore(int OpScore) {
+	OpponentScore = OpScore;
 }

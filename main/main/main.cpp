@@ -58,7 +58,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         // Render game elements
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         RunBlocks(renderer);
-        RenderScore(renderer, score);
+        RenderScore(renderer, score, OpponentScore);
         RenderTetrominos(renderer);
 
         // Render timer text

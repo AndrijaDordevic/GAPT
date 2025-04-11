@@ -15,14 +15,16 @@ C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(178,62): wa
 C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(188,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(189,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(240,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(264,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(276,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(307,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(327,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(333,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(396,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(397,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(421,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(467,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(494,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(269,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(278,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(290,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(321,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(346,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(354,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(361,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(424,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(425,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(449,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(495,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(522,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
   Server.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\Server.exe
