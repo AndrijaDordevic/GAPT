@@ -233,12 +233,16 @@ bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
 }
 
 void RenderScore(SDL_Renderer* renderer, int localScore, int opponentScore) {
-    TextRender scoreText(renderer, "assets/Arial.ttf", 28);
+    TextRender playerscoreText(renderer, "assets/Arial.ttf", 28);
+	TextRender opponentscoreText(renderer, "assets/Arial.ttf", 28);
     SDL_Color white = { 255, 255, 255, 255 };
 
-    std::string combinedScore = "You: " + std::to_string(localScore) + " | Opponent: " + std::to_string(opponentScore);
-    scoreText.updateText(combinedScore, white);
-    scoreText.renderText(300, 47);
+	std::string PlayerScore = std::to_string(localScore);
+	std::string EnemyScore = std::to_string(opponentScore);
+    playerscoreText.updateText(PlayerScore, white);
+	opponentscoreText.updateText(EnemyScore, white);
+    playerscoreText.renderText(300, 47);
+	opponentscoreText.renderText(540,890);
 }
 
 
