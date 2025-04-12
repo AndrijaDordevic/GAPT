@@ -9,6 +9,7 @@
 #include "Texture.hpp"
 #include "Discovery.hpp"
 #include <string>
+#include <windows.h>
 
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
@@ -42,7 +43,7 @@ SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
 	{{(WINDOW_WIDTH - 400) / 2, 500, 400, 100}, "Start Game", false, nullptr, 0, 0}, // Start Game
-	{{(WINDOW_WIDTH - 400) / 2, 650, 400, 100}, "Options", false, nullptr, 0, 0}, // Options
+	{{(WINDOW_WIDTH - 400) / 2, 650, 400, 100}, "Instructions", false, nullptr, 0, 0}, // Instructions
 	{{(WINDOW_WIDTH - 400) / 2, 800, 400, 100}, "Exit", false, nullptr, 0, 0}  // Exit
 };
 
@@ -171,8 +172,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 							notifyThread.detach();
 						}
 						else if (i == 1) {
-							// Options
-							cout << "Options..." << endl;
+							// Instructions
+							MessageBox(NULL, L"Click and drag the blocks on the right to the grid and form lines.\n\nForming a line will clear all blocks in the line and award you with points.\n\nIf you get stuck then click the clear grid button to clear the entire grid.\n\nYou only have 3 minutes to get more points than your opponent!\n\nHave fun!", L"Instructions", MB_OK);
+
 						}
 					}
 				}
