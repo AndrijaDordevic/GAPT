@@ -115,12 +115,26 @@ void broadcastIP(const std::string& ip) {
         return;
     }
 
-    sockaddr_in broadcast_addr;
-    memset(&broadcast_addr, 0, sizeof(broadcast_addr));
-    broadcast_addr.sin_family = AF_INET;
-    broadcast_addr.sin_port = htons(PORT);
-    if (inet_pton(AF_INET, "255.255.255.255", &broadcast_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid broadcast address" << std::endl;
+    sockaddr_in broadcast_addr1, broadcast_addr2;
+
+    memset(&broadcast_addr1, 0, sizeof(broadcast_addr1));
+    broadcast_addr1.sin_family = AF_INET;
+    broadcast_addr1.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, "192.168.7.255", &broadcast_addr1.sin_addr) <= 0) {
+        std::cerr << "Invalid broadcast address 192.168.7.255" << std::endl;
+#ifdef _WIN32
+        closesocket(udp_socket);
+#else
+        close(udp_socket);
+#endif
+        return;
+    }
+
+    memset(&broadcast_addr2, 0, sizeof(broadcast_addr2));
+    broadcast_addr2.sin_family = AF_INET;
+    broadcast_addr2.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, "255.255.255.255", &broadcast_addr2.sin_addr) <= 0) {
+        std::cerr << "Invalid broadcast address 255.255.255.255" << std::endl;
 #ifdef _WIN32
         closesocket(udp_socket);
 #else
@@ -131,15 +145,28 @@ void broadcastIP(const std::string& ip) {
 
     std::string message = "SERVER_IP:" + ip + ":" + std::to_string(PORT);
     while (!stopBroadcast.load()) {
-        int sent_bytes = sendto(udp_socket, message.c_str(), message.size(), 0,
-            reinterpret_cast<struct sockaddr*>(&broadcast_addr),
-            sizeof(broadcast_addr));
-        if (sent_bytes < 0) {
-            std::cerr << "Broadcast failed!" << std::endl;
+        // Broadcast to 192.168.7.255
+        int sent_bytes1 = sendto(udp_socket, message.c_str(), message.size(), 0,
+            reinterpret_cast<struct sockaddr*>(&broadcast_addr1),
+            sizeof(broadcast_addr1));
+        if (sent_bytes1 < 0) {
+            std::cerr << "Broadcast to 192.168.7.255 failed!" << std::endl;
         }
         else {
-            std::cout << "Broadcasting: " << message << std::endl;
+            std::cout << "Broadcasting to 192.168.7.255: " << message << std::endl;
         }
+
+        // Broadcast to 255.255.255.255
+        int sent_bytes2 = sendto(udp_socket, message.c_str(), message.size(), 0,
+            reinterpret_cast<struct sockaddr*>(&broadcast_addr2),
+            sizeof(broadcast_addr2));
+        if (sent_bytes2 < 0) {
+            std::cerr << "Broadcast to 255.255.255.255 failed!" << std::endl;
+        }
+        else {
+            std::cout << "Broadcasting to 255.255.255.255: " << message << std::endl;
+        }
+
         std::this_thread::sleep_for(std::chrono::seconds(BROADCAST_INTERVAL));
     }
 
