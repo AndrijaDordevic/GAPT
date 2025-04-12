@@ -21,7 +21,6 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         exit(1);
     }
     srand(static_cast<unsigned>(time(0)));
-
     // Load game background texture and block textures
     SDL_Texture* texture = LoadGameTexture(renderer);
     if (!LoadBlockTextures(renderer)) {
@@ -59,6 +58,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
         // Render game elements
         SDL_RenderTexture(renderer, texture, NULL, NULL);
+
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
         RenderTetrominos(renderer);
@@ -74,9 +74,10 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 }
 
 int main() {
+
     // Start client thread (remains detached throughout the application)
     thread clientThread(Client::runClient);
-    clientThread.detach();
+    //clientThread.detach();
 
     // Run the menu first. 
     // The runMenu function could return an int or enum indicating the selected menu option.
@@ -87,6 +88,8 @@ int main() {
         // Create SDL window and renderer for the game.
         SDL_Window* gameWindow = nullptr;
         SDL_Renderer* gameRenderer = nullptr;
+        cout << "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" << endl;
+
         runGame(gameWindow, gameRenderer);
     }
 

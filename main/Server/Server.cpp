@@ -36,6 +36,9 @@ using json = nlohmann::json;
 int score1 = 0;
 int score2 = 0;
 
+ShapeType shape;
+json shapeMsg;
+
 // Global atomic flag for broadcaster thread stop
 std::atomic<bool> stopBroadcast(false);
 // Global client ID counter
@@ -245,7 +248,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             continue;
 
         // Process socket 1 if there is activity.
-        if (FD_ISSET(clientSocket1, &readfds)) {
+        if (FD_ISSET(clientSocket1, &readfds) || FD_ISSET(clientSocket2, &readfds)) {
             int bytesRead = recv(clientSocket1, buffer, sizeof(buffer) - 1, 0);
             if (bytesRead > 0) {
                 buffer[bytesRead] = '\0';
@@ -255,12 +258,15 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     json j = json::parse(msg);
                     if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
                         std::cout << "Received DRAG_UPDATE from client " << clientID1 << ":\n";
-                        ShapeType shape = static_cast<ShapeType>(dist(gen));
-                        json shapeMsg;
-                        shapeMsg["type"] = "SHAPE_ASSIGN";
-                        shapeMsg["shapeType"] = static_cast<int>(shape);
-                        send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
-                        send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+
+                            shape = static_cast<ShapeType>(dist(gen));
+                            shapeMsg["type"] = "SHAPE_ASSIGN";
+                            shapeMsg["shapeType"] = static_cast<int>(shape);
+
+                            send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+							send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+                        
+
                         if (j.contains("blocks")) {
                             for (const auto& block : j["blocks"]) {
                                 int x = block.value("x", -1);
@@ -269,6 +275,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                             }
                         }
                         // Forward the update to the other client.
+                        send(clientSocket1, msg.c_str(), msg.size(), 0);
                         send(clientSocket2, msg.c_str(), msg.size(), 0);
                     }
                     else if (j["type"] == "SCORE_REQUEST") {
@@ -342,6 +349,14 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     json j = json::parse(msg);
                     if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
                         std::cout << "Received DRAG_UPDATE from client " << clientID2 << ":\n";
+                        shape = static_cast<ShapeType>(dist(gen));
+                        shapeMsg["type"] = "SHAPE_ASSIGN";
+                        shapeMsg["shapeType"] = static_cast<int>(shape);
+
+                        send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+                        send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+
+
                         if (j.contains("blocks")) {
                             for (const auto& block : j["blocks"]) {
                                 int x = block.value("x", -1);

@@ -49,8 +49,6 @@ void SpawnTetromino() {
 	if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
 	if (draggingInProgress) return;
 
-
-
 	// Tetromino shapes (each shape is a vector of 4 SDL_Points)
 	std::vector<std::vector<SDL_Point>> shapes = {
 		{{0, 0}, {1, 0}, {2, 0}, {2, 0}},    //Horizontal Line
@@ -139,6 +137,7 @@ void SpawnTetromino() {
 	}
 
 	// Add the new tetromino to the active container.
+	std::cout << "Tetromino spawned at (" << spawnX << ", " << chosenSpawnY << ")\n";
 	tetrominos.push_back(newTetromino);
 	spawnedCount++;
 	Client::shape.erase(Client::shape.begin());
