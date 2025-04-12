@@ -36,6 +36,7 @@ namespace Client {
     string TimerBuffer = "";
     std::vector<int> shape = { 0,1,2 };
     bool startperm = false;
+    std::atomic<bool> waitingForSession(false);
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {

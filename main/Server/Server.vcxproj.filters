@@ -21,7 +21,7 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shapes.cpp">
+    <ClCompile Include="Shapes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="Timer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\main\shapes.hpp">
+    <ClInclude Include="..\main\Shapes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,7 @@
 #include "Discovery.hpp"
 #include <string>
 #include <windows.h>
+#include "TextRender.hpp"
 
 
 #define OUTPUT_FILE "server_ip.txt"  // File to store server IP
@@ -33,7 +34,7 @@ struct MenuItem {
 	int textHeight;
 };
 bool running = true;
-
+bool displayWaitingMessage = false;
 // Create window 
 SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
@@ -87,10 +88,14 @@ void cleanupTextures() {
 
 // Render menu
 void renderMenu(SDL_Renderer* renderer) {
+	int textX = 0;
 	SDL_Texture* menuTexture = LoadMenuTexture(renderer);
 	SDL_Texture* menuOptionTexture = LoadMenuOptionTexture(renderer);
 	SDL_Texture* menuOptionTextureS = LoadMenuOptionTextureSelected(renderer);
 	SDL_RenderTexture(renderer, menuTexture, nullptr, nullptr);
+	SDL_Color white = { 255, 255, 255, 255 };
+	TextRender waitingText(renderer, "arial.ttf", 28);
+
 	for (const auto& item : menuItems) {
 		item.isHovered ? SDL_RenderTexture(renderer, menuOptionTextureS, nullptr, &item.rect) : SDL_RenderTexture(renderer, menuOptionTexture, nullptr, &item.rect);
 
@@ -105,6 +110,12 @@ void renderMenu(SDL_Renderer* renderer) {
 			SDL_RenderTexture(renderer, item.textTexture, nullptr, &textRect);
 
 		}
+	}
+
+	if (displayWaitingMessage) {
+		waitingText.updateText("Waiting for opponent...", white);
+		textX = (WINDOW_WIDTH - waitingText.getTextWidth()) / 2;
+		waitingText.renderText(textX, 450);
 	}
 }
 
@@ -130,6 +141,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 		TTF_Quit();
 		return 1;
 	}
+
 
 	// Main loop
 	while (running) {
@@ -161,10 +173,11 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 						}
 						else if (i == 0) {
 							// Start game
-							std::thread notifyThread([]() {
+							std::thread notifyThread([&]() {
 								std::cout << "Starting thread to notify server..." << std::endl;
-								string server_ip = discoverServer();  // Assuming discoverServer() updates the global server_ip
-								
+								// Use discoverServer() if needed (or skip if already done)
+								string server_ip = discoverServer();  // Optional: update the server IP
+								displayWaitingMessage = true;
 								if (!Client::notifyStartGame()) {  // Call without parameters
 									std::cerr << "Failed to notify server to start game session." << std::endl;
 								}
@@ -187,6 +200,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
 		// Render menu
 		renderMenu(rendererm);
+
 		SDL_RenderPresent(rendererm);
 		SDL_Delay(16);
 	}

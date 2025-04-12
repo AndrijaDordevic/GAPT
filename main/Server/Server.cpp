@@ -13,7 +13,7 @@
 #include <nlohmann/json.hpp>
 #include "Timer.hpp"
 #include <random>
-#include "shapes.hpp"
+#include "Shapes.hpp"
 
 #define NOMINMAX
 #ifdef _WIN32

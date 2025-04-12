@@ -13,6 +13,10 @@ public:
     void updateText(const std::string& newText, SDL_Color color);
     void renderText(int x, int y);
 
+    // Add getter for the width of the rendered text
+    int getTextWidth() const { return textRect.w; }
+    // Optionally, a getter for the height if needed
+    int getTextHeight() const { return textRect.h; }
 
 private:
     SDL_Renderer* renderer;

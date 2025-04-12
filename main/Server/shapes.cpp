@@ -1,4 +1,4 @@
-#include "shapes.hpp"
+#include "Shapes.hpp"
 
 // Shape definitions
 static const std::vector<std::vector<SDL_Point>> SHAPES = {
