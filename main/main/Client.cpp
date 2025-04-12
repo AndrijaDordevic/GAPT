@@ -37,6 +37,7 @@ namespace Client {
     int client_socket = -1;
     string TimerBuffer = "";
 	std::vector<int> shape = {0,1,2};
+    bool startperm = false;
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
@@ -80,7 +81,12 @@ namespace Client {
                                 std::cout << "Received shape type: " << shapeType << "\n";
                                 shape.push_back(static_cast<int>(shapeType));
                                 // Convert to your Tetromino class or store the shape
-
+                            
+                            }
+                            else if (msgType == "Tostart") {
+								bool start = j["bool"];
+                                std::cout << "Recieved start: " << start << "\n";
+                                startperm = true;
                             }
                         }
                     }

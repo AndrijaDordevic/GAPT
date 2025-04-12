@@ -470,7 +470,13 @@ void clientHandler(int client_socket, int clientID) {
                     if (pthread_setschedparam(sessionThread.native_handle(), SCHED_FIFO, &sch_params)) {
                         std::cerr << "Failed to set thread scheduling: insufficient privileges?" << std::endl;
                     }
-#endif
+#endif              bool start = true;
+                    json StartMsg;
+                    StartMsg["type"] = "Tostart";
+                    StartMsg["bool"] = true;
+                    send(otherSocket, StartMsg.dump().c_str(), StartMsg.dump().size(), 0);
+                    send(client_socket, StartMsg.dump().c_str(), StartMsg.dump().size(), 0);
+
 
                     std::cout << "Paired client " << otherID << " with client " << clientID << std::endl;
                 }

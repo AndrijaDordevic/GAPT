@@ -117,7 +117,7 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 // Main menu loop
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 	SDL_Event event;
-
+	int i = 0;
 	// Initialize TTF
 	if (TTF_Init() == false) {
 		cerr << "Failed to initialize TTF." << SDL_GetError << endl;
@@ -155,13 +155,20 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 						}
 						else if (i == 0) {
 							// Start game
-							cout << "Starting game..." << endl;
-							running = false; // Close the menu after starting the game
-
-
 							std::thread notifyThread([]() {
 								std::cout << "Starting thread to notify server..." << std::endl;
 								string server_ip = discoverServer();  // Assuming discoverServer() updates the global server_ip
+								std::cout << "wait started";
+								SDL_Delay(2000);
+								std::cout << "wait finished";
+								std::cout << Client::startperm << endl;
+								if (Client::startperm == true) {
+									cout << "Starting game..." << endl;
+									running = false; // Close the menu after starting the game
+									
+									
+								
+								}
 								if (!Client::notifyStartGame()) {  // Call without parameters
 									std::cerr << "Failed to notify server to start game session." << std::endl;
 								}
