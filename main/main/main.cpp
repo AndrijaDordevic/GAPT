@@ -88,7 +88,7 @@ int main() {
         // Create SDL window and renderer for the game.
         SDL_Window* gameWindow = nullptr;
         SDL_Renderer* gameRenderer = nullptr;
-        cout << "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" << endl;
+
 
         runGame(gameWindow, gameRenderer);
     }

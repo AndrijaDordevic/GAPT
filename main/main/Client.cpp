@@ -25,8 +25,6 @@
 using json = nlohmann::json;
 using namespace std;
 
-
-
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
 bool StopResponceTaking;
@@ -36,27 +34,32 @@ namespace Client {
     atomic<bool> client_running(true);
     int client_socket = -1;
     string TimerBuffer = "";
-	std::vector<int> shape = {0,1,2};
+    std::vector<int> shape = { 0,1,2 };
     bool startperm = false;
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
         char buffer[1024];
+        string accumulatedMessage = "";  // Accumulate partial messages here
+
         while (client_running && !StopResponceTaking) {
             memset(buffer, 0, sizeof(buffer));
             int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
             if (bytes_received > 0) {
                 buffer[bytes_received] = '\0';
                 string msg(buffer);
+                accumulatedMessage += msg;  // Accumulate the message
 
                 try {
                     size_t start = 0;
-                    while ((start = msg.find('{')) != std::string::npos) {
-                        size_t end = msg.find('}', start);
+                    while ((start = accumulatedMessage.find('{')) != std::string::npos) {
+                        size_t end = accumulatedMessage.find('}', start);
                         if (end == std::string::npos) break;
 
-                        std::string jsonStr = msg.substr(start, end - start + 1);
-                        msg = msg.substr(end + 1);  // Move to the next JSON
+                        std::string jsonStr = accumulatedMessage.substr(start, end - start + 1);
+                        accumulatedMessage = accumulatedMessage.substr(end + 1);  // Move to the next JSON
+
+                        std::cout << "[Debug] JSON String: " << jsonStr << std::endl;  // Print the JSON string
 
                         json j = json::parse(jsonStr);
                         if (j.contains("type")) {
@@ -73,7 +76,6 @@ namespace Client {
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
-                                std::cout << "Received Opponent's score: " << oppScore << "\n";
                                 RecieveOpponentScore(oppScore);
                             }
                             else if (msgType == "SHAPE_ASSIGN" || msgType == "NEW_SHAPE") {
@@ -81,11 +83,10 @@ namespace Client {
                                 std::cout << "Received shape type: " << shapeType << "\n";
                                 shape.push_back(static_cast<int>(shapeType));
                                 // Convert to your Tetromino class or store the shape
-                            
                             }
                             else if (msgType == "Tostart") {
-								bool start = j["bool"];
-                                std::cout << "Recieved start: " << start << "\n";
+                                bool start = j["bool"];
+                                std::cout << "Received start: " << start << "\n";
                                 startperm = true;
                             }
                         }

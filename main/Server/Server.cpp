@@ -275,7 +275,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             continue;
 
         // Process socket 1 if there is activity.
-        if (FD_ISSET(clientSocket1, &readfds) || FD_ISSET(clientSocket2, &readfds)) {
+        if (FD_ISSET(clientSocket1, &readfds)) {
             int bytesRead = recv(clientSocket1, buffer, sizeof(buffer) - 1, 0);
             if (bytesRead > 0) {
                 buffer[bytesRead] = '\0';
@@ -329,6 +329,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         response["type"] = "SCORE_RESPONSE";
                         response["score"] = score1;
                         std::string responseStr = response.dump();
+                        std::cout << "Sending score to client";
 
                         std::cout << "[Server] Sending SCORE_RESPONSE: " << responseStr << "\n";
                         std::cout << "[Debug] Sending on socket: " << clientSocket1 << "\n";
@@ -415,6 +416,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         json response;
                         response["type"] = "SCORE_RESPONSE";
                         response["score"] = score2;
+						std::cout << "Sending score to client";
                         std::string responseStr = response.dump();
 
                         send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
