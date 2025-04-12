@@ -132,6 +132,11 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
 	// Main loop
 	while (running) {
+		//Client recieves the start permission from the server and starts the game
+		if (Client::startperm == true) {
+			cout << "Starting game..." << endl;
+			running = false; // Close the menu after starting the game
+		}
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) {
 				running = false;
@@ -158,17 +163,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 							std::thread notifyThread([]() {
 								std::cout << "Starting thread to notify server..." << std::endl;
 								string server_ip = discoverServer();  // Assuming discoverServer() updates the global server_ip
-								std::cout << "wait started";
-								SDL_Delay(2000);
-								std::cout << "wait finished";
-								std::cout << Client::startperm << endl;
-								if (Client::startperm == true) {
-									cout << "Starting game..." << endl;
-									running = false; // Close the menu after starting the game
-									
-									
 								
-								}
 								if (!Client::notifyStartGame()) {  // Call without parameters
 									std::cerr << "Failed to notify server to start game session." << std::endl;
 								}
