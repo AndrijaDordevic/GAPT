@@ -19,8 +19,9 @@ public:
     // Updates the timer once per second, returning the current time string.
     std::string UpdateTime() {
         Uint32 currentTime = SDL_GetTicks();
-        if (currentTime > lastUpdateTime + 1000) {
-            lastUpdateTime = currentTime;
+        // Check if at least 1000ms have passed since last update.
+        if (currentTime >= lastUpdateTime + 1000) {
+            lastUpdateTime += 1000;
             if (timeLeft > 0)
                 timeLeft--;
             timeStr = std::to_string(timeLeft / 60) + ":" +
@@ -32,6 +33,8 @@ public:
 
     // Returns whether the timer has run out.
     bool isTimeUp() const { return timeLeft <= 0; }
+
+    void GameOverAction();
 };
 
 #endif // TIMER_HPP

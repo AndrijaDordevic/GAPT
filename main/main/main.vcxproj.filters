@@ -74,5 +74,8 @@
     <ClInclude Include="ClearGrid.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Main.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

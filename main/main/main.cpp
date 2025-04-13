@@ -73,14 +73,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     cleanupSDL(window, renderer);
 }
 
-int main() {
-
-    // Start client thread (remains detached throughout the application)
-    thread clientThread(Client::runClient);
-    //clientThread.detach();
-
-    // Run the menu first. 
-    // The runMenu function could return an int or enum indicating the selected menu option.
+void startMenu() {
     int menuSelection = runMenu(nullptr, nullptr);
 
     // If the user selected "Start Game", start the game.
@@ -93,5 +86,17 @@ int main() {
         runGame(gameWindow, gameRenderer);
     }
 
+}
+
+int main() {
+
+    // Start client thread (remains detached throughout the application)
+    thread clientThread(Client::runClient);
+    clientThread.detach();
+
+    // Run the menu first. 
+    // The runMenu function could return an int or enum indicating the selected menu option.
+	startMenu();
+    
     return 0;
 }

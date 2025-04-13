@@ -30,6 +30,8 @@ namespace Client {
     bool sendDragCoordinates(const Tetromino& tetromino);
     int sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols);
 
+    void resetClientState();
+
 }
 
 #endif // CLIENT_HPP

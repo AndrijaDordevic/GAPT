@@ -1,2 +1,16 @@
-﻿  ClearGrid.cpp
+﻿  Client.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(138,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(169,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(195,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(247,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  DragBlock.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(31,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(32,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(44,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(45,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+  Main.cpp
+  Menu.cpp
+  Tetromino.cpp
+  Generating Code...
+Window.obj : warning LNK4099: PDB '' was not found with 'Window.obj' or at ''; linking object as if no debug info
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

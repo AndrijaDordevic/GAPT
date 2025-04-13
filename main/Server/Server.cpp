@@ -179,7 +179,7 @@ void broadcastIP(const std::string& ip) {
 
 // Timer thread function for a session
 void timerThread(int clientSocket1, int clientSocket2) {
-    Timer sessionTimer(180);  // Create a timer instance for 3 minutes
+    Timer sessionTimer(20);  // Create a timer instance for 3 minutes
 
     while (!sessionTimer.isTimeUp()) {
         std::string currentTimeStr = sessionTimer.UpdateTime();
@@ -197,16 +197,23 @@ void timerThread(int clientSocket1, int clientSocket2) {
         std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait approximately 1 second
     }
 
-    // When the time is up, perform a game-over action.
-    //GameOverAction();
 
     // Optionally notify clients that time is up.
-    json j;
-    j["type"] = "GAME_OVER";
-    j["message"] = "Time's up! The game is over!";
-    std::string gameOverMsg = j.dump();
-    send(clientSocket1, gameOverMsg.c_str(), gameOverMsg.size(), 0);
-    send(clientSocket2, gameOverMsg.c_str(), gameOverMsg.size(), 0);
+    // For Client 1:
+    json j1;
+    j1["type"] = "GAME_OVER";
+    j1["message"] = "Time's up! The game is over!";
+    j1["score"] = score1;
+    std::string gameOverMsg1 = j1.dump();
+    send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
+
+    // For Client 2:
+    json j2;
+    j2["type"] = "GAME_OVER";
+    j2["message"] = "Time's up! The game is over!";
+    j2["score"] = score2;
+    std::string gameOverMsg2 = j2.dump();
+    send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
 }
 
 // Session handler: handles communication between two paired clients.

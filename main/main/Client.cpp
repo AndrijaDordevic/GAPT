@@ -8,6 +8,9 @@
 #include <atomic>
 #include <fstream>
 #include <nlohmann/json.hpp>  // Make sure to include this for JSON parsing
+#include "Main.hpp"
+#include "Menu.hpp"
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -37,6 +40,7 @@ namespace Client {
     std::vector<int> shape = { 0,1,2 };
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
+
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
@@ -69,6 +73,12 @@ namespace Client {
                                 TimerBuffer = j["time"];
                             }
                             else if (msgType == "GAME_OVER") {
+                                // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
+                                std::string finalScore = j["score"].dump();
+                                std::string finalMessage = "Game Over! Your score: " + finalScore;
+
+                                // Display the message box. 
+                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
                                 client_running = false;
                                 break;
                             }
@@ -272,5 +282,16 @@ namespace Client {
         else {
             cerr << "Could not find server automatically!" << endl;
         }
+    }
+
+    void resetClientState() {
+        client_running = true;
+        TimerBuffer = "";
+        ScoreBuffer = "";
+        startperm = false;
+        waitingForSession = false;
+        StopResponceTaking = false;
+        shape.clear();
+        client_socket = -1;
     }
 }

@@ -10,7 +10,7 @@
 #include <SDL3_image/SDL_image.h>
 #include "TextRender.hpp"
 #include "Client.hpp"
-#include "shapes.hpp"
+#include "Shapes.hpp"
 // Global flags and spawn data
 bool draggingInProgress = false;
 bool CanDrag = false;

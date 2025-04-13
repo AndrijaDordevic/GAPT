@@ -145,6 +145,7 @@
     <ClInclude Include="ClearGrid.hpp" />
     <ClInclude Include="Client.hpp" />
     <ClInclude Include="Discovery.hpp" />
+    <ClInclude Include="Main.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="DragBlock.hpp" />
