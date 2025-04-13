@@ -43,6 +43,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
             }
             DragDrop(event); // Handle drag events
             updateClearGridButton(event);
+
         }
 
         // Check client connection status
@@ -62,6 +63,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
         RenderTetrominos(renderer);
+		runClearGridButton(renderer);
 
         // Render timer text
         timerText.renderText(735, 47);

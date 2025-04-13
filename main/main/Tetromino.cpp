@@ -191,6 +191,7 @@ void RenderTetrominos(SDL_Renderer* ren) {
 
 			if (block.texture) {
 				SDL_RenderTexture(ren, block.texture, nullptr, &rect);
+
 			}
 			else {
 				// Fallback: Color if no texture

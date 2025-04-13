@@ -16,6 +16,8 @@ extern SDL_Texture* cyanTexture;
 
 
 SDL_Texture* LoadMenuOptionTextureSelected(SDL_Renderer* ren);
+SDL_Texture* LoadClearGridTexture(SDL_Renderer* ren);
+SDL_Texture* LoadClearGridTextureS(SDL_Renderer* ren);
 SDL_Texture* LoadGameTexture(SDL_Renderer* ren);
 SDL_Texture* LoadMenuTexture(SDL_Renderer* ren);
 SDL_Texture* LoadMenuOptionTexture(SDL_Renderer* ren);

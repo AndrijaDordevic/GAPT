@@ -26,7 +26,31 @@ SDL_Texture* LoadGameTexture(SDL_Renderer* ren) {
 	return texture;
 
 }
+SDL_Texture* LoadClearGridTextureS(SDL_Renderer* ren) {
 
+	const char* path = "Assets/ClearGridSelected.png";
+
+	SDL_Texture* texture = IMG_LoadTexture(ren, path);
+	if (!texture) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
+
+	return texture;
+
+}
+
+SDL_Texture* LoadClearGridTexture(SDL_Renderer* ren) {
+
+	const char* path = "Assets/ClearGrid.png";
+
+	SDL_Texture* texture = IMG_LoadTexture(ren, path);
+	if (!texture) {
+		printf("Create Texture failed: %s\n", SDL_GetError());
+	}
+
+	return texture;
+
+}
 SDL_Texture* LoadMenuTexture(SDL_Renderer* ren) {
 
 	const char* path = "Assets/Menu.png";
