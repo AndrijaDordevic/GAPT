@@ -6,6 +6,7 @@
 #include "Menu.hpp"
 #include "Tetromino.hpp"
 #include "Texture.hpp"
+#include "Audio.hpp"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ vector<ClearGridButton> clrButton = {
 
 void clearTetrominos() {
     placedTetrominos.clear();
+    Audio::PlaySoundFile("Assets/Sounds/ClearGrid.mp3");
 }
 
 

@@ -1,5 +1,6 @@
 ﻿#include <SDL3/SDL.h>
 #include "Window.hpp"
+#include "Audio.hpp"
 #include <vector>
 #include <cstdlib>
 #include <ctime>
@@ -344,9 +345,11 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	std::cout << "Score (from server): " << serverScore << " | Total: " << score << std::endl;
 
 
-	// Remove blocks that are in any complete row or column.
+	// Remove cleared blocks from the placed tetrominos.
+	bool anyBlocksCleared = false;
 	auto removeClearedBlocks = [&](std::vector<Tetromino>& container) {
 		for (auto& tetro : container) {
+			auto originalSize = tetro.blocks.size();
 			auto it = std::remove_if(tetro.blocks.begin(), tetro.blocks.end(),
 				[&](const Block& block) {
 					int col = (block.x - gridStartX) / BLOCK_SIZE;
@@ -356,15 +359,23 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 					return removeRow || removeCol;
 				});
 			tetro.blocks.erase(it, tetro.blocks.end());
+			if (tetro.blocks.size() < originalSize) {
+				anyBlocksCleared = true;
+			}
 		}
-		// Remove any tetromino that has lost all of its blocks.
 		container.erase(std::remove_if(container.begin(), container.end(),
 			[](const Tetromino& t) { return t.blocks.empty(); }),
 			container.end());
 		};
 
-	// Remove cleared blocks from the placed tetrominos.
+	// Run the clearing logic
 	removeClearedBlocks(placedTetrominos);
+
+	// ✅ Play sound **only if blocks were actually cleared**
+	if (anyBlocksCleared) {
+		Audio::PlaySoundFile("Assets/Sounds/BlocksPop.mp3");
+	}
+
 }
 
 

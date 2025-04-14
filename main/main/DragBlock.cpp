@@ -4,6 +4,7 @@
 #include "Window.hpp"
 #include <vector>
 #include <algorithm>
+#include "Audio.hpp"
 
 
 int currentMaxLayer = 0;
@@ -80,6 +81,8 @@ void DragDrop(SDL_Event& event) {
                     [&](const Tetromino& t) { return &t == draggedTetromino; });
                 tetrominos.erase(it, tetrominos.end());
                 spawnedCount--;
+                Audio::PlaySoundFile("Assets/Sounds/BlockPlace.mp3");
+
                 // Send the updated coordinates to the server.
                 
             }

@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)\main;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,7 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\External\SDL\SDL3-3.2.4\include;$(ProjectDir)..\External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)..\External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\External\SDL\SDL3-3.2.4\include;$(ProjectDir)..\External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)..\External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\include;C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\miniaudio.h\include;$(ProjectDir)\main</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Audio.cpp" />
     <ClCompile Include="ClearGrid.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Discovery.cpp" />
@@ -142,6 +146,9 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="ClearGrid.hpp" />
     <ClInclude Include="Client.hpp" />
     <ClInclude Include="Discovery.hpp" />

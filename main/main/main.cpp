@@ -11,9 +11,10 @@
 #include <iostream>
 #include <cstdlib>
 #include "Texture.hpp"
+#include "Audio.hpp"
 
 using namespace std;
-
+bool BGMRunning = false;
 // Function that runs the game loop.
 void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     if (!initializeSDL(window, renderer)) {
@@ -35,6 +36,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     bool running = true;
     SDL_Event event;
 
+    Audio::Init();
     // Main game loop
     while (running) {
         while (SDL_PollEvent(&event)) {
@@ -70,8 +72,13 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
-    }
+        if (!BGMRunning) {
+            Audio::PlaySoundFile("Assets/Sounds/BackgroundMusic.mp3");
+            BGMRunning = true;
+        }
 
+    }
+    //Audio::Shutdown();
     cleanupSDL(window, renderer);
 }
 

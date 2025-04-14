@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "Menu.hpp"
+#include "Audio.hpp"
 #include <SDL3/SDL.h>
 #include <iostream>
 #include <vector>
@@ -168,6 +169,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 					menuItems[i].isHovered = isMouseOver(mouseX, mouseY, menuItems[i].rect);
 
 					if (menuItems[i].isHovered && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+						Audio::PlaySoundFile("Assets/Sounds/ButtonClick.mp3");
 						if (i == 2) {
 							exit(EXIT_SUCCESS); // Exit
 						}

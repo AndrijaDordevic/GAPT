@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>  // Make sure to include this for JSON parsing
 #include "Main.hpp"
 #include "Menu.hpp"
+#include "Audio.hpp"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -73,6 +74,7 @@ namespace Client {
                                 TimerBuffer = j["time"];
                             }
                             else if (msgType == "GAME_OVER") {
+                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
                                 // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
                                 std::string finalScore = j["score"].dump();
                                 std::string finalMessage = "Game Over! Your score: " + finalScore;
