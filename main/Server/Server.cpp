@@ -179,7 +179,7 @@ void broadcastIP(const std::string& ip) {
 
 // Timer thread function for a session
 void timerThread(int clientSocket1, int clientSocket2) {
-    Timer sessionTimer(20);  // Create a timer instance for 3 minutes
+    Timer sessionTimer(50);  // Create a timer instance for 3 minutes
 
     while (!sessionTimer.isTimeUp()) {
         std::string currentTimeStr = sessionTimer.UpdateTime();
@@ -321,10 +321,15 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         int totalCleared = static_cast<int>(rows.size() + cols.size());
                         double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
                         int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
+                        std::cout << "[Server] Total Cleared is  " << totalCleared << "\n";
+                        std::cout << "[Server] The multiplier is " << multiplier << "\n";
+                        std::cout << "[Server] Total earned score: " << earnedScore << "\n";
                         if (earnedScore > 400) {
                             score1 += 400;
                         }
                         else {
+                            std::cout << score2;
+                            std::cout << earnedScore;
                             score1 += earnedScore;
                         }
                         std::cout << "[Server] The score of Client " << clientID1 << " Is " << score1 << "\n";
@@ -349,7 +354,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         updateMsg["opponentScore"] = score1;  
 
                         std::string updateStr = updateMsg.dump();
-                        send(clientSocket2, updateStr.c_str(), updateStr.size(), 0); 
+                        send(clientSocket2, updateStr.c_str(), updateStr.size(), 0);
+
 
                         if (sent <= 0) {
                             std::cerr << "[Server] Failed to send SCORE_RESPONSE to client " << clientID1 << "\n";
@@ -413,6 +419,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                             score2 += 400;
                         }
                         else {
+                            std::cout << score2;
+                            std::cout << earnedScore;
                             score2 += earnedScore;
                         }
                         std::cout << score2;
@@ -425,6 +433,11 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         response["score"] = score2;
 						std::cout << "Sending score to client";
                         std::string responseStr = response.dump();
+
+                        std::cout << "[Server] Sending SCORE_RESPONSE: " << responseStr << "\n";
+                        std::cout << "[Debug] Sending on socket: " << clientSocket1 << "\n";
+                        int sent = send(clientSocket1, responseStr.c_str(), responseStr.size(), 0);
+                        std::cout << "[Server] send() returned: " << sent << "\n";
 
                         send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
 
@@ -447,6 +460,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             else if (bytesRead == 0) {
                 std::cout << "Client " << clientID2 << " disconnected." << std::endl;
                 sessionActive = false;
+
             }
             else {
                 std::cerr << "Error reading from client " << clientID2 << std::endl;
@@ -464,6 +478,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     close(clientSocket2);
 #endif
     std::cout << "Session between client " << clientID1 << " and client " << clientID2 << " ended." << std::endl;
+    score1 = 0;
+    score2 = 0;
 }
 
 

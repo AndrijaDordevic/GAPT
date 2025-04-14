@@ -87,7 +87,7 @@ std::string discoverServer() {
     std::cout << "Waiting for server broadcast...\n";
 
 #ifdef _WIN32
-    DWORD timeout = 5000;
+    DWORD timeout = 10000;
     setsockopt(udp_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 #else
     struct timeval tv;

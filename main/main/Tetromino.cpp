@@ -337,7 +337,8 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	if (!clearedRowsVec.empty() || !clearedColsVec.empty()) {
 		std::cout << "Sending score request...\n";
 		serverScore = Client::sendClearedLinesAndGetScore(clearedRowsVec, clearedColsVec);
-		score += serverScore;
+		score = serverScore;
+		SDL_Delay(100); // Optional delay to allow server to process
 	}
 
 	std::cout << "Score (from server): " << serverScore << " | Total: " << score << std::endl;
