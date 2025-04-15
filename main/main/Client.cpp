@@ -77,7 +77,15 @@ namespace Client {
                                 Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
                                 // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
                                 std::string finalScore = j["score"].dump();
-                                std::string finalMessage = "Game Over! Your score: " + finalScore;
+                            std:string finalOutcome = j["outcome"].get<std::string>();
+                                std::string finalMessage;
+
+                                if (finalOutcome == "draw!") {
+                                    finalMessage = "Game Over! Its a " + finalOutcome + " Your score: " + finalScore;
+                                }
+                                else {
+                                    finalMessage = "Game Over! You " + finalOutcome + " Your score: " + finalScore;
+                                }
 
                                 // Display the message box. 
                                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);

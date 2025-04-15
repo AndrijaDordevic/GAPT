@@ -199,20 +199,61 @@ void timerThread(int clientSocket1, int clientSocket2) {
 
     // Optionally notify clients that time is up.
     // For Client 1:
-    json j1;
-    j1["type"] = "GAME_OVER";
-    j1["message"] = "Time's up! The game is over!";
-    j1["score"] = score1;
-    std::string gameOverMsg1 = j1.dump();
-    send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
 
-    // For Client 2:
-    json j2;
-    j2["type"] = "GAME_OVER";
-    j2["message"] = "Time's up! The game is over!";
-    j2["score"] = score2;
-    std::string gameOverMsg2 = j2.dump();
-    send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+    if (score1 > score2){
+        json j1;
+        j1["type"] = "GAME_OVER";
+        j1["message"] = "Time's up! The game is over! You Won! ";
+        j1["score"] = score1;
+		j1["outcome"] = "win!";
+        std::string gameOverMsg1 = j1.dump();
+        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
+
+        json j2;
+        j2["type"] = "GAME_OVER";
+        j2["message"] = "Time's up! The game is over! You Lost! ";
+		j2["outcome"] = "lose!";
+        j2["score"] = score2;
+        std::string gameOverMsg2 = j2.dump();
+        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+    }
+    else if (score2 > score1) {
+        json j1;
+        j1["type"] = "GAME_OVER";
+        j1["message"] = "Time's up! The game is over! You Lost! ";
+        j1["score"] = score1;
+        j1["outcome"] = "lose!";
+        std::string gameOverMsg1 = j1.dump();
+        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
+
+        // For Client 2:
+        json j2;
+        j2["type"] = "GAME_OVER";
+        j2["message"] = "Time's up! The game is over! You Won! ";
+        j2["score"] = score2;
+        j2["outcome"] = "win!";
+        std::string gameOverMsg2 = j2.dump();
+        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+    }
+    else if (score1 == score2) {
+        json j1;
+        j1["type"] = "GAME_OVER";
+        j1["message"] = "Time's up! The game is over! Its a draw! ";
+        j1["score"] = score1;
+        j1["outcome"] = "draw!";
+        std::string gameOverMsg1 = j1.dump();
+        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
+
+        // For Client 2:
+        json j2;
+        j2["type"] = "GAME_OVER";
+        j2["message"] = "Time's up! The game is over! Its a draw! ";
+        j2["score"] = score2;
+        j2["outcome"] = "draw!";
+        std::string gameOverMsg2 = j2.dump();
+        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+    }
+    
 }
 
 // Session handler: handles communication between two paired clients.
