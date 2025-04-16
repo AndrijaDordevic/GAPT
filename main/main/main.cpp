@@ -15,6 +15,10 @@
 
 using namespace std;
 bool BGMRunning = false;
+
+SDL_Window* gameWindow = nullptr;
+SDL_Renderer* gameRenderer = nullptr;
+
 // Function that runs the game loop.
 void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     if (!initializeSDL(window, renderer)) {
@@ -32,6 +36,8 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     // Create text rendering object for timer
     SDL_Color white = { 255, 255, 255, 255 };
     TextRender timerText(renderer, "arial.ttf", 28);
+    SDL_Texture* ClearGridSelect = LoadClearGridTexture(renderer);
+    SDL_Texture* ClearGridSelectS = LoadClearGridTextureS(renderer);
 
     bool running = true;
     SDL_Event event;
@@ -64,8 +70,10 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
+        runClearGridButton(renderer, ClearGridSelect,ClearGridSelectS);
         RenderTetrominos(renderer);
-		runClearGridButton(renderer);
+
+
 
         // Render timer text
         timerText.renderText(735, 47);
@@ -95,10 +103,6 @@ int main() {
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
             // Create SDL window and renderer for the game.
-            SDL_Window* gameWindow = nullptr;
-            SDL_Renderer* gameRenderer = nullptr;
-
-
             runGame(gameWindow, gameRenderer);
 		}
 		else if (menuSelection == 2) {

@@ -42,6 +42,8 @@ namespace Client {
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
 	bool gameOver = false;
+    bool initialized = false;
+	int spawnedCount = 0;
 
     void resetClientState() {
         client_running = true;
@@ -55,6 +57,9 @@ namespace Client {
 		state::running = true;
 		state::closed = false;
         gameOver = false;
+		initialized = false;
+		spawnedCount = 0;
+
         //client_socket = -1;
     }
 
@@ -107,6 +112,8 @@ namespace Client {
                                 std::cout << "Received start: " << start << "\n";
                                 //shape.clear();
                                 startperm = true;
+                                tetrominos.clear();
+								placedTetrominos.clear();
                             }
                             else if (msgType == "GAME_OVER") {
                                 Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");

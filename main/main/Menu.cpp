@@ -31,6 +31,8 @@ bool displayWaitingMessage = false;
 SDL_Window* windowm = nullptr;
 SDL_Renderer* rendererm = nullptr;
 
+
+
 // Menu item structure
 struct MenuItem {
 	SDL_FRect rect;
@@ -45,6 +47,7 @@ struct MenuItem {
 void initializeMenuWindowAndRenderer() {
 	windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	rendererm = SDL_CreateRenderer(windowm, NULL);
+
 }
 
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
@@ -93,11 +96,8 @@ void cleanupTextures() {
 }
 
 // Render menu
-void renderMenu(SDL_Renderer* renderer) {
+void renderMenu(SDL_Renderer* renderer, SDL_Texture* menuTexture, SDL_Texture* menuOptionTexture, SDL_Texture* menuOptionTextureS) {
 	int textX = 0;
-	SDL_Texture* menuTexture = LoadMenuTexture(renderer);
-	SDL_Texture* menuOptionTexture = LoadMenuOptionTexture(renderer);
-	SDL_Texture* menuOptionTextureS = LoadMenuOptionTextureSelected(renderer);
 	SDL_RenderTexture(renderer, menuTexture, nullptr, nullptr);
 	SDL_Color white = { 255, 255, 255, 255 };
 	TextRender waitingText(renderer, "arial.ttf", 28);
@@ -136,6 +136,11 @@ bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect) {
 int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 	SDL_Event event;
 	int i = 0;
+
+	SDL_Texture* menuTexture = LoadMenuTexture(rendererm);
+	SDL_Texture* menuOptionTexture = LoadMenuOptionTexture(rendererm);
+	SDL_Texture* menuOptionTextureS = LoadMenuOptionTextureSelected(rendererm);
+
 	// Initialize TTF
 	if (TTF_Init() == false) {
 		cerr << "Failed to initialize TTF." << SDL_GetError << endl;
@@ -206,7 +211,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 		SDL_RenderClear(rendererm);
 
 		// Render menu
-		renderMenu(rendererm);
+		renderMenu(rendererm, menuTexture, menuOptionTexture, menuOptionTextureS);
 
 		SDL_RenderPresent(rendererm);
 		SDL_Delay(16);

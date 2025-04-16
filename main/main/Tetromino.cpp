@@ -12,6 +12,8 @@
 #include "TextRender.hpp"
 #include "Client.hpp"
 #include "Shapes.hpp"
+#include <iostream>
+#include <vector>
 // Global flags and spawn data
 bool draggingInProgress = false;
 bool CanDrag = false;
@@ -21,12 +23,11 @@ bool searched = false;
 
 int spawnX = 0;
 int spawnYPositions[3] = { 0, 0, 0 };
-int spawnedCount = 0;
 int score = 0;
 int OpponentScore = 0;
 
 const int POINTS_PER_LINE = 100;
-
+int randomShapeIndex;
 
 
 // Store tetrominos by value instead of pointers.
@@ -39,15 +40,18 @@ bool IsPositionFree(int spawnY) {
 	for (const auto& tetromino : tetrominos) {
 		for (const auto& block : tetromino.blocks) {
 			if (block.x == spawnX && block.y == spawnY) {
+				std::cout << "Position is occupied by another tetromino.\n";
 				return false; // Position is already occupied
 			}
 		}
 	}
+	std::cout << "Position is available.\n";
 	return true; // Position is free
 }
 
 void SpawnTetromino() {
-	if (spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
+	std::cout << Client::spawnedCount << std::endl;
+	if (Client::spawnedCount >= 3) return; // Stop spawning after 3 Tetrominoes
 	if (draggingInProgress) return;
 
 	// Tetromino shapes (each shape is a vector of 4 SDL_Points)
@@ -89,7 +93,17 @@ void SpawnTetromino() {
 
 	//Creating a random shape/Color from the vector
 	int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
-	int randomShapeIndex = Client::shape.front();
+	if (Client::shape.empty()) {
+		std::cout << "Shapes vector is empty. Cannot spawn tetromino.\n";
+	}
+	else
+	{
+		randomShapeIndex = Client::shape.front();
+	}
+
+
+
+
 
 	//Creaging tetromino object and assiging a color
 	Tetromino newTetromino;
@@ -105,6 +119,7 @@ void SpawnTetromino() {
 		}
 	}
 	if (chosenSpawnY == -1) {
+
 		// All positions are occupied; do not spawn
 		return;
 	}
@@ -140,10 +155,15 @@ void SpawnTetromino() {
 	// Add the new tetromino to the active container.
 	std::cout << "Tetromino spawned at (" << spawnX << ", " << chosenSpawnY << ")\n";
 	tetrominos.push_back(newTetromino);
-	spawnedCount++;
-	Client::shape.erase(Client::shape.begin());
+	Client::spawnedCount++;
+	if (Client::shape.empty()) {
+		std::cout << "Shapes vector is empty. Cannot remove shape.\n";
+	}
+	else {
+		std::cout << "Shape removed from vector: " << Client::shape.front() << "\n";
+		Client::shape.erase(Client::shape.begin());
+	}
 }
-
 void ReleaseOccupiedPositions() {
 	// Reset positionsOccupied
 	for (int i = 0; i < 3; ++i) {
@@ -255,8 +275,6 @@ void RenderScore(SDL_Renderer* renderer, int localScore, int opponentScore) {
 
 // This function is called in your main loop to handle tetromino spawning.
 void RunBlocks(SDL_Renderer* renderer) {
-	static bool initialized = false;
-
 	// Set spawn positions
 	spawnX = WINDOW_WIDTH - BLOCK_SIZE - 270;
 	spawnYPositions[0] = 90;
@@ -264,12 +282,18 @@ void RunBlocks(SDL_Renderer* renderer) {
 	spawnYPositions[2] = 630;
 
 	// Spawn a new tetromino if conditions are met.
-	if (!initialized) {
+	if (Client::shape.size() == 3) {
 		// Initial spawning of 3 tetrominos
 		for (int i = 0; i < 3; i++) {
 			SpawnTetromino();
 		}
-		initialized = true;
+		if (Client::shape.empty()) {
+			std::cout << "Shapes vector is empty. Cannot remove shape.\n";
+		}
+		else {
+			std::cout << "Shape removed from vector: " << Client::shape.front() << "\n";
+			Client::shape.erase(Client::shape.begin());
+		}
 	}
 
 	// Check for open spawn positions and refill up to 3 active tetrominos

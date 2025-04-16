@@ -15,7 +15,8 @@ namespace Client {
     extern std::string TimerBuffer;
     extern bool startperm;
     extern bool gameOver;
-
+    extern bool initialized;
+    extern int spawnedCount;
 
 
     // Function to start the client.

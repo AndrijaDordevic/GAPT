@@ -28,12 +28,9 @@ void clearTetrominos() {
 }
 
 
-int runClearGridButton(SDL_Renderer* renderer) {
+int runClearGridButton(SDL_Renderer* renderer, SDL_Texture* ClearGridSelect, SDL_Texture* ClearGridSelectS) {
     SDL_Event event;
     bool running = true;
-    SDL_Texture* ClearGridSelect = LoadClearGridTexture(renderer);
-    SDL_Texture* ClearGridSelectS = LoadClearGridTextureS(renderer);
-
 
                 for (auto& button : clrButton) {
                     

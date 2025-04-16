@@ -80,7 +80,7 @@ void DragDrop(SDL_Event& event) {
                 auto it = std::remove_if(tetrominos.begin(), tetrominos.end(),
                     [&](const Tetromino& t) { return &t == draggedTetromino; });
                 tetrominos.erase(it, tetrominos.end());
-                spawnedCount--;
+                Client::spawnedCount--;
                 Audio::PlaySoundFile("Assets/Sounds/BlockPlace.mp3");
 
                 // Send the updated coordinates to the server.

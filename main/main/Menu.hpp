@@ -13,7 +13,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer);
 
 bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect);
 
-void renderMenu(SDL_Renderer* renderer);
+void renderMenu(SDL_Renderer* renderer, SDL_Texture* menuTexture, SDL_Texture* menuOptionTexture, SDL_Texture* menuOptionTextureS);
 
 bool loadFontTexture();
 
