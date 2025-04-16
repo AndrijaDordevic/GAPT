@@ -1,18 +1,7 @@
-﻿  ClearGrid.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\ClearGrid.cpp(32,15): warning C4101: 'event': unreferenced local variable
-  Client.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(94,29): warning C4102: 'std': unreferenced label
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(163,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(194,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(220,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(272,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  DragBlock.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(32,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(33,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(45,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(46,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-  Main.cpp
-  Menu.cpp
-  Tetromino.cpp
-  Generating Code...
+﻿  Client.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(115,29): warning C4102: 'std': unreferenced label
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(173,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(204,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(230,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(282,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

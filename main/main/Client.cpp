@@ -41,6 +41,7 @@ namespace Client {
     std::vector<int> shape = { 0,1,2 };
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
+	bool gameOver = false;
 
     void resetClientState() {
         client_running = true;
@@ -53,6 +54,7 @@ namespace Client {
         shape.clear();
 		state::running = true;
 		state::closed = false;
+        gameOver = false;
         //client_socket = -1;
     }
 
@@ -87,26 +89,6 @@ namespace Client {
                             if (msgType == "TIME_UPDATE") {
                                 TimerBuffer = j["time"];
                             }
-                            else if (msgType == "GAME_OVER") {
-                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
-                                // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
-                                std::string finalScore = j["score"].dump();
-                            std:string finalOutcome = j["outcome"].get<std::string>();
-                                std::string finalMessage;
-
-                                if (finalOutcome == "draw!") {
-                                    finalMessage = "Game Over! Its a " + finalOutcome + " Your score: " + finalScore;
-                                }
-                                else {
-                                    finalMessage = "Game Over! You " + finalOutcome + " Your score: " + finalScore;
-                                }
-
-                                // Display the message box. 
-                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
-                                client_running = false;
-								resetClientState();
-                                break;
-                            }
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = jsonStr;
                             }
@@ -123,7 +105,35 @@ namespace Client {
                             else if (msgType == "Tostart") {
                                 bool start = j["bool"];
                                 std::cout << "Received start: " << start << "\n";
+                                //shape.clear();
                                 startperm = true;
+                            }
+                            else if (msgType == "GAME_OVER") {
+                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
+                                // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
+                                std::string finalScore = j["score"].dump();
+                            std:string finalOutcome = j["outcome"].get<std::string>();
+                                std::string finalMessage;
+
+                                if (finalOutcome == "draw!") {
+                                    finalMessage = "Game Over! Its a " + finalOutcome + " Your score: " + finalScore;
+                                }
+                                else {
+                                    finalMessage = "Game Over! You " + finalOutcome + " Your score: " + finalScore;
+                                }
+
+                                // Display the message box. 
+                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
+                                gameOver = true;
+                                resetClientState();
+                                accumulatedMessage.clear();
+                                break;
+                            }
+                            else if (msgType == "SESSION_OVER") {
+                                std::cout << "Session Ended!"  << "\n";
+                                resetClientState();
+                                accumulatedMessage.clear();
+                                continue;
                             }
                         }
                     }
@@ -237,7 +247,7 @@ namespace Client {
         std::cout << "Connected to server" << endl;
         thread handle_thread(handle_server, client_socket);
         while (client_running) {
-            this_thread::sleep_for(chrono::milliseconds(100));
+            this_thread::sleep_for(chrono::milliseconds(1000));
         }
         std::cout << "Disconnecting..." << endl;
 #ifdef _WIN32

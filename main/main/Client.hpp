@@ -14,6 +14,7 @@ namespace Client {
     extern std::atomic<bool> client_running;
     extern std::string TimerBuffer;
     extern bool startperm;
+    extern bool gameOver;
 
 
 

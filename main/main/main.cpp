@@ -49,8 +49,8 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         }
 
         // Check client connection status
-        if (!Client::client_running) {
-            cout << "Client disconnected, closing game..." << endl;
+        if (Client::gameOver) {
+            cout << "Game over, closing game..." << endl;
             running = false;
         }
         std::string displayTimer = Client::TimerBuffer.empty() ? "Starting" : Client::TimerBuffer;
@@ -106,6 +106,7 @@ int main() {
 		}
 
     }
+    SDL_Quit();
     
     return 0;
 }

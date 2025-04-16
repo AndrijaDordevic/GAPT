@@ -36,6 +36,7 @@ using json = nlohmann::json;
 int score1 = 0;
 int score2 = 0;
 
+
 ShapeType shape;
 json shapeMsg;
 
@@ -44,10 +45,32 @@ std::atomic<bool> stopBroadcast(false);
 // Global client ID counter
 std::atomic<int> clientIDCounter(0);
 
+
+struct ClientInfo {
+    int clientSocket;
+    bool ready;
+};
+
 // Thread-safe waiting clients for clients waiting to start a session.
 // The unordered_map maps clientID to client_socket.
 std::mutex waitingMutex;
-std::unordered_map<int, int> waitingClients;  // Changed from std::queue
+std::unordered_map<int, ClientInfo> waitingClients;  // Changed from std::queue
+
+// A structure to hold pairing information.
+struct PairInfo {
+    int partnerID;
+    int partnerSocket;
+};
+
+
+
+
+// Global pairing map (clientID -> PairInfo) used to pass pairing info to waiting clients.
+std::unordered_map<int, PairInfo> pairingMap;
+
+// Condition variable to signal a waiting client when it has been paired.
+std::condition_variable waitingCV;
+
 
 // Function to retrieve the local IP address
 std::string getLocalIP() {
@@ -177,8 +200,34 @@ void broadcastIP(const std::string& ip) {
 #endif
 }
 
+
+
+void displayWaitingClients() {
+    std::lock_guard<std::mutex> lock(waitingMutex);
+    if (waitingClients.empty()) {
+        std::cout << "No clients waiting." << std::endl;
+    }
+    else {
+        std::cout << "Clients waiting: ";
+        for (const auto& entry : waitingClients) {
+            std::cout << "ClientID " << entry.first
+                << " (socket = " << entry.second.clientSocket
+                << ", ready = " << (entry.second.ready ? "true" : "false")
+                << ") ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void waitingClientsMonitor() {
+    while (true) {
+        displayWaitingClients();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 // Timer thread function for a session
-void timerThread(int clientSocket1, int clientSocket2) {
+void timerThread(int clientSocket1, int clientSocket2, bool &sessionActive) {
     Timer sessionTimer(10);  // Create a timer instance for 3 minutes
 
     while (!sessionTimer.isTimeUp()) {
@@ -253,11 +302,22 @@ void timerThread(int clientSocket1, int clientSocket2) {
         std::string gameOverMsg2 = j2.dump();
         send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
     }
-    
+
+    json sessionEndMsg;
+    sessionEndMsg["type"] = "SESSION_OVER";
+    sessionEndMsg["message"] = "Session ended. Press START_GAME to play again.";
+    std::string endMsgStr = sessionEndMsg.dump();
+
+    // Send the final session termination message to both clients.
+    send(clientSocket1, endMsgStr.c_str(), endMsgStr.size(), 0);
+    send(clientSocket2, endMsgStr.c_str(), endMsgStr.size(), 0);
+	sessionActive = false;
+
 }
 
 // Session handler: handles communication between two paired clients.
 void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int clientID2) {
+    bool sessionActive = true;
     // Notify both clients of session start.
     std::string sessionMessage1 = "You are now in a session with client " + std::to_string(clientID2) + "\n";
     std::string sessionMessage2 = "You are now in a session with client " + std::to_string(clientID1) + "\n";
@@ -270,7 +330,6 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, static_cast<int>(ShapeType::Count) - 1);
 
-    // Assign shapes to clients.
     ShapeType shape1 = static_cast<ShapeType>(dist(gen));
     ShapeType shape2 = static_cast<ShapeType>(dist(gen));
     ShapeType shape3 = static_cast<ShapeType>(dist(gen));
@@ -283,19 +342,26 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     shapeMsg2["shapeType"] = static_cast<int>(shape2);
     shapeMsg3["type"] = "SHAPE_ASSIGN";
     shapeMsg3["shapeType"] = static_cast<int>(shape3);
-    send(clientSocket1, shapeMsg1.dump().c_str(), shapeMsg1.dump().size(), 0);
-    send(clientSocket2, shapeMsg1.dump().c_str(), shapeMsg1.dump().size(), 0);
-    send(clientSocket1, shapeMsg2.dump().c_str(), shapeMsg2.dump().size(), 0);
-    send(clientSocket2, shapeMsg2.dump().c_str(), shapeMsg2.dump().size(), 0);
-    send(clientSocket1, shapeMsg3.dump().c_str(), shapeMsg3.dump().size(), 0);
-    send(clientSocket2, shapeMsg3.dump().c_str(), shapeMsg3.dump().size(), 0);
+
+    // Append newline delimiter to each JSON message.
+    std::string shape1Str = shapeMsg1.dump() + "\n";
+    std::string shape2Str = shapeMsg2.dump() + "\n";
+    std::string shape3Str = shapeMsg3.dump() + "\n";
+
+    // Send to both clients.
+    send(clientSocket1, shape1Str.c_str(), shape1Str.size(), 0);
+    send(clientSocket2, shape1Str.c_str(), shape1Str.size(), 0);
+    send(clientSocket1, shape2Str.c_str(), shape2Str.size(), 0);
+    send(clientSocket2, shape2Str.c_str(), shape2Str.size(), 0);
+    send(clientSocket1, shape3Str.c_str(), shape3Str.size(), 0);
+    send(clientSocket2, shape3Str.c_str(), shape3Str.size(), 0);
 
     // Launch the timer thread for this specific session.
-    std::thread t(timerThread, clientSocket1, clientSocket2);
+    std::thread t(timerThread, clientSocket1, clientSocket2, std::ref(sessionActive));
     t.detach();
 
     char buffer[1024];
-    bool sessionActive = true;
+
 
     while (sessionActive) {
         fd_set readfds;
@@ -498,14 +564,12 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         }
     }
 
-    // Clean up sockets when session ends.
-#ifdef _WIN32
-    closesocket(clientSocket1);
-    closesocket(clientSocket2);
-#else
-    close(clientSocket1);
-    close(clientSocket2);
-#endif
+    {
+        std::lock_guard<std::mutex> lock(waitingMutex);
+        waitingClients.erase(clientID1);
+        waitingClients.erase(clientID2);
+    }
+
     std::cout << "Session between client " << clientID1 << " and client " << clientID2 << " ended." << std::endl;
     score1 = 0;
     score2 = 0;
@@ -515,124 +579,22 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 void clientHandler(int client_socket, int clientID) {
     char buffer[256];
 
-    // First, wait for the client to send the "START_GAME" command.
     while (true) {
-        int bytesRead = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-        if (bytesRead <= 0) {
-            std::cerr << "Client " << clientID << " disconnected or an error occurred." << std::endl;
-            // Remove from waitingClients (if in it).
-            {
-                std::lock_guard<std::mutex> lock(waitingMutex);
-                auto it = waitingClients.find(clientID);
-                if (it != waitingClients.end()) {
-                    waitingClients.erase(it);
-                    std::cout << "Client " << clientID << " was removed from waitingClients due to disconnection." << std::endl;
-                }
-            }
-#ifdef _WIN32
-            closesocket(client_socket);
-#else
-            close(client_socket);
-#endif
-            return;
-        }
-        buffer[bytesRead] = '\0';
-        std::string message(buffer);
-        // Remove newline characters
-        message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
-        message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
-
-        if (message == "START_GAME") {
-            std::cout << "Client " << clientID << " requested to start a game." << std::endl;
-            break;
-        }
-        else {
-            std::cerr << "[Server] Unknown message from client " << clientID << ": " << message << "\n";
-        }
-    }
-
-    // Now the client has requested to start a game.
-    {
-        std::lock_guard<std::mutex> lock(waitingMutex);
-        if (!waitingClients.empty()) {
-            // Pair with an arbitrary waiting client.
-            auto it = waitingClients.begin();
-            int otherID = it->first;
-            int otherSocket = it->second;
-            waitingClients.erase(it);  // Remove the waiting client.
-
-            // Notify both clients about game start.
-            std::string startMsg = "START_GAME";
-            send(otherSocket, startMsg.c_str(), startMsg.size(), 0);
-            send(client_socket, startMsg.c_str(), startMsg.size(), 0);
-
-            // Launch a new session thread for these two clients.
-            std::thread sessionThread(sessionHandler, otherSocket, otherID, client_socket, clientID);
-            sessionThread.detach();
-#ifdef _WIN32
-            HANDLE threadHandle = static_cast<HANDLE>(sessionThread.native_handle());
-            SetThreadPriority(threadHandle, THREAD_PRIORITY_HIGHEST);
-#else
-            sched_param sch_params;
-            sch_params.sched_priority = 80;
-            if (pthread_setschedparam(sessionThread.native_handle(), SCHED_FIFO, &sch_params)) {
-                std::cerr << "Failed to set thread scheduling: insufficient privileges?" << std::endl;
-            }
-#endif
-
-            json StartMsg;
-            StartMsg["type"] = "Tostart";
-            StartMsg["bool"] = true;
-            send(otherSocket, StartMsg.dump().c_str(), StartMsg.dump().size(), 0);
-            send(client_socket, StartMsg.dump().c_str(), StartMsg.dump().size(), 0);
-
-            std::cout << "Paired client " << otherID << " with client " << clientID << std::endl;
-
-            // Return here; sessionThread now takes over communication on both sockets.
-            return;
-        }
-        else {
-            // No client is waiting; add this client to waitingClients.
-            waitingClients.emplace(clientID, client_socket);
-            std::string waitMsg = "Waiting for another client to join...\n";
-            send(client_socket, waitMsg.c_str(), waitMsg.size(), 0);
-        }
-    }
-
-    // --- Start a loop that monitors the waiting client socket.
-    // This loop periodically checks if the waiting client has disconnected.
-    while (true) {
-        fd_set readfds;
-        FD_ZERO(&readfds);
-        FD_SET(client_socket, &readfds);
-        timeval tv;
-        tv.tv_sec = 1;  // 1 second timeout
-        tv.tv_usec = 0;
-
-        int activity = select(client_socket + 1, &readfds, nullptr, nullptr, &tv);
-        if (activity < 0) {
-            std::cerr << "select() error on waiting client " << clientID << std::endl;
-            break;  // Exit on error.
-        }
-        else if (activity == 0) {
-            // Timeout occurred; check if this client is still in waitingClients.
+        // Clean up any stale waiting state for this client.
+        {
             std::lock_guard<std::mutex> lock(waitingMutex);
-            if (waitingClients.find(clientID) == waitingClients.end()) {
-                // The client was paired and removed from waitingClients.
-                break;
-            }
-            // Otherwise, simply continue waiting.
-            continue;
+            waitingClients.erase(clientID);
         }
 
-        if (FD_ISSET(client_socket, &readfds)) {
-            // There is data available.
-            int br = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-            if (br <= 0) {
-                // Error or disconnect detected.
-                std::lock_guard<std::mutex> lock(waitingMutex);
-                waitingClients.erase(clientID);
-                std::cerr << "Waiting client " << clientID << " disconnected." << std::endl;
+        // 1. Wait for the client to send the "START_GAME" command.
+        while (true) {
+            int bytesRead = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+            if (bytesRead <= 0) {
+                std::cerr << "Client " << clientID << " disconnected or an error occurred." << std::endl;
+                {
+                    std::lock_guard<std::mutex> lock(waitingMutex);
+                    waitingClients.erase(clientID);
+                }
 #ifdef _WIN32
                 closesocket(client_socket);
 #else
@@ -640,18 +602,98 @@ void clientHandler(int client_socket, int clientID) {
 #endif
                 return;
             }
+            buffer[bytesRead] = '\0';
+            std::string message(buffer);
+            // Remove newline and carriage return characters.
+            message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
+            message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
+            if (message == "START_GAME") {
+                std::cout << "Client " << clientID << " requested to start a game." << std::endl;
+                break;
+            }
             else {
-                // Optionally process any unexpected messages while waiting.
-                buffer[br] = '\0';
-                std::string extraMsg(buffer);
-                std::cout << "Waiting client " << clientID << " sent an extra message: " << extraMsg << std::endl;
+                std::cerr << "[Server] Unknown message from client " << clientID << ": " << message << "\n";
             }
         }
-    }
 
-    // If the loop exits, it means the client was paired (waitingClients entry was removed).
-    // At this point, the sessionThread has been started for this client.
-    std::cout << "Client " << clientID << " has been paired. Ending waiting loop." << std::endl;
+        int partnerSocket = -1;
+        int partnerID = -1;
+        bool paired = false;
+
+        {
+            std::lock_guard<std::mutex> lock(waitingMutex);
+            // Mark this client as ready by inserting/updating waitingClients.
+            waitingClients[clientID] = { client_socket, true };
+
+            // Search for an eligible waiting partner.
+            for (auto it = waitingClients.begin(); it != waitingClients.end(); ++it) {
+                if (it->first != clientID && it->second.ready) {  // Ensure it's not the same client.
+                    partnerID = it->first;
+                    partnerSocket = it->second.clientSocket;
+                    // Remove both clients from the waiting list.
+                    waitingClients.erase(it);
+                    waitingClients.erase(clientID);
+
+                    // Record the pairing information.
+                    pairingMap[partnerID] = { clientID, client_socket };
+                    pairingMap[clientID] = { partnerID, partnerSocket };
+
+                    paired = true;
+                    waitingCV.notify_all();
+                    std::cout << "Paired client " << partnerID << " with client " << clientID << std::endl;
+                    break;
+                }
+            }
+            // If no eligible partner is found, the client remains in the waiting list.
+            if (!paired) {
+                std::string waitMsg = "Waiting for another client to join...\n";
+                send(client_socket, waitMsg.c_str(), waitMsg.size(), 0);
+            }
+        }
+
+        // Debug: Display the waiting clients (you may want to update displayWaitingClients()).
+        // displayWaitingClients();
+
+        // If pairing was not immediately found, wait for the condition variable signal.
+        if (!paired) {
+            std::unique_lock<std::mutex> lock(waitingMutex);
+            waitingCV.wait(lock, [&]() { return pairingMap.find(clientID) != pairingMap.end(); });
+            PairInfo info = pairingMap[clientID];
+            partnerID = info.partnerID;
+            partnerSocket = info.partnerSocket;
+            pairingMap.erase(clientID);
+            std::cout << "Client " << clientID << " has been paired with client " << partnerID << std::endl;
+        }
+
+        // 3. Send both clients a notification that the session is starting.
+        json startMsgJson;
+        startMsgJson["type"] = "START_GAME";
+        std::string startMsg = startMsgJson.dump() + "\n";
+
+        json tostartMsgJson;
+        tostartMsgJson["type"] = "Tostart";
+        tostartMsgJson["bool"] = true;
+        std::string tostartMsg = tostartMsgJson.dump() + "\n";
+
+        std::cout << "Client " << clientID << " paired with client " << partnerID
+            << ". Sending START_GAME and Tostart messages." << std::endl;
+
+        send(partnerSocket, startMsg.c_str(), startMsg.size(), 0);
+        send(client_socket, startMsg.c_str(), startMsg.size(), 0);
+        send(partnerSocket, tostartMsg.c_str(), tostartMsg.size(), 0);
+        send(client_socket, tostartMsg.c_str(), tostartMsg.size(), 0);
+
+        // Start the session for the paired clients.
+        sessionHandler(partnerSocket, partnerID, client_socket, clientID);
+		// After the session ends, clean up the pairing information.
+		{
+			std::lock_guard<std::mutex> lock(waitingMutex);
+			waitingClients.erase(partnerID);
+			waitingClients.erase(clientID);
+			pairingMap.erase(partnerID);
+			pairingMap.erase(clientID);
+		}
+    }
 }
 
 int main() {
@@ -725,6 +767,9 @@ int main() {
         // Launch a dedicated thread for this client.
         std::thread clientThread(clientHandler, client_socket, uniqueClientID);
         clientThread.detach();
+
+        std::thread monitor(waitingClientsMonitor);
+        monitor.detach();
     }
 
     // Cleanup code (if reached).

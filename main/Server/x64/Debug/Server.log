@@ -5,55 +5,47 @@ C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'i
 C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   (compiling source file 'Server.cpp')
   
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(54,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(100,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(149,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(160,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(194,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(195,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(210,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(218,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(227,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(236,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(245,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(254,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(264,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(265,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(286,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(287,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(288,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(289,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(290,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(291,72): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(336,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(337,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(347,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(348,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(383,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(392,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(402,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(429,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(430,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(440,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(470,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(473,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(481,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(487,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(566,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(567,64): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(586,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(587,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(598,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(688,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(715,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-  Shapes.cpp
-  Timer.cpp
-C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Timer.cpp')
-  
-C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Timer.cpp')
-  
-  Generating Code...
-  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(77,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(123,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(172,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(183,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(243,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(244,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(259,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(267,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(276,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(285,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(294,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(303,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(312,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(313,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(324,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(325,70): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(352,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(353,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(354,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(355,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(356,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(357,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(402,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(403,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(413,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(414,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(449,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(458,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(468,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(495,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(496,90): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(506,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(536,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(539,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(547,78): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(553,76): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(650,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(681,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(682,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(683,64): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(684,64): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(730,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(757,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe
