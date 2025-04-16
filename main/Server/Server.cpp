@@ -179,7 +179,7 @@ void broadcastIP(const std::string& ip) {
 
 // Timer thread function for a session
 void timerThread(int clientSocket1, int clientSocket2) {
-    Timer sessionTimer(50);  // Create a timer instance for 3 minutes
+    Timer sessionTimer(10);  // Create a timer instance for 3 minutes
 
     while (!sessionTimer.isTimeUp()) {
         std::string currentTimeStr = sessionTimer.UpdateTime();

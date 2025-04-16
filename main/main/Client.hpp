@@ -15,6 +15,8 @@ namespace Client {
     extern std::string TimerBuffer;
     extern bool startperm;
 
+
+
     // Function to start the client.
     void start_client(const std::string& server_ip);
 

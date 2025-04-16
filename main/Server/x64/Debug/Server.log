@@ -46,5 +46,14 @@ C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(587,78): warning C4267: 
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(598,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(688,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(715,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-Shapes.obj : warning LNK4099: PDB '' was not found with 'Shapes.obj' or at ''; linking object as if no debug info
+  Shapes.cpp
+  Timer.cpp
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Timer.cpp')
+  
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Timer.cpp')
+  
+  Generating Code...
+  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe

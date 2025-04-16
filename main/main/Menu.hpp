@@ -1,7 +1,12 @@
 #ifndef MENU_H
 #define MENU_H
 
-extern bool closed;
+extern bool displayWaitingMessage;
+
+namespace state {
+	extern bool closed;
+	extern bool running;
+}
 
 // Function declaration
 int runMenu(SDL_Window* window, SDL_Renderer* renderer);
@@ -13,5 +18,7 @@ void renderMenu(SDL_Renderer* renderer);
 bool loadFontTexture();
 
 void cleanupTextures();
+
+void initializeMenuWindowAndRenderer();
 
 #endif

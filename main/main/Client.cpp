@@ -42,6 +42,20 @@ namespace Client {
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
 
+    void resetClientState() {
+        client_running = true;
+        TimerBuffer = "";
+        ScoreBuffer = "";
+        startperm = false;
+        waitingForSession = false;
+        StopResponceTaking = false;
+		displayWaitingMessage = false;
+        shape.clear();
+		state::running = true;
+		state::closed = false;
+        //client_socket = -1;
+    }
+
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
@@ -90,6 +104,7 @@ namespace Client {
                                 // Display the message box. 
                                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
                                 client_running = false;
+								resetClientState();
                                 break;
                             }
                             else if (msgType == "SCORE_RESPONSE") {
@@ -295,14 +310,4 @@ namespace Client {
         }
     }
 
-    void resetClientState() {
-        client_running = true;
-        TimerBuffer = "";
-        ScoreBuffer = "";
-        startperm = false;
-        waitingForSession = false;
-        StopResponceTaking = false;
-        shape.clear();
-        client_socket = -1;
-    }
 }

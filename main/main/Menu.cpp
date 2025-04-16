@@ -22,8 +22,14 @@ TTF_Font* font = nullptr;
 
 SDL_Color textColor = { 0, 0, 0, 255 };
 
-bool closed = false;
-bool startGame = false;
+bool state::closed = false;
+bool state::running = true;
+
+
+bool displayWaitingMessage = false;
+
+SDL_Window* windowm = nullptr;
+SDL_Renderer* rendererm = nullptr;
 
 // Menu item structure
 struct MenuItem {
@@ -34,13 +40,12 @@ struct MenuItem {
 	int textWidth;
 	int textHeight;
 };
-bool running = true;
-bool displayWaitingMessage = false;
-// Create window 
-SDL_Window* windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
-// Create renderer for window
-SDL_Renderer* rendererm = SDL_CreateRenderer(windowm, NULL);
+
+void initializeMenuWindowAndRenderer() {
+	windowm = SDL_CreateWindow("Main Menu", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY);
+	rendererm = SDL_CreateRenderer(windowm, NULL);
+}
 
 // Initialize menu items: Rect pos and size, text and initial isHovered value.
 vector<MenuItem> menuItems = {
@@ -145,16 +150,16 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 
 
 	// Main loop
-	while (running) {
+	while (state::running) {
 		//Client recieves the start permission from the server and starts the game
 		if (Client::startperm == true) {
 			cout << "Starting game..." << endl;
-			running = false; // Close the menu after starting the game
+			state::running = false; // Close the menu after starting the game
 		}
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) {
-				running = false;
-				closed = true;
+				state::running = false;
+				state::closed = true;
 			}
 			else if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
 				exit(EXIT_SUCCESS); // Close the window
