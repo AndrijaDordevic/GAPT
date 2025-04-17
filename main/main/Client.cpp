@@ -94,6 +94,7 @@ namespace Client {
                             }
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = jsonStr;
+                                ScoreBuffer = "";
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
