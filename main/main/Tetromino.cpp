@@ -395,7 +395,7 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	// Run the clearing logic
 	removeClearedBlocks(placedTetrominos);
 
-	// ✅ Play sound **only if blocks were actually cleared**
+	// Play sound **only if blocks were actually cleared**
 	if (anyBlocksCleared) {
 		Audio::PlaySoundFile("Assets/Sounds/BlocksPop.mp3");
 	}

@@ -15,6 +15,7 @@
 
 using namespace std;
 bool BGMRunning = false;
+bool closeGame = false;
 
 SDL_Window* gameWindow = nullptr;
 SDL_Renderer* gameRenderer = nullptr;
@@ -48,6 +49,9 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
+                if(Client::inSession){
+                    closeGame = true;
+                }
             }
             DragDrop(event); // Handle drag events
             updateClearGridButton(event);
@@ -59,7 +63,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
             cout << "Game over, closing game..." << endl;
             running = false;
         }
-        std::string displayTimer = Client::TimerBuffer.empty() ? "Starting" : Client::TimerBuffer;
+        std::string displayTimer = Client::TimerBuffer.empty() ? "Ended" : Client::TimerBuffer;
         timerText.updateText(displayTimer, white);
 
         // Clear screen (background assumed transparent or set elsewhere)
@@ -104,6 +108,9 @@ int main() {
         if (menuSelection == 0) {
             // Create SDL window and renderer for the game.
             runGame(gameWindow, gameRenderer);
+			if (closeGame) {
+				break; // Exit the loop if closeGame is true
+			}
 		}
 		else if (menuSelection == 2) {
             return false;

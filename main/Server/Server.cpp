@@ -16,6 +16,8 @@
 #include "Timer.hpp"
 #include <random>
 #include "Shapes.hpp"
+#include <signal.h>
+
 
 #define NOMINMAX
 #ifdef _WIN32
@@ -27,6 +29,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <pthread.h>
 #include <sys/select.h>
 #endif
@@ -68,7 +72,21 @@ std::unordered_map<int, PairInfo> pairingMap;
 
 // Condition variable to signal a waiting client when it has been paired.
 std::condition_variable waitingCV;
+void ignoreSigpipe() {
+#ifndef _WIN32
+    signal(SIGPIPE, SIG_IGN);
+#endif
+}
 
+//------------------------------------------------------------------------------
+// Safe send wrapper (prevents SIGPIPE)
+int safeSend(int sock, const char* buf, size_t len) {
+#ifdef _WIN32
+    return send(sock, buf, (int)len, 0);
+#else
+    return send(sock, buf, len, MSG_NOSIGNAL);
+#endif
+}
 //----------------------------------------------------------------------------
 // Helper: Retrieve the local IP address.
 std::string getLocalIP() {
@@ -201,126 +219,200 @@ void waitingClientsMonitor() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
+bool isSocketAlive(int sock) {
+    // prepare fd_sets
+#ifdef _WIN32
+    fd_set readfds, exceptfds;
+    FD_ZERO(&readfds);
+    FD_ZERO(&exceptfds);
+    FD_SET(static_cast<SOCKET>(sock), &readfds);
+    FD_SET(static_cast<SOCKET>(sock), &exceptfds);
+    // Winsock select uses nfds ignored
+    timeval tv{ 0, 0 };
+    int ret = select(0, &readfds, nullptr, &exceptfds, &tv);
+#else
+    fd_set readfds, exceptfds;
+    FD_ZERO(&readfds);
+    FD_ZERO(&exceptfds);
+    FD_SET(sock, &readfds);
+    FD_SET(sock, &exceptfds);
+    timeval tv{ 0, 0 };
+    int ret = select(sock + 1, &readfds, nullptr, &exceptfds, &tv);
+#endif
+
+    if (ret < 0) {
+        // select() failed — assume dead
+        return false;
+    }
+    if (FD_ISSET(sock, &exceptfds)) {
+        // socket in exception state => dead
+        return false;
+    }
+    if (ret == 0) {
+        // no events => socket still up
+        return true;
+    }
+
+    // if we get here, there's something to read (or it's hung up)
+    if (FD_ISSET(sock, &readfds)) {
+        // peek one byte
+#ifdef _WIN32
+        int n = recv(static_cast<SOCKET>(sock), nullptr, 0, MSG_PEEK);
+#else
+        char buf;
+        int n = recv(sock, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
+#endif
+        if (n <= 0) {
+            // 0 = orderly shutdown, <0 = error
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 //----------------------------------------------------------------------------
 // Timer thread function for a session.
-void timerThread(int clientSocket1, int clientSocket2, bool& sessionActive) {
-    Timer sessionTimer(10);  // e.g., 30 seconds session timer
-    while (!sessionTimer.isTimeUp()) {
+void timerThread(int clientSocket1,
+    int clientSocket2,
+    std::shared_ptr<std::atomic<bool>> sessionActive)
+{
+    // 10?second session timer
+    Timer sessionTimer(10);
+
+    // Run until time is up OR session is aborted
+    while (!sessionTimer.isTimeUp() && sessionActive->load()) {
         std::string currentTimeStr = sessionTimer.UpdateTime();
         json j;
         j["type"] = "TIME_UPDATE";
         j["time"] = currentTimeStr;
-        std::string message = j.dump();
-        send(clientSocket1, message.c_str(), message.size(), 0);
-        send(clientSocket2, message.c_str(), message.size(), 0);
+        std::string msg = j.dump();
+
+        if (isSocketAlive(clientSocket1))
+            safeSend(clientSocket1, msg.c_str(), msg.size());
+        if (isSocketAlive(clientSocket2))
+            safeSend(clientSocket2, msg.c_str(), msg.size());
+
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    // When time is up, send GAME_OVER messages.
+
+    // If the session was aborted mid?timer:
+    if (!sessionActive->load()) {
+        // 1) Force timer to the remaining client
+        json zeroed;
+        zeroed["type"] = "TIME_UPDATE";
+        zeroed["time"] = "00:00";
+        std::string zeroMsg = zeroed.dump();
+        if (isSocketAlive(clientSocket1))
+            safeSend(clientSocket1, zeroMsg.c_str(), zeroMsg.size());
+        if (isSocketAlive(clientSocket2))
+            safeSend(clientSocket2, zeroMsg.c_str(), zeroMsg.size());
+
+        // 2) Notify of session abort
+        json abortMsg;
+        abortMsg["type"] = "SESSION_ABORT";
+        abortMsg["message"] = "Other player disconnected. Session aborted.";
+        std::string abortStr = abortMsg.dump();
+        if (isSocketAlive(clientSocket1))
+            safeSend(clientSocket1, abortStr.c_str(), abortStr.size());
+        if (isSocketAlive(clientSocket2))
+            safeSend(clientSocket2, abortStr.c_str(), abortStr.size());
+
+        return;
+    }
+
     if (score1 > score2) {
-        json j1; j1["type"] = "GAME_OVER"; j1["message"] = "Time's up! You Won! "; j1["score"] = score1; j1["outcome"] = "win!";
-        std::string gameOverMsg1 = j1.dump();
-        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
-        json j2; j2["type"] = "GAME_OVER"; j2["message"] = "Time's up! You Lost! "; j2["score"] = score2; j2["outcome"] = "lose!";
-        std::string gameOverMsg2 = j2.dump();
-        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+        json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score1},{"outcome","win!"} };
+        json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score2},{"outcome","lose!"} };
+        safeSend(clientSocket1, w1.dump().c_str(), w1.dump().size());
+        safeSend(clientSocket2, w2.dump().c_str(), w2.dump().size());
     }
     else if (score2 > score1) {
-        json j1; j1["type"] = "GAME_OVER"; j1["message"] = "Time's up! You Lost! "; j1["score"] = score1; j1["outcome"] = "lose!";
-        std::string gameOverMsg1 = j1.dump();
-        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
-        json j2; j2["type"] = "GAME_OVER"; j2["message"] = "Time's up! You Won! "; j2["score"] = score2; j2["outcome"] = "win!";
-        std::string gameOverMsg2 = j2.dump();
-        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+        json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score1},{"outcome","lose!"} };
+        json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score2},{"outcome","win!"} };
+        safeSend(clientSocket1, w1.dump().c_str(), w1.dump().size());
+        safeSend(clientSocket2, w2.dump().c_str(), w2.dump().size());
     }
     else {
-        json j1; j1["type"] = "GAME_OVER"; j1["message"] = "Time's up! It's a draw! "; j1["score"] = score1; j1["outcome"] = "draw!";
-        std::string gameOverMsg1 = j1.dump();
-        send(clientSocket1, gameOverMsg1.c_str(), gameOverMsg1.size(), 0);
-        json j2; j2["type"] = "GAME_OVER"; j2["message"] = "Time's up! It's a draw! "; j2["score"] = score2; j2["outcome"] = "draw!";
-        std::string gameOverMsg2 = j2.dump();
-        send(clientSocket2, gameOverMsg2.c_str(), gameOverMsg2.size(), 0);
+        json d = { {"type","GAME_OVER"},{"message","Time's up! It's a draw!"},{"score",score1},{"outcome","draw!"} };
+        safeSend(clientSocket1, d.dump().c_str(), d.dump().size());
+        safeSend(clientSocket2, d.dump().c_str(), d.dump().size());
     }
-    json sessionEndMsg;
-    sessionEndMsg["type"] = "SESSION_OVER";
-    sessionEndMsg["message"] = "Session ended. Press START_GAME to play again.";
-    std::string endMsgStr = sessionEndMsg.dump();
-    send(clientSocket1, endMsgStr.c_str(), endMsgStr.size(), 0);
-    send(clientSocket2, endMsgStr.c_str(), endMsgStr.size(), 0);
-    sessionActive = false;
+
+    // Final SESSION_OVER prompt
+    json endMsg = { {"type","SESSION_OVER"},
+                   {"message","Session ended. Press START_GAME to play again."} };
+    safeSend(clientSocket1, endMsg.dump().c_str(), endMsg.dump().size());
+    safeSend(clientSocket2, endMsg.dump().c_str(), endMsg.dump().size());
+
+    sessionActive->store(false);
 }
+
 
 //----------------------------------------------------------------------------
 // Session handler now does not return until the session is ended.
 // It remains identical except that it does not attempt any synchronization itself.
 void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int clientID2, std::atomic<bool>& sessionOver)
-{   
+{
     sessionOver.store(false);
-    bool sessionActive = true;
-    // Notify both clients that the session is starting.
+    auto sessionActive = std::make_shared<std::atomic<bool>>(true);
+
     std::string sessionMessage1 = "You are now in a session with client " + std::to_string(clientID2) + "\n";
     std::string sessionMessage2 = "You are now in a session with client " + std::to_string(clientID1) + "\n";
-    send(clientSocket1, sessionMessage1.c_str(), sessionMessage1.size(), 0);
-    send(clientSocket2, sessionMessage2.c_str(), sessionMessage2.size(), 0);
+    safeSend(clientSocket1, sessionMessage1.c_str(), sessionMessage1.size());
+    safeSend(clientSocket2, sessionMessage2.c_str(), sessionMessage2.size());
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
 
-    // Assign random shapes.
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, static_cast<int>(ShapeType::Count) - 1);
-    json shapeMsg1, shapeMsg2, shapeMsg3;
-    shapeMsg1["type"] = "SHAPE_ASSIGN";
-    shapeMsg1["shapeType"] = dist(gen);
-    shapeMsg2["type"] = "SHAPE_ASSIGN";
-    shapeMsg2["shapeType"] = dist(gen);
-    shapeMsg3["type"] = "SHAPE_ASSIGN";
-    shapeMsg3["shapeType"] = dist(gen);
-    std::string shape1Str = shapeMsg1.dump() + "\n";
-    std::string shape2Str = shapeMsg2.dump() + "\n";
-    std::string shape3Str = shapeMsg3.dump() + "\n";
-    send(clientSocket1, shape1Str.c_str(), shape1Str.size(), 0);
-    send(clientSocket2, shape1Str.c_str(), shape1Str.size(), 0);
-    send(clientSocket1, shape2Str.c_str(), shape2Str.size(), 0);
-    send(clientSocket2, shape2Str.c_str(), shape2Str.size(), 0);
-    send(clientSocket1, shape3Str.c_str(), shape3Str.size(), 0);
-    send(clientSocket2, shape3Str.c_str(), shape3Str.size(), 0);
 
-    // Launch timer thread.
+    // Send 3 initial random shapes to both clients
+    for (int i = 0; i < 3; ++i) {
+        json shapeMsg;
+        shapeMsg["type"] = "SHAPE_ASSIGN";
+        shapeMsg["shapeType"] = dist(gen);
+        std::string shapeStr = shapeMsg.dump() + "\n";
+        send(clientSocket1, shapeStr.c_str(), shapeStr.size(), 0);
+        send(clientSocket2, shapeStr.c_str(), shapeStr.size(), 0);
+    }
+
     std::thread t(timerThread, clientSocket1, clientSocket2, std::ref(sessionActive));
     t.detach();
 
     char buffer[1024];
-    while (sessionActive) {
+    while (sessionActive->load()) {
         fd_set readfds;
         FD_ZERO(&readfds);
         FD_SET(clientSocket1, &readfds);
         FD_SET(clientSocket2, &readfds);
         int maxfd = std::max(clientSocket1, clientSocket2);
-        timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        timeval tv{ 1, 0 }; // 1 second timeout
+
         int activity = select(maxfd + 1, &readfds, nullptr, nullptr, &tv);
         if (activity < 0) {
-            std::cerr << "select() error." << std::endl;
+            std::cerr << "select() error.\n";
             break;
         }
-        if (activity == 0)
-            continue;
-        // Process messages from client 1.
-        if (FD_ISSET(clientSocket1, &readfds)) {
-            int bytesRead = recv(clientSocket1, buffer, sizeof(buffer) - 1, 0);
+        if (activity == 0) continue;
+
+        auto processClient = [&](int fromSocket, int toSocket, int& fromScore, int fromID, int toID) -> bool {
+            int bytesRead = recv(fromSocket, buffer, sizeof(buffer) - 1, 0);
             if (bytesRead > 0) {
                 buffer[bytesRead] = '\0';
                 std::string msg(buffer);
                 try {
                     json j = json::parse(msg);
                     if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
-                        std::cout << "Received DRAG_UPDATE from client " << clientID1 << ":\n";
-                        shape = static_cast<ShapeType>(dist(gen));
+                        std::cout << "Received DRAG_UPDATE from client " << fromID << ":\n";
+                        json shapeMsg;
                         shapeMsg["type"] = "SHAPE_ASSIGN";
-                        shapeMsg["shapeType"] = static_cast<int>(shape);
-                        send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
-                        send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
+                        shapeMsg["shapeType"] = dist(gen);
+                        std::string shapeStr = shapeMsg.dump();
+                        send(clientSocket1, shapeStr.c_str(), shapeStr.size(), 0);
+                        send(clientSocket2, shapeStr.c_str(), shapeStr.size(), 0);
+
                         if (j.contains("blocks")) {
                             for (const auto& block : j["blocks"]) {
                                 int x = block.value("x", -1);
@@ -328,6 +420,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                                 std::cout << "   Block: (" << x << ", " << y << ")\n";
                             }
                         }
+
                         send(clientSocket1, msg.c_str(), msg.size(), 0);
                         send(clientSocket2, msg.c_str(), msg.size(), 0);
                     }
@@ -337,106 +430,67 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         int totalCleared = static_cast<int>(rows.size() + cols.size());
                         double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
                         int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
-                        if (earnedScore > 400)
-                            score1 += 400;
-                        else
-                            score1 += earnedScore;
+                        fromScore += std::min(earnedScore, 400);
+
                         json response;
                         response["type"] = "SCORE_RESPONSE";
-                        response["score"] = score1;
+                        response["score"] = fromScore;
                         std::string responseStr = response.dump();
-                        send(clientSocket1, responseStr.c_str(), responseStr.size(), 0);
-                        send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
+                        send(fromSocket, responseStr.c_str(), responseStr.size(), 0);
+                        send(toSocket, responseStr.c_str(), responseStr.size(), 0);
+
                         json updateMsg;
                         updateMsg["type"] = "SCORE_UPDATE";
-                        updateMsg["opponentScore"] = score1;
+                        updateMsg["opponentScore"] = fromScore;
                         std::string updateStr = updateMsg.dump();
-                        send(clientSocket2, updateStr.c_str(), updateStr.size(), 0);
+                        send(toSocket, updateStr.c_str(), updateStr.size(), 0);
                     }
                 }
                 catch (...) {
-                    std::string forwardMsg = "Client " + std::to_string(clientID1) + ": " + msg;
-                    send(clientSocket1, forwardMsg.c_str(), forwardMsg.size(), 0);
+                    std::string forwardMsg = "Client " + std::to_string(fromID) + ": " + msg;
+                    send(toSocket, forwardMsg.c_str(), forwardMsg.size(), 0);
                 }
             }
             else if (bytesRead == 0) {
-                std::cout << "Client " << clientID1 << " disconnected." << std::endl;
-                sessionActive = false;
+                std::cout << "Client " << fromID << " disconnected.\n";
+
+                // Notify the other client immediately
+                json sessionEndMsg;
+                sessionEndMsg["type"] = "SESSION_OVER";
+                sessionEndMsg["message"] = "Other player disconnected. Press START_GAME to play again.";
+                std::string endStr = sessionEndMsg.dump();
+
+                send(toSocket, endStr.c_str(), endStr.size(), 0);
+                send(fromSocket, endStr.c_str(), endStr.size(), 0);  // Optional: in case of graceful shutdown
+
+                sessionActive->store(false);
+                return false; // break the loop
             }
             else {
-                std::cerr << "Error reading from client " << clientID1 << std::endl;
-                sessionActive = false;
+                std::cerr << "Error reading from client " << fromID << std::endl;
+                sessionActive->store(false);
+                return false;
             }
+            return true;
+            };
+
+        if (FD_ISSET(clientSocket1, &readfds)) {
+            if (!processClient(clientSocket1, clientSocket2, score1, clientID1, clientID2))
+                break;
         }
-        // Process messages from client 2.
         if (FD_ISSET(clientSocket2, &readfds)) {
-            int bytesRead = recv(clientSocket2, buffer, sizeof(buffer) - 1, 0);
-            if (bytesRead > 0) {
-                buffer[bytesRead] = '\0';
-                std::string msg(buffer);
-                try {
-                    json j = json::parse(msg);
-                    if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
-                        std::cout << "Received DRAG_UPDATE from client " << clientID2 << ":\n";
-                        shape = static_cast<ShapeType>(dist(gen));
-                        shapeMsg["type"] = "SHAPE_ASSIGN";
-                        shapeMsg["shapeType"] = static_cast<int>(shape);
-                        send(clientSocket1, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
-                        send(clientSocket2, shapeMsg.dump().c_str(), shapeMsg.dump().size(), 0);
-                        if (j.contains("blocks")) {
-                            for (const auto& block : j["blocks"]) {
-                                int x = block.value("x", -1);
-                                int y = block.value("y", -1);
-                                std::cout << "   Block: (" << x << ", " << y << ")\n";
-                            }
-                        }
-                        send(clientSocket1, msg.c_str(), msg.size(), 0);
-                    }
-                    else if (j["type"] == "SCORE_REQUEST") {
-                        std::vector<int> rows = j["rows"];
-                        std::vector<int> cols = j["columns"];
-                        int totalCleared = static_cast<int>(rows.size() + cols.size());
-                        double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
-                        int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
-                        if (earnedScore > 400)
-                            score2 += 400;
-                        else
-                            score2 += earnedScore;
-                        json response;
-                        response["type"] = "SCORE_RESPONSE";
-                        response["score"] = score2;
-                        std::string responseStr = response.dump();
-                        send(clientSocket2, responseStr.c_str(), responseStr.size(), 0);
-                        send(clientSocket1, responseStr.c_str(), responseStr.size(), 0);
-                        json updateMsg;
-                        updateMsg["type"] = "SCORE_UPDATE";
-                        updateMsg["opponentScore"] = score2;
-                        std::string updateStr = updateMsg.dump();
-                        send(clientSocket1, updateStr.c_str(), updateStr.size(), 0);
-                    }
-                }
-                catch (...) {
-                    std::string forwardMsg = "Client " + std::to_string(clientID2) + ": " + msg;
-                    send(clientSocket2, forwardMsg.c_str(), forwardMsg.size(), 0);
-                }
-            }
-            else if (bytesRead == 0) {
-                std::cout << "Client " << clientID2 << " disconnected." << std::endl;
-                sessionActive = false;
-            }
-            else {
-                std::cerr << "Error reading from client " << clientID2 << std::endl;
-                sessionActive = false;
-            }
+            if (!processClient(clientSocket2, clientSocket1, score2, clientID2, clientID1))
+                break;
         }
     }
-    // Cleanup waiting state.
+
     {
         std::lock_guard<std::mutex> lock(waitingMutex);
         waitingClients.erase(clientID1);
         waitingClients.erase(clientID2);
     }
-    std::cout << "Session between client " << clientID1 << " and client " << clientID2 << " ended." << std::endl;
+
+    std::cout << "Session between client " << clientID1 << " and client " << clientID2 << " ended.\n";
     score1 = 0;
     score2 = 0;
 
@@ -447,15 +501,28 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     send(clientSocket1, endMsgStr.c_str(), endMsgStr.size(), 0);
     send(clientSocket2, endMsgStr.c_str(), endMsgStr.size(), 0);
 
-    // Signal that the session has ended.
+    sessionActive->store(false);
     sessionOver.store(true);
 }
+
 
 //----------------------------------------------------------------------------
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
 void clientHandler(int client_socket, int clientID) {
     char buffer[256];
     while (true) {
+        {
+            std::lock_guard<std::mutex> lock(waitingMutex);
+            for (auto it = waitingClients.begin(); it != waitingClients.end(); ) {
+                if (!isSocketAlive(it->second.clientSocket)) {
+                    std::cerr << "Pruning disconnected client " << it->first << std::endl;
+                    it = waitingClients.erase(it);
+                }
+                else {
+                    ++it;
+                }
+            }
+        }
         // Clear any stale waiting state.
         {
             std::lock_guard<std::mutex> lock(waitingMutex);
@@ -566,6 +633,7 @@ void clientHandler(int client_socket, int clientID) {
 }
 
 int main() {
+    ignoreSigpipe();
 #ifdef _WIN32
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {

@@ -1,7 +1,7 @@
 ﻿  Client.cpp
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(122,29): warning C4102: 'std': unreferenced label
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(180,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(211,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(237,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(289,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  main.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\main.exe
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(133,33): warning C4102: 'std': unreferenced label
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(192,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(223,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(249,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(301,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe

@@ -17,6 +17,7 @@ namespace Client {
     extern bool gameOver;
     extern bool initialized;
     extern int spawnedCount;
+    extern std::atomic<bool> inSession;
 
 
     // Function to start the client.

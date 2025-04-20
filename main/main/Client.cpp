@@ -44,6 +44,7 @@ namespace Client {
 	bool gameOver = false;
     bool initialized = false;
 	int spawnedCount = 0;
+    atomic<bool> inSession(false);
 
     void resetClientState() {
         client_running = true;
@@ -59,8 +60,7 @@ namespace Client {
         gameOver = false;
 		initialized = false;
 		spawnedCount = 0;
-
-        //client_socket = -1;
+        inSession = false;
     }
 
 
@@ -114,12 +114,23 @@ namespace Client {
                                 startperm = true;
                                 tetrominos.clear();
 								placedTetrominos.clear();
+                                inSession.store(true);
+                            }
+                            else if (msgType == "SESSION_ABORT") {
+                                inSession.store(false);
+                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
+								std::string finalMessage = "Game over! You Win! Your opponent disconnected.";
+                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
+                                gameOver = true;
+                                resetClientState();
+                                accumulatedMessage.clear();
                             }
                             else if (msgType == "GAME_OVER") {
+                                inSession.store(false);
                                 Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
                                 // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
                                 std::string finalScore = j["score"].dump();
-                            std:string finalOutcome = j["outcome"].get<std::string>();
+                                std:string finalOutcome = j["outcome"].get<std::string>();
                                 std::string finalMessage;
 
                                 if (finalOutcome == "draw!") {
@@ -137,6 +148,7 @@ namespace Client {
                                 break;
                             }
                             else if (msgType == "SESSION_OVER") {
+                                inSession.store(false);
                                 std::cout << "Session Ended!"  << "\n";
                                 resetClientState();
                                 accumulatedMessage.clear();
