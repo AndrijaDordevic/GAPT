@@ -66,7 +66,7 @@ namespace Client {
 
     // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
-        char buffer[1024];
+        char buffer[800];
         string accumulatedMessage = "";  // Accumulate partial messages here
 
         while (client_running && !StopResponceTaking) {
@@ -96,6 +96,7 @@ namespace Client {
                             }
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = jsonStr;
+                                ScoreBuffer = "";
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
@@ -301,7 +302,7 @@ namespace Client {
         send(client_socket, message.c_str(), message.size(), 0);
 
         // Wait briefly for ScoreBuffer to be updated
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
         try {
             std::string msg = ScoreBuffer;
