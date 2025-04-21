@@ -5,8 +5,6 @@
 int Test_Position();
 bool Test_Collision();
 bool Test_InsideGrid();
-bool testMouseHover();
-bool testMenuActions();
-bool testMenuInitialization();
+bool Test_HoverStates();
 
 #endif 

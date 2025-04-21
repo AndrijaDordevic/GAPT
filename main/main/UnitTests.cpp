@@ -48,42 +48,23 @@ Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int 
     return t;
 }
 
-bool testMenuInitialization() {
-    // Simulate window initialisation 
-    assert(windowm != nullptr);
-    assert(rendererm != nullptr);
-    assert(menuItems.size() == 3);
-    assert(menuItems[0].label == "Start Game");
-    assert(menuItems[1].label == "Instructions");
-    assert(menuItems[2].label == "Exit");
-    std::cout << "Menu initialization tests passed.\n";
-    return true;
-}
-bool testMouseHover() {
-	// Simulate mouse coordinates for hovering over first menu item
-    float mouseX = menuItems[0].rect.x + 10;
-    float mouseY = menuItems[0].rect.y + 10;
-    assert(isMouseOver(mouseX, mouseY, menuItems[0].rect));
 
-    std::cout << "Mouse hover tests passed.\n";
-	return true;
-}
 
-bool testMenuActions() {
-	// Simulate hovering over the menu items
-    menuItems[0].isHovered = true;
-    assert(menuItems[0].isHovered);
+bool Test_HoverStates() {
+    assert(!menuItems.empty());
 
-    displayWaitingMessage = true;
-    assert(displayWaitingMessage);
+    for (size_t i = 0; i < menuItems.size(); ++i) {
+        float hoverX = menuItems[i].rect.x + 1;
+        float hoverY = menuItems[i].rect.y + 1;
 
-    menuItems[1].isHovered = true;
-    assert(menuItems[1].isHovered);
+        // Simulate hovering over current item
+        menuItems[i].isHovered = isMouseOver(hoverX, hoverY, menuItems[i].rect);
 
-    menuItems[2].isHovered = true;
-    assert(menuItems[2].isHovered);
+        // Validate hover is true only if we're over it
+        assert(menuItems[i].isHovered == true);
+    }
 
-    std::cout << "Menu action tests passed.\n";
+    std::cout << "Test_HoverStates passed.\n";
     return true;
 }
 

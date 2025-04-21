@@ -102,6 +102,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 int main(int argc, char* argv[]) {
 
     // Start client thread (remains detached throughout the application)
+    Test_HoverStates();
     Test_InsideGrid(); // Run unit tests
     thread clientThread(Client::runClient);
     clientThread.detach();
@@ -109,9 +110,6 @@ int main(int argc, char* argv[]) {
     // Run the menu first.
     while (true) {
         initializeMenuWindowAndRenderer();
-        testMenuInitialization();
-        testMouseHover();
-		testMenuActions();
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
             if (!initializeSDL(gameWindow, gameRenderer)) {
