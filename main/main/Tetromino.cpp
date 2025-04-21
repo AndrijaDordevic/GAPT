@@ -101,10 +101,6 @@ void SpawnTetromino() {
 		randomShapeIndex = Client::shape.front();
 	}
 
-
-
-
-
 	//Creaging tetromino object and assiging a color
 	Tetromino newTetromino;
 	newTetromino.color = colors[randomColorIndex]; // Random color

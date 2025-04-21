@@ -12,6 +12,8 @@
 #include <cstdlib>
 #include "Texture.hpp"
 #include "Audio.hpp"
+#include "UnitTests.hpp"
+#include "windows.h"
 
 using namespace std;
 bool BGMRunning = false;
@@ -72,6 +74,8 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         // Render game elements
         SDL_RenderTexture(renderer, texture, NULL, NULL);
 
+
+		score = Client::UpdateScore();
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
         runClearGridButton(renderer, ClearGridSelect,ClearGridSelectS);
@@ -95,29 +99,32 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
+
     // Start client thread (remains detached throughout the application)
+    Test_InsideGrid(); // Run unit tests
     thread clientThread(Client::runClient);
     clientThread.detach();
 
-    // Run the menu first. 
-    // The runMenu function could return an int or enum indicating the selected menu option.
+    // Run the menu first.
     while (true) {
         initializeMenuWindowAndRenderer();
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
-            // Create SDL window and renderer for the game.
+            if (!initializeSDL(gameWindow, gameRenderer)) {
+                std::cerr << "Failed to initialize SDL. Exiting..." << std::endl;
+                return -1;
+            }
             runGame(gameWindow, gameRenderer);
-			if (closeGame) {
-				break; // Exit the loop if closeGame is true
-			}
-		}
-		else if (menuSelection == 2) {
-            return false;
-		}
-
+            if (closeGame) {
+                break;
+            }
+        }
+        else if (menuSelection == 2) {
+            return 0;
+        }
     }
+
     SDL_Quit();
-    
     return 0;
 }

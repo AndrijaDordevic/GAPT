@@ -20,6 +20,8 @@ namespace Client {
     extern std::atomic<bool> inSession;
 
 
+
+    int UpdateScore();
     // Function to start the client.
     void start_client(const std::string& server_ip);
 

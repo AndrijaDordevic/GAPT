@@ -38,7 +38,7 @@ namespace Client {
     atomic<bool> client_running(true);
     int client_socket = -1;
     string TimerBuffer = "";
-    std::vector<int> shape = { 0,1,2 };
+    std::vector<int> shape = { };
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
 	bool gameOver = false;
@@ -96,7 +96,6 @@ namespace Client {
                             }
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = jsonStr;
-                                ScoreBuffer = "";
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
@@ -282,27 +281,7 @@ namespace Client {
 #endif
     }
 
-    int Client::sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols) {
-        if (client_socket < 0) {
-            std::cerr << "[Client] Invalid socket before send!\n";
-            return 0;
-        }
-
-        json j;
-        j["type"] = "SCORE_REQUEST";
-        j["rows"] = rows;
-        j["columns"] = cols;
-        std::string message = j.dump();
-
-        std::cout << "[Client] Sending SCORE_REQUEST...\n";
-        std::cout << "[Debug] Sending on socket: " << client_socket << "\n";
-        std::cout << "[Debug] Message: " << message << "\n";
-
-        //StopResponceTaking = true; // Optional if needed elsewhere
-        send(client_socket, message.c_str(), message.size(), 0);
-
-        // Wait briefly for ScoreBuffer to be updated
-        std::this_thread::sleep_for(std::chrono::milliseconds(800));
+    int Client::UpdateScore() {
 
         try {
             std::string msg = ScoreBuffer;
@@ -327,6 +306,31 @@ namespace Client {
         }
 
         return 0;
+
+
+    }
+
+
+    int Client::sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols) {
+        if (client_socket < 0) {
+            std::cerr << "[Client] Invalid socket before send!\n";
+            return 0;
+        }
+
+        json j;
+        j["type"] = "SCORE_REQUEST";
+        j["rows"] = rows;
+        j["columns"] = cols;
+        std::string message = j.dump();
+
+        std::cout << "[Client] Sending SCORE_REQUEST...\n";
+        std::cout << "[Debug] Sending on socket: " << client_socket << "\n";
+        std::cout << "[Debug] Message: " << message << "\n";
+
+        //StopResponceTaking = true; // Optional if needed elsewhere
+        send(client_socket, message.c_str(), message.size(), 0);
+
+        
     }
 
     // New: runClient() simply checks if the server IP was discovered and calls start_client().

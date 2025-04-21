@@ -1,7 +1,4 @@
-﻿  Client.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(133,33): warning C4102: 'std': unreferenced label
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(192,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(223,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(249,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(301,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+﻿  Main.cpp
+  main.vcxproj -> C:\Users\jurge\source\repos\GAPT\main\x64\Debug\main.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
