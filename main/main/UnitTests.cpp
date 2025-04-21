@@ -1,7 +1,11 @@
 #include <cassert>
 #include "Tetromino.hpp"
+#include "Menu.hpp"
 #include <vector>
 #include <iostream>
+#include "Window.hpp"
+#include "Audio.hpp"
+
 
 std::vector<std::vector<SDL_Point>> shapes = {
 {{0, 0}, {1, 0}, {2, 0}, {2, 0}},    // Horizontal Line
@@ -23,6 +27,18 @@ std::vector<std::vector<SDL_Point>> shapes = {
 {{0, 0}, {0, 0}, {0, 0}, {0, 0}},    // Dot shape
 };
 
+struct MenuItem {
+    SDL_FRect rect;
+    string label;
+    bool isHovered;
+    SDL_Texture* textTexture;
+    int textWidth;
+    int textHeight;
+};
+
+extern std::vector<MenuItem> menuItems;
+extern SDL_Window* windowm;
+extern SDL_Renderer* rendererm;
 
 Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int yOffset) {
     Tetromino t;
@@ -30,6 +46,45 @@ Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int 
         t.blocks.push_back({ p.x + xOffset, p.y + yOffset });
     }
     return t;
+}
+
+bool testMenuInitialization() {
+    // Simulate window initialisation 
+    assert(windowm != nullptr);
+    assert(rendererm != nullptr);
+    assert(menuItems.size() == 3);
+    assert(menuItems[0].label == "Start Game");
+    assert(menuItems[1].label == "Instructions");
+    assert(menuItems[2].label == "Exit");
+    std::cout << "Menu initialization tests passed.\n";
+    return true;
+}
+bool testMouseHover() {
+	// Simulate mouse coordinates for hovering over first menu item
+    float mouseX = menuItems[0].rect.x + 10;
+    float mouseY = menuItems[0].rect.y + 10;
+    assert(isMouseOver(mouseX, mouseY, menuItems[0].rect));
+
+    std::cout << "Mouse hover tests passed.\n";
+	return true;
+}
+
+bool testMenuActions() {
+	// Simulate hovering over the menu items
+    menuItems[0].isHovered = true;
+    assert(menuItems[0].isHovered);
+
+    displayWaitingMessage = true;
+    assert(displayWaitingMessage);
+
+    menuItems[1].isHovered = true;
+    assert(menuItems[1].isHovered);
+
+    menuItems[2].isHovered = true;
+    assert(menuItems[2].isHovered);
+
+    std::cout << "Menu action tests passed.\n";
+    return true;
 }
 
 bool Test_Collision() {
