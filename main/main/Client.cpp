@@ -7,10 +7,13 @@
 #include <chrono>
 #include <atomic>
 #include <fstream>
-#include <nlohmann/json.hpp>  // Make sure to include this for JSON parsing
+#include <nlohmann/json.hpp>
 #include "Main.hpp"
 #include "Menu.hpp"
 #include "Audio.hpp"
+#include <openssl/hmac.h>
+#include <iomanip>
+#include <sstream>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -33,6 +36,8 @@ using namespace std;
 string server_ip = discoverServer();
 bool StopResponceTaking;
 
+static const std::string SHARED_SECRET = "my?very?strong?key";
+
 namespace Client {
     string ScoreBuffer;
     atomic<bool> client_running(true);
@@ -41,10 +46,101 @@ namespace Client {
     std::vector<int> shape = { };
     bool startperm = false;
     std::atomic<bool> waitingForSession(false);
-	bool gameOver = false;
+    bool gameOver = false;
     bool initialized = false;
-	int spawnedCount = 0;
+    int spawnedCount = 0;
     atomic<bool> inSession(false);
+
+    static std::string computeHMAC(const std::string& data, const std::string& secret) {
+        unsigned char* result = HMAC(
+            EVP_sha256(),
+            reinterpret_cast<const unsigned char*>(secret.data()), secret.size(),
+            reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+            nullptr, nullptr
+        );
+
+        std::ostringstream hex;
+        hex << std::hex << std::setfill('0');
+        for (int i = 0; i < 32; ++i) {
+            hex << std::setw(2) << static_cast<int>(result[i]);
+        }
+        return hex.str();
+    }
+
+    static bool hmacEquals(const std::string& a, const std::string& b) {
+        if (a.size() != b.size()) return false;
+        unsigned char diff = 0;
+        for (size_t i = 0; i < a.size(); ++i)
+            diff |= a[i] ^ b[i];
+        return diff == 0;
+    }
+
+    bool sendSecure(const json& j) {
+        if (client_socket < 0) {
+            cerr << "Client socket is not connected!" << endl;
+            return false;
+        }
+
+        std::string body = j.dump();
+        std::string tag = computeHMAC(body, SHARED_SECRET);
+        json withTag = j;
+        withTag["hmac"] = tag;
+        std::string out = withTag.dump() + "\n";
+
+        int sent = send(client_socket, out.c_str(), out.size(), 0);
+        if (sent <= 0) {
+#ifdef _WIN32
+            int error = WSAGetLastError();
+#else
+            int error = errno;
+#endif
+            cerr << "Failed to send secure message! Error code: " << error << endl;
+            return false;
+        }
+        return true;
+    }
+
+    bool recvSecure(json& j) {
+        char buffer[4096];
+        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received <= 0) {
+            return false; // Connection closed or error
+        }
+        buffer[bytes_received] = '\0';
+
+        try {
+            j = json::parse(buffer);
+
+            // Verify HMAC if present
+            if (j.contains("hmac")) {
+                std::string receivedTag = j["hmac"];
+                json body = j; // Make a copy
+                body.erase("hmac"); // Remove the tag for verification
+                std::string bodyStr = body.dump();
+
+                // Compute expected HMAC
+                std::string expectedTag = computeHMAC(bodyStr, SHARED_SECRET);
+
+                // Constant-time comparison
+                if (!hmacEquals(receivedTag, expectedTag)) {
+                    std::cerr << "HMAC verification failed - possible tampering\n";
+                    return false;
+                }
+
+                // Remove HMAC from the parsed JSON since it's verified
+                j.erase("hmac");
+                return true;
+            }
+            else {
+                std::cerr << "No HMAC in message - rejecting\n";
+                return false;
+            }
+        }
+        catch (...) {
+            std::cerr << "Failed to parse JSON message\n";
+            return false;
+        }
+    }
 
     void resetClientState() {
         client_running = true;
@@ -53,18 +149,16 @@ namespace Client {
         startperm = false;
         waitingForSession = false;
         StopResponceTaking = false;
-		displayWaitingMessage = false;
+        displayWaitingMessage = false;
         shape.clear();
-		state::running = true;
-		state::closed = false;
+        state::running = true;
+        state::closed = false;
         gameOver = false;
-		initialized = false;
-		spawnedCount = 0;
+        initialized = false;
+        spawnedCount = 0;
         inSession = false;
     }
 
-
-    // Handles receiving messages from the server continuously.
     void handle_server(int client_socket) {
         char buffer[800];
         string accumulatedMessage = "";  // Accumulate partial messages here
@@ -88,14 +182,19 @@ namespace Client {
 
                         std::cout << "[Debug] JSON String: " << jsonStr << std::endl;  // Print the JSON string
 
-                        json j = json::parse(jsonStr);
+                        json j;
+                        if (!recvSecure(j)) {
+                            std::cerr << "Invalid or tampered message received\n";
+                            continue;
+                        }
+
                         if (j.contains("type")) {
                             string msgType = j["type"];
                             if (msgType == "TIME_UPDATE") {
                                 TimerBuffer = j["time"];
                             }
                             else if (msgType == "SCORE_RESPONSE") {
-                                ScoreBuffer = jsonStr;
+                                ScoreBuffer = j.dump();
                             }
                             else if (msgType == "SCORE_UPDATE") {
                                 int oppScore = j["opponentScore"];
@@ -105,21 +204,19 @@ namespace Client {
                                 int shapeType = j["shapeType"];
                                 std::cout << "Received shape type: " << shapeType << "\n";
                                 shape.push_back(static_cast<int>(shapeType));
-                                // Convert to your Tetromino class or store the shape
                             }
                             else if (msgType == "Tostart") {
                                 bool start = j["bool"];
                                 std::cout << "Received start: " << start << "\n";
-                                //shape.clear();
                                 startperm = true;
                                 tetrominos.clear();
-								placedTetrominos.clear();
+                                placedTetrominos.clear();
                                 inSession.store(true);
                             }
                             else if (msgType == "SESSION_ABORT") {
                                 inSession.store(false);
                                 Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
-								std::string finalMessage = "Game over! You Win! Your opponent disconnected.";
+                                std::string finalMessage = "Game over! You Win! Your opponent disconnected.";
                                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
                                 gameOver = true;
                                 resetClientState();
@@ -128,9 +225,8 @@ namespace Client {
                             else if (msgType == "GAME_OVER") {
                                 inSession.store(false);
                                 Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
-                                // Convert score to string (ensure proper conversion if j["score"] isn't already a string)
                                 std::string finalScore = j["score"].dump();
-                                std:string finalOutcome = j["outcome"].get<std::string>();
+                                std::string finalOutcome = j["outcome"].get<std::string>();
                                 std::string finalMessage;
 
                                 if (finalOutcome == "draw!") {
@@ -140,7 +236,6 @@ namespace Client {
                                     finalMessage = "Game Over! You " + finalOutcome + " Your score: " + finalScore;
                                 }
 
-                                // Display the message box. 
                                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
                                 gameOver = true;
                                 resetClientState();
@@ -149,7 +244,7 @@ namespace Client {
                             }
                             else if (msgType == "SESSION_OVER") {
                                 inSession.store(false);
-                                std::cout << "Session Ended!"  << "\n";
+                                std::cout << "Session Ended!" << "\n";
                                 resetClientState();
                                 accumulatedMessage.clear();
                                 continue;
@@ -160,7 +255,6 @@ namespace Client {
                 catch (const std::exception& e) {
                     cerr << "[Client] JSON parse error: " << e.what() << "\n";
                 }
-
             }
             else if (bytes_received == 0) {
                 std::cout << "Server disconnected.\n";
@@ -188,55 +282,22 @@ namespace Client {
             cerr << "Client socket is not connected!" << endl;
             return false;
         }
-        string message = "START_GAME";
-        if (send(client_socket, message.c_str(), message.size(), 0) < 0) {
-#ifdef _WIN32
-            int error = WSAGetLastError();
-#else
-            int error = errno;
-#endif
-            cerr << "Failed to send START_GAME message, error code: " << error << endl;
-            return false;
-        }
-        return true;
+
+        json j;
+        j["type"] = "START_GAME";
+        return sendSecure(j);
     }
 
-    // Serializes a tetromino’s block coordinates as JSON and sends it to the server.
     bool sendDragCoordinates(const Tetromino& tetromino) {
-        if (client_socket < 0) {
-            cerr << "Client socket is not connected!" << endl;
-            return false;
-        }
         json j;
         j["type"] = "DRAG_UPDATE";
         j["blocks"] = json::array();
         for (const auto& block : tetromino.blocks) {
             j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"block type", "d"} });
         }
-        string message = j.dump();
-
-        // Use a loop to ensure the full message is sent.
-        size_t totalSent = 0;
-        size_t messageLength = message.size();
-        while (totalSent < messageLength) {
-            int sent = send(client_socket, message.c_str() + totalSent,
-                messageLength - totalSent, 0);
-            if (sent <= 0) {
-#ifdef _WIN32
-                int error = WSAGetLastError();
-#else
-                int error = errno;
-#endif
-                cerr << "Failed to send drag coordinates! Error code: " << error << endl;
-                return false;
-            }
-            totalSent += sent;
-        }
-        cout << "Drag coordinates sent: " << message << endl;
-        return true;
+        return sendSecure(j);
     }
 
-    // Connects to the server given its IP address.
     void start_client(const string& server_ip) {
         cout << "*Server IP: " << server_ip << endl;
 #ifdef _WIN32
@@ -282,17 +343,8 @@ namespace Client {
     }
 
     int Client::UpdateScore() {
-
         try {
-            std::string msg = ScoreBuffer;
-
-            // Optional: Trim to JSON
-            size_t end = msg.find("}") + 1;
-            if (end != std::string::npos && end < msg.size()) {
-                msg = msg.substr(0, end);
-            }
-
-            json response = json::parse(msg);
+            json response = json::parse(ScoreBuffer);
             std::cout << "[Client] Parsed ScoreBuffer JSON: " << response.dump() << "\n";
 
             if (response.contains("type") && response["type"] == "SCORE_RESPONSE") {
@@ -304,12 +356,8 @@ namespace Client {
         catch (const std::exception& e) {
             std::cerr << "[Client] JSON parse failed from ScoreBuffer: " << e.what() << "\n";
         }
-
         return 0;
-
-
     }
-
 
     int Client::sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols) {
         if (client_socket < 0) {
@@ -321,27 +369,22 @@ namespace Client {
         j["type"] = "SCORE_REQUEST";
         j["rows"] = rows;
         j["columns"] = cols;
-        std::string message = j.dump();
 
-        std::cout << "[Client] Sending SCORE_REQUEST...\n";
-        std::cout << "[Debug] Sending on socket: " << client_socket << "\n";
-        std::cout << "[Debug] Message: " << message << "\n";
+        if (!sendSecure(j)) {
+            std::cerr << "[Client] Failed to send SCORE_REQUEST\n";
+            return 0;
+        }
 
-        //StopResponceTaking = true; // Optional if needed elsewhere
-        send(client_socket, message.c_str(), message.size(), 0);
-
-        
+        return 0; // Actual score will be received asynchronously
     }
 
-    // New: runClient() simply checks if the server IP was discovered and calls start_client().
     void runClient() {
         if (!server_ip.empty()) {
             start_client(server_ip);
         }
         else {
             cerr << "Could not find server automatically!" << endl;
-			exit(0);
+            exit(0);
         }
     }
-
 }

@@ -17,6 +17,8 @@
 #include <random>
 #include "Shapes.hpp"
 #include <signal.h>
+#include <openssl/hmac.h>
+#include <iomanip>
 
 
 #define NOMINMAX
@@ -52,6 +54,9 @@ std::atomic<int> clientIDCounter(0);
 
 std::atomic<bool> sessionOver(false);
 
+// Shared HMAC secret
+static const std::string SHARED_SECRET = "my?very?strong?key";
+
 struct ClientInfo {
     int clientSocket;
     bool ready;
@@ -72,10 +77,38 @@ std::unordered_map<int, PairInfo> pairingMap;
 
 // Condition variable to signal a waiting client when it has been paired.
 std::condition_variable waitingCV;
+
 void ignoreSigpipe() {
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
 #endif
+}
+
+// Computes HMAC-SHA256(secret, data) and returns hex string.
+static std::string computeHMAC(const std::string& data, const std::string& secret) {
+    unsigned char* result;
+    unsigned int len = EVP_MAX_MD_SIZE;
+
+    result = HMAC(
+        EVP_sha256(),
+        reinterpret_cast<const unsigned char*>(secret.data()), secret.size(),
+        reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+        nullptr, nullptr
+    );
+    // hex-encode
+    std::ostringstream hex;
+    for (unsigned int i = 0; i < 32; ++i)  // SHA256 is 32 bytes
+        hex << std::hex << std::setw(2) << std::setfill('0') << (int)result[i];
+    return hex.str();
+}
+
+// Constant-time comparison to avoid timing attacks:
+static bool hmacEquals(const std::string& a, const std::string& b) {
+    if (a.size() != b.size()) return false;
+    unsigned char diff = 0;
+    for (size_t i = 0; i < a.size(); ++i)
+        diff |= a[i] ^ b[i];
+    return diff == 0;
 }
 
 //------------------------------------------------------------------------------
@@ -87,6 +120,64 @@ int safeSend(int sock, const char* buf, size_t len) {
     return send(sock, buf, len, MSG_NOSIGNAL);
 #endif
 }
+
+bool sendSecure(int sock, json j, const std::string& secret) {
+    // 1) Serialize without HMAC
+    std::string body = j.dump();
+    // 2) Compute HMAC
+    std::string tag = computeHMAC(body, secret);
+    // 3) Add it
+    j["hmac"] = tag;
+    std::string withTag = j.dump();
+    // 4) Send (add newline if your protocol expects it)
+    withTag += "\n";
+    return safeSend(sock, withTag.c_str(), withTag.size()) >= 0;
+}
+
+// Add this function to read and verify secure messages
+bool recvSecure(int sock, json& j, const std::string& secret) {
+    char buffer[4096];
+    int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    if (bytesRead <= 0) {
+        return false; // Connection closed or error
+    }
+    buffer[bytesRead] = '\0';
+
+    try {
+        // Parse the incoming JSON
+        j = json::parse(buffer);
+
+        // Verify HMAC if present
+        if (j.contains("hmac")) {
+            std::string receivedTag = j["hmac"];
+            json body = j; // Make a copy
+            body.erase("hmac"); // Remove the tag for verification
+            std::string bodyStr = body.dump();
+
+            // Compute expected HMAC
+            std::string expectedTag = computeHMAC(bodyStr, secret);
+
+            // Constant-time comparison
+            if (!hmacEquals(receivedTag, expectedTag)) {
+                std::cerr << "HMAC verification failed - possible tampering\n";
+                return false;
+            }
+
+            // Remove HMAC from the parsed JSON since it's verified
+            j.erase("hmac");
+            return true;
+        }
+        else {
+            std::cerr << "No HMAC in message - rejecting\n";
+            return false;
+        }
+    }
+    catch (...) {
+        std::cerr << "Failed to parse JSON message\n";
+        return false;
+    }
+}
+
 //----------------------------------------------------------------------------
 // Helper: Retrieve the local IP address.
 std::string getLocalIP() {
@@ -219,6 +310,7 @@ void waitingClientsMonitor() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
+
 bool isSocketAlive(int sock) {
     // prepare fd_sets
 #ifdef _WIN32
@@ -271,14 +363,13 @@ bool isSocketAlive(int sock) {
     return true;
 }
 
-
 //----------------------------------------------------------------------------
 // Timer thread function for a session.
 void timerThread(int clientSocket1,
     int clientSocket2,
     std::shared_ptr<std::atomic<bool>> sessionActive)
 {
-    // 10?second session timer
+    // 10-second session timer
     Timer sessionTimer(10);
 
     // Run until time is up OR session is aborted
@@ -287,37 +378,34 @@ void timerThread(int clientSocket1,
         json j;
         j["type"] = "TIME_UPDATE";
         j["time"] = currentTimeStr;
-        std::string msg = j.dump();
 
         if (isSocketAlive(clientSocket1))
-            safeSend(clientSocket1, msg.c_str(), msg.size());
+            sendSecure(clientSocket1, j, SHARED_SECRET);
         if (isSocketAlive(clientSocket2))
-            safeSend(clientSocket2, msg.c_str(), msg.size());
+            sendSecure(clientSocket2, j, SHARED_SECRET);
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    // If the session was aborted mid?timer:
+    // If the session was aborted mid-timer:
     if (!sessionActive->load()) {
         // 1) Force timer to the remaining client
         json zeroed;
         zeroed["type"] = "TIME_UPDATE";
         zeroed["time"] = "00:00";
-        std::string zeroMsg = zeroed.dump();
         if (isSocketAlive(clientSocket1))
-            safeSend(clientSocket1, zeroMsg.c_str(), zeroMsg.size());
+            sendSecure(clientSocket1, zeroed, SHARED_SECRET);
         if (isSocketAlive(clientSocket2))
-            safeSend(clientSocket2, zeroMsg.c_str(), zeroMsg.size());
+            sendSecure(clientSocket2, zeroed, SHARED_SECRET);
 
         // 2) Notify of session abort
         json abortMsg;
         abortMsg["type"] = "SESSION_ABORT";
         abortMsg["message"] = "Other player disconnected. Session aborted.";
-        std::string abortStr = abortMsg.dump();
         if (isSocketAlive(clientSocket1))
-            safeSend(clientSocket1, abortStr.c_str(), abortStr.size());
+            sendSecure(clientSocket1, abortMsg, SHARED_SECRET);
         if (isSocketAlive(clientSocket2))
-            safeSend(clientSocket2, abortStr.c_str(), abortStr.size());
+            sendSecure(clientSocket2, abortMsg, SHARED_SECRET);
 
         return;
     }
@@ -325,43 +413,47 @@ void timerThread(int clientSocket1,
     if (score1 > score2) {
         json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score1},{"outcome","win!"} };
         json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score2},{"outcome","lose!"} };
-        safeSend(clientSocket1, w1.dump().c_str(), w1.dump().size());
-        safeSend(clientSocket2, w2.dump().c_str(), w2.dump().size());
+        sendSecure(clientSocket1, w1, SHARED_SECRET);
+        sendSecure(clientSocket2, w2, SHARED_SECRET);
     }
     else if (score2 > score1) {
         json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score1},{"outcome","lose!"} };
         json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score2},{"outcome","win!"} };
-        safeSend(clientSocket1, w1.dump().c_str(), w1.dump().size());
-        safeSend(clientSocket2, w2.dump().c_str(), w2.dump().size());
+        sendSecure(clientSocket1, w1, SHARED_SECRET);
+        sendSecure(clientSocket2, w2, SHARED_SECRET);
     }
     else {
         json d = { {"type","GAME_OVER"},{"message","Time's up! It's a draw!"},{"score",score1},{"outcome","draw!"} };
-        safeSend(clientSocket1, d.dump().c_str(), d.dump().size());
-        safeSend(clientSocket2, d.dump().c_str(), d.dump().size());
+        sendSecure(clientSocket1, d, SHARED_SECRET);
+        sendSecure(clientSocket2, d, SHARED_SECRET);
     }
 
     // Final SESSION_OVER prompt
     json endMsg = { {"type","SESSION_OVER"},
                    {"message","Session ended. Press START_GAME to play again."} };
-    safeSend(clientSocket1, endMsg.dump().c_str(), endMsg.dump().size());
-    safeSend(clientSocket2, endMsg.dump().c_str(), endMsg.dump().size());
+    sendSecure(clientSocket1, endMsg, SHARED_SECRET);
+    sendSecure(clientSocket2, endMsg, SHARED_SECRET);
 
     sessionActive->store(false);
 }
 
-
 //----------------------------------------------------------------------------
 // Session handler now does not return until the session is ended.
-// It remains identical except that it does not attempt any synchronization itself.
 void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int clientID2, std::atomic<bool>& sessionOver)
 {
     sessionOver.store(false);
     auto sessionActive = std::make_shared<std::atomic<bool>>(true);
 
-    std::string sessionMessage1 = "You are now in a session with client " + std::to_string(clientID2) + "\n";
-    std::string sessionMessage2 = "You are now in a session with client " + std::to_string(clientID1) + "\n";
-    safeSend(clientSocket1, sessionMessage1.c_str(), sessionMessage1.size());
-    safeSend(clientSocket2, sessionMessage2.c_str(), sessionMessage2.size());
+    json sessionMsg1;
+    sessionMsg1["type"] = "SESSION_START";
+    sessionMsg1["message"] = "You are now in a session with client " + std::to_string(clientID2);
+    sendSecure(clientSocket1, sessionMsg1, SHARED_SECRET);
+
+    json sessionMsg2;
+    sessionMsg2["type"] = "SESSION_START";
+    sessionMsg2["message"] = "You are now in a session with client " + std::to_string(clientID1);
+    sendSecure(clientSocket2, sessionMsg2, SHARED_SECRET);
+
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
 
     std::random_device rd;
@@ -373,15 +465,13 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         json shapeMsg;
         shapeMsg["type"] = "SHAPE_ASSIGN";
         shapeMsg["shapeType"] = dist(gen);
-        std::string shapeStr = shapeMsg.dump() + "\n";
-        send(clientSocket1, shapeStr.c_str(), shapeStr.size(), 0);
-        send(clientSocket2, shapeStr.c_str(), shapeStr.size(), 0);
+        sendSecure(clientSocket1, shapeMsg, SHARED_SECRET);
+        sendSecure(clientSocket2, shapeMsg, SHARED_SECRET);
     }
 
     std::thread t(timerThread, clientSocket1, clientSocket2, std::ref(sessionActive));
     t.detach();
 
-    char buffer[1024];
     while (sessionActive->load()) {
         fd_set readfds;
         FD_ZERO(&readfds);
@@ -398,78 +488,58 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         if (activity == 0) continue;
 
         auto processClient = [&](int fromSocket, int toSocket, int& fromScore, int fromID, int toID) -> bool {
-            int bytesRead = recv(fromSocket, buffer, sizeof(buffer) - 1, 0);
-            if (bytesRead > 0) {
-                buffer[bytesRead] = '\0';
-                std::string msg(buffer);
-                try {
-                    json j = json::parse(msg);
-                    if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
-                        std::cout << "Received DRAG_UPDATE from client " << fromID << ":\n";
-                        json shapeMsg;
-                        shapeMsg["type"] = "SHAPE_ASSIGN";
-                        shapeMsg["shapeType"] = dist(gen);
-                        std::string shapeStr = shapeMsg.dump();
-                        send(clientSocket1, shapeStr.c_str(), shapeStr.size(), 0);
-                        send(clientSocket2, shapeStr.c_str(), shapeStr.size(), 0);
-
-                        if (j.contains("blocks")) {
-                            for (const auto& block : j["blocks"]) {
-                                int x = block.value("x", -1);
-                                int y = block.value("y", -1);
-                                std::cout << "   Block: (" << x << ", " << y << ")\n";
-                            }
-                        }
-
-                        send(clientSocket1, msg.c_str(), msg.size(), 0);
-                        send(clientSocket2, msg.c_str(), msg.size(), 0);
-                    }
-                    else if (j["type"] == "SCORE_REQUEST") {
-                        std::vector<int> rows = j["rows"];
-                        std::vector<int> cols = j["columns"];
-                        int totalCleared = static_cast<int>(rows.size() + cols.size());
-                        double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
-                        int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
-                        fromScore += std::min(earnedScore, 400);
-
-                        json response;
-                        response["type"] = "SCORE_RESPONSE";
-                        response["score"] = fromScore;
-                        std::string responseStr = response.dump();
-                        send(fromSocket, responseStr.c_str(), responseStr.size(), 0);
-                        send(toSocket, responseStr.c_str(), responseStr.size(), 0);
-
-                        json updateMsg;
-                        updateMsg["type"] = "SCORE_UPDATE";
-                        updateMsg["opponentScore"] = fromScore;
-                        std::string updateStr = updateMsg.dump();
-                        send(toSocket, updateStr.c_str(), updateStr.size(), 0);
-                    }
-                }
-                catch (...) {
-                    std::string forwardMsg = "Client " + std::to_string(fromID) + ": " + msg;
-                    send(toSocket, forwardMsg.c_str(), forwardMsg.size(), 0);
-                }
-            }
-            else if (bytesRead == 0) {
+            json j;
+            if (!recvSecure(fromSocket, j, SHARED_SECRET)) {
                 std::cout << "Client " << fromID << " disconnected.\n";
 
                 // Notify the other client immediately
                 json sessionEndMsg;
                 sessionEndMsg["type"] = "SESSION_OVER";
                 sessionEndMsg["message"] = "Other player disconnected. Press START_GAME to play again.";
-                std::string endStr = sessionEndMsg.dump();
-
-                send(toSocket, endStr.c_str(), endStr.size(), 0);
-                send(fromSocket, endStr.c_str(), endStr.size(), 0);  // Optional: in case of graceful shutdown
+                sendSecure(toSocket, sessionEndMsg, SHARED_SECRET);
 
                 sessionActive->store(false);
                 return false; // break the loop
             }
-            else {
-                std::cerr << "Error reading from client " << fromID << std::endl;
-                sessionActive->store(false);
-                return false;
+
+            // Process the message (j is already parsed and verified)
+            if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
+                std::cout << "Received DRAG_UPDATE from client " << fromID << ":\n";
+                json shapeMsg;
+                shapeMsg["type"] = "SHAPE_ASSIGN";
+                shapeMsg["shapeType"] = dist(gen);
+                sendSecure(clientSocket1, shapeMsg, SHARED_SECRET);
+                sendSecure(clientSocket2, shapeMsg, SHARED_SECRET);
+
+                if (j.contains("blocks")) {
+                    for (const auto& block : j["blocks"]) {
+                        int x = block.value("x", -1);
+                        int y = block.value("y", -1);
+                        std::cout << "   Block: (" << x << ", " << y << ")\n";
+                    }
+                }
+
+                sendSecure(clientSocket1, j, SHARED_SECRET);
+                sendSecure(clientSocket2, j, SHARED_SECRET);
+            }
+            else if (j["type"] == "SCORE_REQUEST") {
+                std::vector<int> rows = j["rows"];
+                std::vector<int> cols = j["columns"];
+                int totalCleared = static_cast<int>(rows.size() + cols.size());
+                double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
+                int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
+                fromScore += std::min(earnedScore, 400);
+
+                json response;
+                response["type"] = "SCORE_RESPONSE";
+                response["score"] = fromScore;
+                sendSecure(fromSocket, response, SHARED_SECRET);
+                sendSecure(toSocket, response, SHARED_SECRET);
+
+                json updateMsg;
+                updateMsg["type"] = "SCORE_UPDATE";
+                updateMsg["opponentScore"] = fromScore;
+                sendSecure(toSocket, updateMsg, SHARED_SECRET);
             }
             return true;
             };
@@ -497,19 +567,16 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     json sessionEndMsg;
     sessionEndMsg["type"] = "SESSION_OVER";
     sessionEndMsg["message"] = "Session ended. Press START_GAME to play again.";
-    std::string endMsgStr = sessionEndMsg.dump();
-    send(clientSocket1, endMsgStr.c_str(), endMsgStr.size(), 0);
-    send(clientSocket2, endMsgStr.c_str(), endMsgStr.size(), 0);
+    sendSecure(clientSocket1, sessionEndMsg, SHARED_SECRET);
+    sendSecure(clientSocket2, sessionEndMsg, SHARED_SECRET);
 
     sessionActive->store(false);
     sessionOver.store(true);
 }
 
-
 //----------------------------------------------------------------------------
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
 void clientHandler(int client_socket, int clientID) {
-    char buffer[256];
     while (true) {
         {
             std::lock_guard<std::mutex> lock(waitingMutex);
@@ -530,8 +597,8 @@ void clientHandler(int client_socket, int clientID) {
         }
         // Wait for the client to send "START_GAME".
         while (true) {
-            int bytesRead = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-            if (bytesRead <= 0) {
+            json j;
+            if (!recvSecure(client_socket, j, SHARED_SECRET)) {
                 std::cerr << "Client " << clientID << " disconnected or error occurred." << std::endl;
 #ifdef _WIN32
                 closesocket(client_socket);
@@ -540,16 +607,13 @@ void clientHandler(int client_socket, int clientID) {
 #endif
                 return;
             }
-            buffer[bytesRead] = '\0';
-            std::string message(buffer);
-            message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
-            message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
-            if (message == "START_GAME") {
+
+            if (j.contains("type") && j["type"] == "START_GAME") {
                 std::cout << "Client " << clientID << " requested to start a game." << std::endl;
                 break;
             }
             else {
-                std::cerr << "[Server] Unknown message from client " << clientID << ": " << message << "\n";
+                std::cerr << "[Server] Unknown message from client " << clientID << ": " << j.dump() << "\n";
             }
         }
         // Pairing:
@@ -574,8 +638,10 @@ void clientHandler(int client_socket, int clientID) {
                 }
             }
             if (!paired) {
-                std::string waitMsg = "Waiting for another client to join...\n";
-                send(client_socket, waitMsg.c_str(), waitMsg.size(), 0);
+                json waitMsg;
+                waitMsg["type"] = "WAITING";
+                waitMsg["message"] = "Waiting for another client to join...";
+                sendSecure(client_socket, waitMsg, SHARED_SECRET);
             }
         }
         if (!paired) {
@@ -588,17 +654,16 @@ void clientHandler(int client_socket, int clientID) {
             std::cout << "Client " << clientID << " has been paired with client " << partnerID << std::endl;
         }
         // Notify both clients that the session is starting.
-        json startMsgJson;
-        startMsgJson["type"] = "START_GAME";
-        std::string startMsg = startMsgJson.dump() + "\n";
-        json tostartMsgJson;
-        tostartMsgJson["type"] = "Tostart";
-        tostartMsgJson["bool"] = true;
-        std::string tostartMsg = tostartMsgJson.dump() + "\n";
-        send(partnerSocket, startMsg.c_str(), startMsg.size(), 0);
-        send(client_socket, startMsg.c_str(), startMsg.size(), 0);
-        send(partnerSocket, tostartMsg.c_str(), tostartMsg.size(), 0);
-        send(client_socket, tostartMsg.c_str(), tostartMsg.size(), 0);
+        json startMsg;
+        startMsg["type"] = "START_GAME";
+        sendSecure(partnerSocket, startMsg, SHARED_SECRET);
+        sendSecure(client_socket, startMsg, SHARED_SECRET);
+
+        json tostartMsg;
+        tostartMsg["type"] = "Tostart";
+        tostartMsg["bool"] = true;
+        sendSecure(partnerSocket, tostartMsg, SHARED_SECRET);
+        sendSecure(client_socket, tostartMsg, SHARED_SECRET);
 
         // Reset sessionOver flag for the new session.
         sessionOver.store(false);
@@ -625,7 +690,7 @@ void clientHandler(int client_socket, int clientID) {
             pairingMap.erase(partnerID);
             pairingMap.erase(clientID);
         }
-        
+
         // At this point the session has ended.
         // The outer loop will continue so that the same connection listens for a new "START_GAME".
         std::cout << "Session between client " << clientID << " and client " << partnerID << " is complete. Ready for new game." << std::endl;

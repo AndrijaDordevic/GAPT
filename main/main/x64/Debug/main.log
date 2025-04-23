@@ -1,4 +1,7 @@
-﻿  Main.cpp
-  UnitTests.cpp
-  Generating Code...
-  main.vcxproj -> C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\main.exe
+﻿  Client.cpp
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(57,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(90,61): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(310,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+  main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
