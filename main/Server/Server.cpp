@@ -365,26 +365,22 @@ bool isSocketAlive(int sock) {
 
 //----------------------------------------------------------------------------
 // Timer thread function for a session.
-void timerThread(int clientSocket1,
-    int clientSocket2,
-    std::shared_ptr<std::atomic<bool>> sessionActive)
+void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atomic<bool>> sessionActive)
 {
-    // 10-second session timer
-    Timer sessionTimer(10);
+   int remaining = 10;               // total seconds
+    while (remaining > 0 && sessionActive->load()) {
+        // format mm:ss
+        int m = remaining / 60, s = remaining % 60;
+        std::ostringstream ss;
+        ss << std::setw(2) << std::setfill('0') << m
+           << ":" << std::setw(2) << std::setfill('0') << s;
 
-    // Run until time is up OR session is aborted
-    while (!sessionTimer.isTimeUp() && sessionActive->load()) {
-        std::string currentTimeStr = sessionTimer.UpdateTime();
-        json j;
-        j["type"] = "TIME_UPDATE";
-        j["time"] = currentTimeStr;
-
-        if (isSocketAlive(clientSocket1))
-            sendSecure(clientSocket1, j, SHARED_SECRET);
-        if (isSocketAlive(clientSocket2))
-            sendSecure(clientSocket2, j, SHARED_SECRET);
+        json j = { {"type","TIME_UPDATE"}, {"time", ss.str()} };
+        sendSecure(clientSocket1, j, SHARED_SECRET);
+        sendSecure(clientSocket2, j, SHARED_SECRET);
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
+        --remaining;
     }
 
     // If the session was aborted mid-timer:

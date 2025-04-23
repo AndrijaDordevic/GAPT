@@ -159,37 +159,64 @@ namespace Client {
         inSession = false;
     }
 
+    static bool validateHMAC(json& j, const std::string& secret) {
+        if (!j.contains("hmac")) {
+            std::cerr << "No HMAC in message – rejecting\n";
+            return false;
+        }
+        std::string receivedTag = j["hmac"];
+        // Remove it for recomputing
+        j.erase("hmac");
+        std::string bodyStr = j.dump();
+        // Compute expected
+        std::string expectedTag = computeHMAC(bodyStr, secret);
+        if (!hmacEquals(receivedTag, expectedTag)) {
+            std::cerr << "HMAC verification failed – possible tampering\n";
+            return false;
+        }
+        return true;
+    }
+
     void handle_server(int client_socket) {
-        char buffer[800];
-        string accumulatedMessage = "";  // Accumulate partial messages here
+        std::string accumulatedMessage;
+        char buffer[4096];
 
         while (client_running && !StopResponceTaking) {
-            memset(buffer, 0, sizeof(buffer));
-            int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-            if (bytes_received > 0) {
-                buffer[bytes_received] = '\0';
-                string msg(buffer);
-                accumulatedMessage += msg;  // Accumulate the message
+            // —— read once per loop ——
+            int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
 
-                try {
-                    size_t start = 0;
-                    while ((start = accumulatedMessage.find('{')) != std::string::npos) {
-                        size_t end = accumulatedMessage.find('}', start);
-                        if (end == std::string::npos) break;
+            if (bytes_received <= 0) {
+                // connection closed or error
+                if (bytes_received == 0)
+                    std::cout << "Server disconnected.\n";
+                else
+                    perror("recv");
+                client_running = false;
+                break;
+            }
+            else {
+                // accumulate raw bytes
+                accumulatedMessage.append(buffer, bytes_received);
 
-                        std::string jsonStr = accumulatedMessage.substr(start, end - start + 1);
-                        accumulatedMessage = accumulatedMessage.substr(end + 1);  // Move to the next JSON
+                // pull out each '\n'-terminated JSON blob
+                size_t nl;
+                while ((nl = accumulatedMessage.find('\n')) != std::string::npos) {
+                    std::string raw = accumulatedMessage.substr(0, nl);
+                    accumulatedMessage.erase(0, nl + 1);
 
-                        std::cout << "[Debug] JSON String: " << jsonStr << std::endl;  // Print the JSON string
+                    std::cout << "[Debug] JSON String: " << raw << "\n"; 
 
-                        json j;
-                        if (!recvSecure(j)) {
-                            std::cerr << "Invalid or tampered message received\n";
+                    try {
+                        json j = json::parse(raw);
+
+                        // validate+strip HMAC
+                        if (!validateHMAC(j, SHARED_SECRET)) {
                             continue;
                         }
 
+                        // dispatch on type
                         if (j.contains("type")) {
-                            string msgType = j["type"];
+                            std::string msgType = j["type"];
                             if (msgType == "TIME_UPDATE") {
                                 TimerBuffer = j["time"];
                             }
@@ -197,13 +224,14 @@ namespace Client {
                                 ScoreBuffer = j.dump();
                             }
                             else if (msgType == "SCORE_UPDATE") {
-                                int oppScore = j["opponentScore"];
-                                RecieveOpponentScore(oppScore);
+                                RecieveOpponentScore(j["opponentScore"]);
                             }
-                            else if (msgType == "SHAPE_ASSIGN" || msgType == "NEW_SHAPE") {
+                            else if (msgType == "SHAPE_ASSIGN"
+                                || msgType == "NEW_SHAPE") {
                                 int shapeType = j["shapeType"];
-                                std::cout << "Received shape type: " << shapeType << "\n";
-                                shape.push_back(static_cast<int>(shapeType));
+                                std::cout << "Received shape type: "
+                                    << shapeType << "\n";
+                                shape.push_back(shapeType);
                             }
                             else if (msgType == "Tostart") {
                                 bool start = j["bool"];
@@ -215,64 +243,64 @@ namespace Client {
                             }
                             else if (msgType == "SESSION_ABORT") {
                                 inSession.store(false);
-                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
-                                std::string finalMessage = "Game over! You Win! Your opponent disconnected.";
-                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
+                                Audio::PlaySoundFile(
+                                    "Assets/Sounds/GameOver.mp3");
+                                SDL_ShowSimpleMessageBox(
+                                    SDL_MESSAGEBOX_INFORMATION,
+                                    "Game Over",
+                                    "Game over! You Win! Your opponent disconnected.",
+                                    NULL
+                                );
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
                             }
                             else if (msgType == "GAME_OVER") {
                                 inSession.store(false);
-                                Audio::PlaySoundFile("Assets/Sounds/GameOver.mp3");
+                                Audio::PlaySoundFile(
+                                    "Assets/Sounds/GameOver.mp3");
                                 std::string finalScore = j["score"].dump();
-                                std::string finalOutcome = j["outcome"].get<std::string>();
+                                std::string finalOutcome =
+                                    j["outcome"].get<std::string>();
                                 std::string finalMessage;
-
-                                if (finalOutcome == "draw!") {
-                                    finalMessage = "Game Over! Its a " + finalOutcome + " Your score: " + finalScore;
-                                }
-                                else {
-                                    finalMessage = "Game Over! You " + finalOutcome + " Your score: " + finalScore;
-                                }
-
-                                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Game Over", finalMessage.c_str(), NULL);
+                                if (finalOutcome == "draw!")
+                                    finalMessage =
+                                    "Game Over! It's a draw! Your score: "
+                                    + finalScore;
+                                else
+                                    finalMessage =
+                                    "Game Over! You " + finalOutcome
+                                    + " Your score: " + finalScore;
+                                SDL_ShowSimpleMessageBox(
+                                    SDL_MESSAGEBOX_INFORMATION,
+                                    "Game Over",
+                                    finalMessage.c_str(),
+                                    NULL
+                                );
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
-                                break;
+                                break;  // break out of inner while(nl)… if you want
                             }
                             else if (msgType == "SESSION_OVER") {
                                 inSession.store(false);
-                                std::cout << "Session Ended!" << "\n";
+                                std::cout << "Session Ended!\n";
                                 resetClientState();
                                 accumulatedMessage.clear();
-                                continue;
+                                // continue processing any further lines
                             }
                         }
                     }
-                }
-                catch (const std::exception& e) {
-                    cerr << "[Client] JSON parse error: " << e.what() << "\n";
-                }
-            }
-            else if (bytes_received == 0) {
-                std::cout << "Server disconnected.\n";
-                client_running = false;
-                break;
-            }
-            else {
-#ifdef _WIN32
-                int error = WSAGetLastError();
-#else
-                int error = errno;
-#endif
-                cerr << "Failed to receive data from server, error code: " << error << "\n";
-                client_running = false;
-                break;
-            }
-            this_thread::sleep_for(chrono::milliseconds(50));
-        }
+                    catch (const std::exception& e) {
+                        std::cerr << "[Client] JSON parse error: "
+                            << e.what() << "\n";
+                    }
+                } // end while(nl…)
+            } // end else(bytes_received>0)
+
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(50));
+        } // end while(client_running…)
     }
 
     bool notifyStartGame() {
@@ -343,13 +371,17 @@ namespace Client {
     }
 
     int Client::UpdateScore() {
+        if (ScoreBuffer.empty()) {
+            // No score update has arrived yet
+            return 0;
+        }
+
         try {
             json response = json::parse(ScoreBuffer);
-            std::cout << "[Client] Parsed ScoreBuffer JSON: " << response.dump() << "\n";
-
             if (response.contains("type") && response["type"] == "SCORE_RESPONSE") {
                 int score = response["score"].get<int>();
-                std::cout << "[Client] Extracted score: " << score << "\n";
+                // clear it so you don’t parse it again on the next tick
+                ScoreBuffer.clear();
                 return score;
             }
         }
