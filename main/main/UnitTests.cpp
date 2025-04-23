@@ -1,10 +1,18 @@
-#include <cassert>
+﻿#include <cassert>
 #include "Tetromino.hpp"
 #include "Menu.hpp"
 #include <vector>
 #include <iostream>
 #include "Window.hpp"
 #include "Audio.hpp"
+#include <sstream>
+#include <iomanip>
+#include <string>
+#include <thread>
+#include <atomic>
+#include <openssl/hmac.h>
+#include <nlohmann/json.hpp>
+
 
 
 std::vector<std::vector<SDL_Point>> shapes = {
@@ -40,6 +48,8 @@ extern std::vector<MenuItem> menuItems;
 extern SDL_Window* windowm;
 extern SDL_Renderer* rendererm;
 
+using json = nlohmann::json;
+
 Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int yOffset) {
     Tetromino t;
     for (const auto& p : shape) {
@@ -48,7 +58,31 @@ Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int 
     return t;
 }
 
+static std::string computeHMAC(const std::string& data, const std::string& secret) {
+    unsigned char* result = HMAC(
+        EVP_sha256(),
+        reinterpret_cast<const unsigned char*>(secret.data()), secret.size(),
+        reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+        nullptr, nullptr
+    );
 
+    std::ostringstream hex;
+    hex << std::hex << std::setfill('0');
+    for (int i = 0; i < 32; ++i) {
+        hex << std::setw(2) << static_cast<int>(result[i]);
+    }
+    return hex.str();
+}
+
+static bool hmacEquals(const std::string& a, const std::string& b) {
+    if (a.size() != b.size()) return false;
+    unsigned char diff = 0;
+    for (size_t i = 0; i < a.size(); ++i)
+        diff |= a[i] ^ b[i];
+    return diff == 0;
+}
+
+static const std::string SHARED_SECRET = "my?very?strong?key";
 
 bool Test_HoverStates() {
     assert(!menuItems.empty());
@@ -75,17 +109,17 @@ bool Test_Collision() {
     Tetromino test1 = CreateTetromino(shapes[0], SnapToGrid(5,40), SnapToGrid(5, 40));
     assert(CheckCollision(test1, placed) == false);
 
-    // Test 2: Collision � block at (5,5)
+    // Test 2: Collision — block at (5,5)
     placed.push_back(CreateTetromino(shapes[0], SnapToGrid(5, 40), SnapToGrid(5, 40))); // square at same spot
     Tetromino test2 = CreateTetromino(shapes[1], SnapToGrid(5, 40), SnapToGrid(5, 40)); // long overlapping square
     assert(CheckCollision(test2, placed) == true);
 
-    // Test 3: No collision � test block is far away
+    // Test 3: No collision — test block is far away
 
     Tetromino test3 = CreateTetromino(shapes[2], SnapToGrid(100, 40), SnapToGrid(10, 40));
     assert(CheckCollision(test3, placed) == false);
 
-    // Test 4: Edge touch but no overlap � no collision
+    // Test 4: Edge touch but no overlap — no collision
     Tetromino test4 = CreateTetromino(shapes[0], SnapToGrid(7, 40), SnapToGrid(5, 40)); // square to the right of existing one
     assert(CheckCollision(test4, placed) == true);
 
@@ -113,7 +147,7 @@ int Test_Position() {
     tetrominos.push_back(CreateTetromino(shapes[16], spawnX, 10));
     assert(IsPositionFree(10) == false);
 
-    // Move Dot away � should be free
+    // Move Dot away — should be free
     tetrominos.clear();
     tetrominos.push_back(CreateTetromino(shapes[16], spawnX + 1, 10));
     assert(IsPositionFree(10) == true);
@@ -154,3 +188,26 @@ bool Test_InsideGrid() {
     return 0;
 
 }
+
+bool Test_ComputeHMAC() {
+    std::string data = "The quick brown fox jumps over the lazy dog";
+
+    const std::string expected =
+        "ad5800ea20a7a3599ba631507ea99e5852445c1ed280d9d1030c474390f4dd69";
+    std::string tag = computeHMAC(data, SHARED_SECRET);
+    assert(tag == expected);
+    std::cout << "ComputeHMAC test passed. \n";
+    return 0;
+}
+
+bool Test_hmacEquals() {
+    // identical strings → true
+    assert(hmacEquals("abcdef", "abcdef"));
+    // different bytes → false
+    assert(!hmacEquals("abcd00", "abcd01"));
+    // differing lengths → false
+    assert(!hmacEquals("short", "toolong"));
+    std::cout << "hmacEquals test passed. \n";
+    return 0;
+}
+
