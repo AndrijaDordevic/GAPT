@@ -112,10 +112,6 @@ int main(int argc, char* argv[]) {
         initializeMenuWindowAndRenderer();
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
-            if (!initializeSDL(gameWindow, gameRenderer)) {
-                std::cerr << "Failed to initialize SDL. Exiting..." << std::endl;
-                return -1;
-            }
             runGame(gameWindow, gameRenderer);
             if (closeGame) {
                 break;
