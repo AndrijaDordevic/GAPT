@@ -383,6 +383,7 @@ namespace Client {
                 int score = response["score"].get<int>();
                  cout << "[Client] Score response received: " << score << "\n";
                 // clear it so you don’t parse it again on the next tick
+
                 return score;
             }
         }

@@ -555,12 +555,13 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                 int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
                 fromScore += std::min(earnedScore, 400);
 
+                // Send response ONLY to the client who scored
                 json response;
                 response["type"] = "SCORE_RESPONSE";
                 response["score"] = fromScore;
                 sendSecure(fromSocket, response, SHARED_SECRET);
-                sendSecure(toSocket, response, SHARED_SECRET);
 
+                // Send update ONLY to the opponent
                 json updateMsg;
                 updateMsg["type"] = "SCORE_UPDATE";
                 updateMsg["opponentScore"] = fromScore;

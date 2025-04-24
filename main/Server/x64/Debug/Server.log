@@ -1,4 +1,3 @@
-﻿Server.obj : warning LNK4099: PDB '' was not found with 'Server.obj' or at ''; linking object as if no debug info
-Shapes.obj : warning LNK4099: PDB '' was not found with 'Shapes.obj' or at ''; linking object as if no debug info
+﻿Shapes.obj : warning LNK4099: PDB '' was not found with 'Shapes.obj' or at ''; linking object as if no debug info
 Timer.obj : warning LNK4099: PDB '' was not found with 'Timer.obj' or at ''; linking object as if no debug info
   Server.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\Server.exe

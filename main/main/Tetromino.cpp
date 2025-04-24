@@ -277,21 +277,6 @@ void RunBlocks(SDL_Renderer* renderer) {
 	spawnYPositions[1] = 375;
 	spawnYPositions[2] = 630;
 
-	// Spawn a new tetromino if conditions are met.
-	if (Client::shape.size() == 3) {
-		// Initial spawning of 3 tetrominos
-		for (int i = 0; i < 3; i++) {
-			SpawnTetromino();
-		}
-		if (Client::shape.empty()) {
-			std::cout << "Shapes vector is empty. Cannot remove shape.\n";
-		}
-		else {
-			std::cout << "Shape removed from vector: " << Client::shape.front() << "\n";
-			Client::shape.erase(Client::shape.begin());
-		}
-	}
-
 	// Check for open spawn positions and refill up to 3 active tetrominos
 	while (tetrominos.size() < 3) {
 		SpawnTetromino();
@@ -358,7 +343,6 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	if (!clearedRowsVec.empty() || !clearedColsVec.empty()) {
 		std::cout << "Sending score request...\n";
 		serverScore = Client::sendClearedLinesAndGetScore(clearedRowsVec, clearedColsVec);
-		score = serverScore;
 		SDL_Delay(100); // Optional delay to allow server to process
 	}
 

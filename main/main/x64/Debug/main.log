@@ -1,5 +1,2 @@
-﻿  Client.cpp
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(57,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(90,61): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(339,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+﻿  Tetromino.cpp
   main.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\main.exe
