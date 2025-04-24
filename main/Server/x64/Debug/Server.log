@@ -1,25 +1,27 @@
 ﻿  Server.cpp
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   (compiling source file 'Server.cpp')
   
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   (compiling source file 'Server.cpp')
   
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(94,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(184,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(226,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(269,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(276,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(725,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Server.cpp(748,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(94,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(184,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(226,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(269,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(276,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(754,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(777,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
   Shapes.cpp
   Timer.cpp
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   (compiling source file 'Timer.cpp')
   
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
   (compiling source file 'Timer.cpp')
   
   Generating Code...
-  LINK : C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
-  Server.vcxproj -> C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\Server.exe
+  LINK : C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe not found or not built by the last incremental link; performing full link
+  Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.

@@ -367,7 +367,7 @@ bool isSocketAlive(int sock) {
 // Timer thread function for a session.
 void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atomic<bool>> sessionActive)
 {
-   int remaining = 10;               // total seconds
+   int remaining = 30;               // total seconds
     while (remaining > 0 && sessionActive->load()) {
         // format mm:ss
         int m = remaining / 60, s = remaining % 60;
@@ -456,14 +456,32 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, static_cast<int>(ShapeType::Count) - 1);
 
-    // Send 3 initial random shapes to both clients
+    // Pre-generate a queue of shapes for this session
+    const int totalShapes = 1000; // total number of predetermined shapes
+    std::vector<ShapeType> shapeArray(totalShapes);
+    for (int i = 0; i < totalShapes; ++i)
+        shapeArray[i] = static_cast<ShapeType>(dist(gen));
+
+    // 2) Two pointers
+    size_t nextIdx1 = 0, nextIdx2 = 0;
+
+    // Helper to build and send a SHAPE_ASSIGN
+    auto sendShapeTo = [&](int sock, ShapeType s) {
+        json j;
+        j["type"] = "SHAPE_ASSIGN";
+        j["shapeType"] = static_cast<int>(s);
+        // sign+send
+        if (!sendSecure(sock, j, SHARED_SECRET)) {
+            std::cerr << "FAILED to send SHAPE_ASSIGN\n";
+        }
+    };
+
+    // 3) Initial deal of 3 shapes each
     for (int i = 0; i < 3; ++i) {
-        json shapeMsg;
-        shapeMsg["type"] = "SHAPE_ASSIGN";
-        shapeMsg["shapeType"] = dist(gen);
-        sendSecure(clientSocket1, shapeMsg, SHARED_SECRET);
-        sendSecure(clientSocket2, shapeMsg, SHARED_SECRET);
+        sendShapeTo(clientSocket1, shapeArray[nextIdx1++]);
+        sendShapeTo(clientSocket2, shapeArray[nextIdx2++]);
     }
+
 
     std::thread t(timerThread, clientSocket1, clientSocket2, std::ref(sessionActive));
     t.detach();
@@ -501,12 +519,6 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             // Process the message (j is already parsed and verified)
             if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
                 std::cout << "Received DRAG_UPDATE from client " << fromID << ":\n";
-                json shapeMsg;
-                shapeMsg["type"] = "SHAPE_ASSIGN";
-                shapeMsg["shapeType"] = dist(gen);
-                sendSecure(clientSocket1, shapeMsg, SHARED_SECRET);
-                sendSecure(clientSocket2, shapeMsg, SHARED_SECRET);
-
                 if (j.contains("blocks")) {
                     for (const auto& block : j["blocks"]) {
                         int x = block.value("x", -1);
@@ -515,8 +527,25 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     }
                 }
 
-                sendSecure(clientSocket1, j, SHARED_SECRET);
+                // 1) Forward the drag-update to both (unchanged)
+                sendSecure(clientSocket1,j, SHARED_SECRET);
                 sendSecure(clientSocket2, j, SHARED_SECRET);
+
+                // 2) Now pop _this_ client’s next shape and send _only_ to them
+                if (fromID == clientID1) {
+                    ShapeType next = (nextIdx1 < shapeArray.size())
+                        ? shapeArray[nextIdx1++]
+                        : static_cast<ShapeType>(dist(gen));
+                    sendShapeTo(fromSocket, next);
+                }
+                else {
+                    ShapeType next = (nextIdx2 < shapeArray.size())
+                        ? shapeArray[nextIdx2++]
+                        : static_cast<ShapeType>(dist(gen));
+                    sendShapeTo(fromSocket, next);
+                }
+
+                return true;
             }
             else if (j["type"] == "SCORE_REQUEST") {
                 std::vector<int> rows = j["rows"];
