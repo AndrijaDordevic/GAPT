@@ -157,6 +157,7 @@ namespace Client {
         initialized = false;
         spawnedCount = 0;
         inSession = false;
+        RecieveOpponentScore(0);
     }
 
     static bool validateHMAC(json& j, const std::string& secret) {
@@ -380,8 +381,8 @@ namespace Client {
             json response = json::parse(ScoreBuffer);
             if (response.contains("type") && response["type"] == "SCORE_RESPONSE") {
                 int score = response["score"].get<int>();
+                 cout << "[Client] Score response received: " << score << "\n";
                 // clear it so you don’t parse it again on the next tick
-                ScoreBuffer.clear();
                 return score;
             }
         }

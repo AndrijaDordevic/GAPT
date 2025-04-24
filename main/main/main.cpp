@@ -74,7 +74,6 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         // Render game elements
         SDL_RenderTexture(renderer, texture, NULL, NULL);
 
-
 		score = Client::UpdateScore();
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
