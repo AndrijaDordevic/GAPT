@@ -14,6 +14,9 @@
 #include <openssl/hmac.h>
 #include <iomanip>
 #include <sstream>
+#include <set>
+#include <mutex>
+#include <ctime>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -50,6 +53,10 @@ namespace Client {
     bool initialized = false;
     int spawnedCount = 0;
     atomic<bool> inSession(false);
+    static std::atomic<uint64_t> clientMsgCounter{ 1 };
+    static std::mutex            clientSeenMutex;
+    static std::set<uint64_t>    clientSeenMsgIDs;
+    constexpr time_t             CLIENT_ALLOWED_DRIFT = 5;  // seconds
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
         unsigned char* result = HMAC(
@@ -75,18 +82,24 @@ namespace Client {
         return diff == 0;
     }
 
-    bool sendSecure(const json& j) {
+    bool sendSecure(const json& j_in) {
         if (client_socket < 0) {
             cerr << "Client socket is not connected!" << endl;
             return false;
         }
 
+        // 1) Copy and stamp
+        json j = j_in;
+        j["msg_id"] = clientMsgCounter.fetch_add(1, std::memory_order_relaxed);
+        j["ts"] = std::time(nullptr);
+
+        // 2) Compute HMAC over the stamped body
         std::string body = j.dump();
         std::string tag = computeHMAC(body, SHARED_SECRET);
-        json withTag = j;
-        withTag["hmac"] = tag;
-        std::string out = withTag.dump() + "\n";
+        j["hmac"] = tag;
 
+        // 3) Serialize + send
+        std::string out = j.dump() + "\n";
         int sent = send(client_socket, out.c_str(), out.size(), 0);
         if (sent <= 0) {
 #ifdef _WIN32
@@ -160,20 +173,50 @@ namespace Client {
     }
 
     static bool validateHMAC(json& j, const std::string& secret) {
+        // 1) HMAC check (existing)
         if (!j.contains("hmac")) {
             std::cerr << "No HMAC in message – rejecting\n";
             return false;
         }
         std::string receivedTag = j["hmac"];
-        // Remove it for recomputing
         j.erase("hmac");
         std::string bodyStr = j.dump();
-        // Compute expected
-        std::string expectedTag = computeHMAC(bodyStr, secret);
-        if (!hmacEquals(receivedTag, expectedTag)) {
+        if (!hmacEquals(receivedTag, computeHMAC(bodyStr, secret))) {
             std::cerr << "HMAC verification failed – possible tampering\n";
             return false;
         }
+
+        // 2) Replay-protection fields must exist
+        if (!j.contains("msg_id") || !j.contains("ts")) {
+            std::cerr << "Missing replay-protection fields\n";
+            return false;
+        }
+
+        uint64_t msg_id = j["msg_id"];
+        time_t   ts = j["ts"];
+        time_t   now = std::time(nullptr);
+
+        // 3) Freshness
+        if (std::llabs(now - ts) > CLIENT_ALLOWED_DRIFT) {
+            std::cerr << "Stale or future message – ts=" << ts << ", now=" << now << "\n";
+            return false;
+        }
+
+        // 4) Uniqueness
+        {
+            std::lock_guard<std::mutex> lock(clientSeenMutex);
+            if (clientSeenMsgIDs.count(msg_id)) {
+                std::cerr << "Replay detected – msg_id=" << msg_id << "\n";
+                return false;
+            }
+            clientSeenMsgIDs.insert(msg_id);
+            // (Optionally prune older IDs to limit memory)
+        }
+
+        // 5) Strip before dispatch
+        j.erase("msg_id");
+        j.erase("ts");
+
         return true;
     }
 

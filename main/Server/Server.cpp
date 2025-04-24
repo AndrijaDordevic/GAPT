@@ -19,6 +19,8 @@
 #include <signal.h>
 #include <openssl/hmac.h>
 #include <iomanip>
+#include <set>
+#include <ctime>
 
 
 #define NOMINMAX
@@ -53,6 +55,11 @@ std::atomic<bool> stopBroadcast(false);
 std::atomic<int> clientIDCounter(0);
 
 std::atomic<bool> sessionOver(false);
+
+static std::atomic<uint64_t> globalMsgCounter{ 1 };
+static std::mutex          seenMutex;
+static std::set<uint64_t>  seenMsgIDs;
+constexpr time_t           ALLOWED_DRIFT = 5; // seconds
 
 // Shared HMAC secret
 static const std::string SHARED_SECRET = "my?very?strong?key";
@@ -122,6 +129,11 @@ int safeSend(int sock, const char* buf, size_t len) {
 }
 
 bool sendSecure(int sock, json j, const std::string& secret) {
+    
+    // 0) stamp message
+    j["msg_id"] = globalMsgCounter.fetch_add(1, std::memory_order_relaxed);
+    j["ts"] = std::time(nullptr);
+
     // 1) Serialize without HMAC
     std::string body = j.dump();
     // 2) Compute HMAC
@@ -136,46 +148,71 @@ bool sendSecure(int sock, json j, const std::string& secret) {
 
 // Add this function to read and verify secure messages
 bool recvSecure(int sock, json& j, const std::string& secret) {
-    char buffer[4096];
-    int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    // 1) Read a single JSON blob (terminated by '\n'):
+    static constexpr size_t BUF_SZ = 4096;
+    char buffer[BUF_SZ];
+    int bytesRead = recv(sock, buffer, BUF_SZ - 1, 0);
     if (bytesRead <= 0) {
-        return false; // Connection closed or error
+        // closed or error
+        return false;
     }
     buffer[bytesRead] = '\0';
 
+    // 2) Parse
     try {
-        // Parse the incoming JSON
         j = json::parse(buffer);
-
-        // Verify HMAC if present
-        if (j.contains("hmac")) {
-            std::string receivedTag = j["hmac"];
-            json body = j; // Make a copy
-            body.erase("hmac"); // Remove the tag for verification
-            std::string bodyStr = body.dump();
-
-            // Compute expected HMAC
-            std::string expectedTag = computeHMAC(bodyStr, secret);
-
-            // Constant-time comparison
-            if (!hmacEquals(receivedTag, expectedTag)) {
-                std::cerr << "HMAC verification failed - possible tampering\n";
-                return false;
-            }
-
-            // Remove HMAC from the parsed JSON since it's verified
-            j.erase("hmac");
-            return true;
-        }
-        else {
-            std::cerr << "No HMAC in message - rejecting\n";
-            return false;
-        }
     }
-    catch (...) {
-        std::cerr << "Failed to parse JSON message\n";
+    catch (const std::exception& e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
         return false;
     }
+
+    // 3) Verify HMAC field
+    if (!j.contains("hmac")) {
+        std::cerr << "No HMAC in message – rejecting\n";
+        return false;
+    }
+    std::string receivedTag = j["hmac"];
+    j.erase("hmac");
+    std::string body = j.dump();
+    std::string expectedTag = computeHMAC(body, secret);
+    if (!hmacEquals(receivedTag, expectedTag)) {
+        std::cerr << "HMAC verification failed – possible tampering\n";
+        return false;
+    }
+
+    // 4) Replay?protection fields
+    if (!j.contains("msg_id") || !j.contains("ts")) {
+        std::cerr << "Missing replay?protection fields\n";
+        return false;
+    }
+    uint64_t msg_id = j["msg_id"].get<uint64_t>();
+    time_t   ts = j["ts"].get<time_t>();
+    time_t   now = std::time(nullptr);
+
+    // 5) Freshness check
+    if (std::llabs(now - ts) > ALLOWED_DRIFT) {
+        std::cerr << "Stale or future message (ts=" << ts << ", now=" << now << ")\n";
+        return false;
+    }
+
+    // 6) Uniqueness check
+    {
+        std::lock_guard<std::mutex> lock(seenMutex);
+        if (seenMsgIDs.count(msg_id)) {
+            std::cerr << "Replay detected – msg_id=" << msg_id << "\n";
+            return false;
+        }
+        seenMsgIDs.insert(msg_id);
+
+        // Optional: prune entries older than (now – ALLOWED_DRIFT)
+        // for (auto it = seenMsgIDs.begin(); it != seenMsgIDs.end(); ) { … }
+    }
+
+    // 7) Clean up and return
+    j.erase("msg_id");
+    j.erase("ts");
+    return true;
 }
 
 //----------------------------------------------------------------------------
