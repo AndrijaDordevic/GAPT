@@ -20,7 +20,6 @@
 #include <openssl/hmac.h>
 #include <iomanip>
 
-
 #define NOMINMAX
 #ifdef _WIN32
 #include <winsock2.h>
@@ -60,6 +59,8 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
 struct ClientInfo {
     int clientSocket;
     bool ready;
+    std::string ipAddress;
+
 };
 
 // Thread-safe waiting clients for clients waiting to start a session.
@@ -602,7 +603,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
 //----------------------------------------------------------------------------
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
-void clientHandler(int client_socket, int clientID) {
+void clientHandler(int client_socket, int clientID, const std::string& clientIP) {
     while (true) {
         {
             std::lock_guard<std::mutex> lock(waitingMutex);
@@ -648,7 +649,7 @@ void clientHandler(int client_socket, int clientID) {
         bool paired = false;
         {
             std::lock_guard<std::mutex> lock(waitingMutex);
-            waitingClients[clientID] = { client_socket, true };
+            waitingClients[clientID] = { client_socket, true, clientIP };
             for (auto it = waitingClients.begin(); it != waitingClients.end(); ++it) {
                 if (it->first != clientID && it->second.ready) {
                     partnerID = it->first;
@@ -725,6 +726,7 @@ void clientHandler(int client_socket, int clientID) {
 
 int main() {
     ignoreSigpipe();
+
 #ifdef _WIN32
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -732,13 +734,15 @@ int main() {
         return -1;
     }
 #endif
+
     std::string localIP = getLocalIP();
     if (localIP.empty()) {
         std::cerr << "Failed to retrieve local IP address!" << std::endl;
         return -1;
     }
     std::cout << "Server's local IP address: " << localIP << std::endl;
-    // Start broadcaster thread.
+
+    // Start broadcaster thread
     std::thread broadcaster(broadcastIP, localIP);
 #ifdef _WIN32
     HANDLE broadcastHandle = static_cast<HANDLE>(broadcaster.native_handle());
@@ -751,44 +755,63 @@ int main() {
     }
 #endif
     broadcaster.detach();
-    // Set up server TCP listener.
+
+    // Set up server TCP listener
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
         std::cerr << "Socket creation failed" << std::endl;
         return -1;
     }
+
     sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
     server_addr.sin_addr.s_addr = INADDR_ANY;
+
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         std::cerr << "Binding failed" << std::endl;
         return -1;
     }
+
     if (listen(server_fd, 10) < 0) {
         std::cerr << "Listen failed" << std::endl;
         return -1;
     }
+
     std::cout << "Server listening on port " << PORT << "...\n";
-    // Main loop: accept new client connections.
+
+    // Main accept loop
     while (true) {
         sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
+
         int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
         if (client_socket < 0) {
             std::cerr << "Connection failed" << std::endl;
             continue;
         }
+
+        // **Correctly get client IP AFTER accept() succeeds**
+        char client_ip[INET_ADDRSTRLEN];
+        if (inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN) == nullptr) {
+            std::cerr << "Failed to convert client IP address." << std::endl;
+            continue;
+        }
+
         int uniqueClientID = clientIDCounter.fetch_add(1) + 1;
-        std::cout << "New client connected with unique ID: " << uniqueClientID << std::endl;
-        std::thread clientThread(clientHandler, client_socket, uniqueClientID);
+        std::cout << "New client connected with unique ID: " << uniqueClientID
+            << " and IP: " << client_ip << std::endl;
+
+        // Launch threads
+        std::thread clientThread(clientHandler, client_socket, uniqueClientID , client_ip);
         clientThread.detach();
+
         std::thread monitor(waitingClientsMonitor);
         monitor.detach();
     }
+
     stopBroadcast.store(true);
-    broadcaster.join();
 #ifdef _WIN32
     closesocket(server_fd);
     WSACleanup();

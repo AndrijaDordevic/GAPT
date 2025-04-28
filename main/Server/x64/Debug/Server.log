@@ -1,3 +1,17 @@
-﻿Shapes.obj : warning LNK4099: PDB '' was not found with 'Shapes.obj' or at ''; linking object as if no debug info
+﻿  Server.cpp
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Server.cpp')
+  
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
+  (compiling source file 'Server.cpp')
+  
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(95,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(185,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(227,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(270,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(277,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(760,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\Server\Server.cpp(789,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+Shapes.obj : warning LNK4099: PDB '' was not found with 'Shapes.obj' or at ''; linking object as if no debug info
 Timer.obj : warning LNK4099: PDB '' was not found with 'Timer.obj' or at ''; linking object as if no debug info
-  Server.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\Server.exe
+  Server.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT2\main\x64\Debug\Server.exe
