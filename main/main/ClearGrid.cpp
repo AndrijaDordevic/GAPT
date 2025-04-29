@@ -1,4 +1,4 @@
-#include <SDL3/SDL.h>
+﻿#include <SDL3/SDL.h>
 #include <iostream>
 #include <vector>
 #include "ClearGrid.hpp"
@@ -7,9 +7,10 @@
 #include "Tetromino.hpp"
 #include "Texture.hpp"
 #include "Audio.hpp"
+#include "ScreenShake.hpp"
 
 using namespace std;
-
+extern ScreenShake shaker;
 struct ClearGridButton {
     SDL_FRect rect;
     string clrlabel;
@@ -25,20 +26,28 @@ vector<ClearGridButton> clrButton = {
 void clearTetrominos() {
     placedTetrominos.clear();
     Audio::PlaySoundFile("Assets/Sounds/ClearGrid.mp3");
+    shaker.start(0.6f, 12.0f);
 }
 
 
+extern SDL_FPoint cameraOffset;  // ← ADD this at top if not already
+
 int runClearGridButton(SDL_Renderer* renderer, SDL_Texture* ClearGridSelect, SDL_Texture* ClearGridSelectS) {
-    SDL_Event event;
-    bool running = true;
+    for (auto& button : clrButton) {
+        SDL_FRect offsetRect = {
+            button.rect.x - cameraOffset.x,
+            button.rect.y - cameraOffset.y,
+            button.rect.w,
+            button.rect.h
+        };
 
-                for (auto& button : clrButton) {
-                    
+        button.isHovered
+            ? SDL_RenderTexture(renderer, ClearGridSelectS, nullptr, &offsetRect)
+            : SDL_RenderTexture(renderer, ClearGridSelect, nullptr, &offsetRect);
+    }
+    return 0;
+}
 
-                    button.isHovered ? SDL_RenderTexture(renderer, ClearGridSelectS, nullptr, &button.rect) : SDL_RenderTexture(renderer, ClearGridSelect, nullptr, &button.rect);
-                }
-                return 0;
-            }
 
         
 
@@ -64,7 +73,7 @@ void updateClearGridButton(const SDL_Event& event) {
             }
         }
     }
-    }
+}
             
 
 

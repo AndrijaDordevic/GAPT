@@ -12,6 +12,7 @@
 #include "TextRender.hpp"
 #include "Client.hpp"
 #include "Shapes.hpp"
+#include "ScreenShake.hpp"
 #include <iostream>
 #include <vector>
 // Global flags and spawn data
@@ -20,12 +21,12 @@ bool CanDrag = false;
 bool positionsOccupied[3] = { false, false, false };
 bool searched = false;
 
-
+extern ScreenShake shaker;
 int spawnX = 0;
 int spawnYPositions[3] = { 0, 0, 0 };
 int score = 0;
 int OpponentScore = 0;
-
+extern SDL_FPoint cameraOffset;
 const int POINTS_PER_LINE = 100;
 int randomShapeIndex;
 
@@ -200,12 +201,11 @@ void RenderTetrominos(SDL_Renderer* ren) {
 		const Tetromino& tetromino = tetrominoRef.get();
 		for (auto& block : tetromino.blocks) {
 			SDL_FRect rect = {
-				static_cast<float>(block.x),
-				static_cast<float>(block.y),
+				static_cast<float>(block.x) - cameraOffset.x,
+				static_cast<float>(block.y) - cameraOffset.y,
 				static_cast<float>(BLOCK_SIZE),
 				static_cast<float>(BLOCK_SIZE)
 			};
-
 			if (block.texture) {
 				SDL_RenderTexture(ren, block.texture, nullptr, &rect);
 
@@ -378,6 +378,9 @@ void ClearSpanningTetrominos(int gridStartX, int gridStartY, int gridCols, int g
 	// Play sound **only if blocks were actually cleared**
 	if (anyBlocksCleared) {
 		Audio::PlaySoundFile("Assets/Sounds/BlocksPop.mp3");
+		extern ScreenShake shaker;
+		shaker.start(0.4f, 8.0f);  // 0.4s of juicy 8px screen quake
+
 	}
 
 }

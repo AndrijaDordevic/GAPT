@@ -1,5 +1,8 @@
 #include "TextRender.hpp"
+#include "ScreenShake.hpp"
 #include <iostream>
+
+extern SDL_FPoint cameraOffset;
 
 TextRender::TextRender(SDL_Renderer* renderer, const std::string& fontPath, int fontSize)
 	: renderer(renderer), textTexture(nullptr) {
@@ -47,8 +50,8 @@ void TextRender::renderText(int x, int y) {
 
 		// Convert SDL_Rect to SDL_FRect
 		SDL_FRect textFRect = {
-			static_cast<float>(textRect.x),
-			static_cast<float>(textRect.y),
+			static_cast<float>(textRect.x) - cameraOffset.x,  // <- Offset X
+			static_cast<float>(textRect.y) - cameraOffset.y,  // <- Offset Y
 			static_cast<float>(textRect.w),
 			static_cast<float>(textRect.h)
 		};

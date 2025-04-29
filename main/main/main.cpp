@@ -13,6 +13,7 @@
 #include "Texture.hpp"
 #include "Audio.hpp"
 #include "UnitTests.hpp"
+#include "ScreenShake.hpp"
 #include "windows.h"
 
 using namespace std;
@@ -21,7 +22,8 @@ bool closeGame = false;
 
 SDL_Window* gameWindow = nullptr;
 SDL_Renderer* gameRenderer = nullptr;
-
+ScreenShake shaker; 
+SDL_FPoint cameraOffset = { 0, 0 };
 // Function that runs the game loop.
 void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     if (!initializeSDL(window, renderer)) {
@@ -44,9 +46,13 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
     bool running = true;
     SDL_Event event;
+    
 
     Audio::Init();
     // Main game loop
+    uint64_t last = SDL_GetTicksNS();
+
+
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
@@ -59,12 +65,20 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
             updateClearGridButton(event);
 
         }
-
+            
         // Check client connection status
         if (Client::gameOver) {
             cout << "Game over, closing game..." << endl;
             running = false;
         }
+
+        uint64_t now = SDL_GetTicksNS();
+        float deltaTime = (now - last) / 1'000'000'000.0f;
+        last = now;
+
+
+        cameraOffset = shaker.update(deltaTime);
+
         std::string displayTimer = Client::TimerBuffer.empty() ? "Ended" : Client::TimerBuffer;
         timerText.updateText(displayTimer, white);
 
@@ -72,7 +86,13 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         SDL_RenderClear(renderer);
 
         // Render game elements
-        SDL_RenderTexture(renderer, texture, NULL, NULL);
+        SDL_FRect bgRect = {
+            -cameraOffset.x,
+            -cameraOffset.y,
+            static_cast<float>(WINDOW_WIDTH),
+            static_cast<float>(WINDOW_HEIGHT)
+        };
+        SDL_RenderTexture(renderer, texture, nullptr, &bgRect);
 
 		score = Client::UpdateScore();
         RunBlocks(renderer);
