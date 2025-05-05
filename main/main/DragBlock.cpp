@@ -4,6 +4,7 @@
 #include "Window.hpp"
 #include <vector>
 #include <algorithm>
+#include "ScreenShake.hpp"
 #include "Audio.hpp"
 
 
@@ -71,6 +72,9 @@ void DragDrop(SDL_Event& event) {
                     draggedTetromino->blocks[i].x = originalPosition[i].x;
                     draggedTetromino->blocks[i].y = originalPosition[i].y;
                 }
+                Audio::PlaySoundFile("Assets/Sounds/Wrong.mp3");
+                extern ScreenShake shaker;
+                shaker.start(0.4f, 4.0f);
             }
             else {
                 Client::sendDragCoordinates(*draggedTetromino);
