@@ -44,6 +44,9 @@ using json = nlohmann::json;
 int score1 = 0;
 int score2 = 0;
 
+
+uint64_t id = 0;
+
 ShapeType shape;
 json shapeMsg;
 
@@ -60,8 +63,11 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
 struct ClientInfo {
     int clientSocket;
     bool ready;
+    uint64_t lastMessageId = 0;
 };
 
+std::unordered_map<int, ClientInfo> clientStates; // clientID -> state
+std::mutex clientStatesMutex;
 // Thread-safe waiting clients for clients waiting to start a session.
 std::mutex waitingMutex;
 std::unordered_map<int, ClientInfo> waitingClients;
@@ -135,42 +141,65 @@ bool sendSecure(int sock, json j, const std::string& secret) {
 }
 
 // Add this function to read and verify secure messages
-bool recvSecure(int sock, json& j, const std::string& secret) {
+bool recvSecure(int sock, json& j, const std::string& secret, int clientID) {
     char buffer[4096];
     int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
     if (bytesRead <= 0) {
-        return false; // Connection closed or error
+        return false;
     }
     buffer[bytesRead] = '\0';
 
     try {
-        // Parse the incoming JSON
         j = json::parse(buffer);
+        std::cout << "Received JSON from client " << clientID << ": " << j.dump() << "\n";
 
-        // Verify HMAC if present
+        // Verify HMAC first
         if (j.contains("hmac")) {
             std::string receivedTag = j["hmac"];
-            json body = j; // Make a copy
-            body.erase("hmac"); // Remove the tag for verification
+            json body = j;
+            body.erase("hmac");
             std::string bodyStr = body.dump();
 
-            // Compute expected HMAC
-            std::string expectedTag = computeHMAC(bodyStr, secret);
-
-            // Constant-time comparison
-            if (!hmacEquals(receivedTag, expectedTag)) {
-                std::cerr << "HMAC verification failed - possible tampering\n";
+            if (!hmacEquals(receivedTag, computeHMAC(bodyStr, secret))) {
+                std::cerr << "HMAC verification failed\n";
                 return false;
             }
 
-            // Remove HMAC from the parsed JSON since it's verified
+            // Extract message ID from type field (e.g. "123SCORE_REQUEST")
+            if (j.contains("type") && j["type"].is_string()) {
+                std::string typeStr = j["type"].get<std::string>();
+
+                // Find where the ID ends and type begins
+                size_t typeStart = typeStr.find_first_not_of("0123456789");
+                if (typeStart != std::string::npos && typeStart > 0) {
+                    uint64_t currentId = std::stoull(typeStr.substr(0, typeStart));
+
+                    // Per-client replay protection
+                    {
+                        std::lock_guard<std::mutex> lock(clientStatesMutex);
+                        auto& clientState = clientStates[clientID];
+
+                        std::cout << "Client " << clientID << " - Current ID: " << currentId
+                            << ", Last ID: " << clientState.lastMessageId << "\n";
+
+                        if (currentId <= clientState.lastMessageId) {
+                            std::cerr << "Replay attack detected from client " << clientID
+                                << "! Message ID " << currentId
+                                << " <= last seen " << clientState.lastMessageId << "\n";
+                            return false;
+                        }
+                        clientState.lastMessageId = currentId;
+                    }
+
+                    // Remove ID from type for normal processing
+                    j["type"] = typeStr.substr(typeStart);
+                }
+            }
+
             j.erase("hmac");
             return true;
         }
-        else {
-            std::cerr << "No HMAC in message - rejecting\n";
-            return false;
-        }
+        return false;
     }
     catch (...) {
         std::cerr << "Failed to parse JSON message\n";
@@ -503,7 +532,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
         auto processClient = [&](int fromSocket, int toSocket, int& fromScore, int fromID, int toID) -> bool {
             json j;
-            if (!recvSecure(fromSocket, j, SHARED_SECRET)) {
+            if (!recvSecure(fromSocket, j, SHARED_SECRET, fromID)) {
                 std::cout << "Client " << fromID << " disconnected.\n";
 
                 // Notify the other client immediately
@@ -603,6 +632,10 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 //----------------------------------------------------------------------------
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
 void clientHandler(int client_socket, int clientID) {
+    {
+        std::lock_guard<std::mutex> lock(clientStatesMutex);
+        clientStates[clientID] = ClientInfo();
+    }
     while (true) {
         {
             std::lock_guard<std::mutex> lock(waitingMutex);
@@ -624,8 +657,15 @@ void clientHandler(int client_socket, int clientID) {
         // Wait for the client to send "START_GAME".
         while (true) {
             json j;
-            if (!recvSecure(client_socket, j, SHARED_SECRET)) {
+            if (!recvSecure(client_socket, j, SHARED_SECRET, clientID)) {
                 std::cerr << "Client " << clientID << " disconnected or error occurred." << std::endl;
+
+                // Clean up client state
+                {
+                    std::lock_guard<std::mutex> lock(clientStatesMutex);
+                    clientStates.erase(clientID);
+                }
+
 #ifdef _WIN32
                 closesocket(client_socket);
 #else
