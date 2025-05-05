@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿  Audio.cpp
   ClearGrid.cpp
   Client.cpp
@@ -24,3 +25,10 @@ C:\Users\andri\source\repos\GAPT\main\main\UnitTests.cpp(64,75): warning C4267: 
   Generating Code...
 C:\Users\andri\source\repos\GAPT\main\main\Texture.cpp(143,1): warning C4715: 'ApplyTexture': not all control paths return a value
   main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe
+=======
+﻿  Client.cpp
+C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(59,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(92,61): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Jurgen Cauchi\source\repos\GAPT\main\main\Client.cpp(344,31): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+  main.vcxproj -> C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\main.exe
+>>>>>>> 8a5fc3c4432dc0a02b97176f6437e789e362eb9d

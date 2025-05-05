@@ -2,7 +2,11 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
+<<<<<<< HEAD
       <FullPath>C:\Users\andri\source\repos\GAPT\main\x64\Debug\Server.exe</FullPath>
+=======
+      <FullPath>C:\Users\Jurgen Cauchi\source\repos\GAPT\main\x64\Debug\Server.exe</FullPath>
+>>>>>>> 8a5fc3c4432dc0a02b97176f6437e789e362eb9d
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

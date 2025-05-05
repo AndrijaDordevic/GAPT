@@ -32,6 +32,8 @@
 using json = nlohmann::json;
 using namespace std;
 
+int id = 1;
+
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
 bool StopResponceTaking;
@@ -313,13 +315,16 @@ namespace Client {
         }
 
         json j;
-        j["type"] = "START_GAME";
+        j["type"] = to_string(id) + "START_GAME";
+        id++;
         return sendSecure(j);
     }
 
     bool sendDragCoordinates(const Tetromino& tetromino) {
         json j;
-        j["type"] = "DRAG_UPDATE";
+        j["type"] = to_string(id) + "DRAG_UPDATE";
+		std::cout << "Sending drag coordinates to server: " << j["type"] << endl;
+		id++;
         j["blocks"] = json::array();
         for (const auto& block : tetromino.blocks) {
             j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"block type", "d"} });
@@ -400,10 +405,10 @@ namespace Client {
         }
 
         json j;
-        j["type"] = "SCORE_REQUEST";
+        j["type"] = to_string(id) + "SCORE_REQUEST";
         j["rows"] = rows;
         j["columns"] = cols;
-
+        id++;
         if (!sendSecure(j)) {
             std::cerr << "[Client] Failed to send SCORE_REQUEST\n";
             return 0;
