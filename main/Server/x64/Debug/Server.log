@@ -1,15 +1,1 @@
-﻿  Server.cpp
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Server.cpp')
-  
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Server.cpp')
-  
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(94,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(184,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(226,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(269,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(276,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(755,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\Server\Server.cpp(778,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-  Server.vcxproj -> C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\x64\Debug\Server.exe
+﻿  Server.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\Server.exe

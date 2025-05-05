@@ -119,7 +119,6 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
 
 int main(int argc, char* argv[]) {
-
     // Start client thread (remains detached throughout the application)
     Test_hmacEquals();
     Test_ComputeHMAC();

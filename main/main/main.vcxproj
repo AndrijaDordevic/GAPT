@@ -154,6 +154,7 @@
     <ClInclude Include="Client.hpp" />
     <ClInclude Include="Discovery.hpp" />
     <ClInclude Include="Main.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenShake.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
@@ -162,6 +163,12 @@
     <ClInclude Include="Tetromino.hpp" />
     <ClInclude Include="UnitTests.hpp" />
     <ClInclude Include="Window.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Desktop\BlockIcon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Main.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

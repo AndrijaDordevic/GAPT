@@ -36,7 +36,7 @@ using namespace std;
 string server_ip = discoverServer();
 bool StopResponceTaking;
 
-static const std::string SHARED_SECRET = "my?very?strong?key";
+static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
 namespace Client {
     string ScoreBuffer;

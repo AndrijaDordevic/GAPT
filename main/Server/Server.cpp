@@ -55,7 +55,7 @@ std::atomic<int> clientIDCounter(0);
 std::atomic<bool> sessionOver(false);
 
 // Shared HMAC secret
-static const std::string SHARED_SECRET = "my?very?strong?key";
+static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
 struct ClientInfo {
     int clientSocket;
