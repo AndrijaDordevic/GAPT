@@ -1,3 +1,5 @@
-﻿  UnitTests.cpp
-C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\main\UnitTests.cpp(64,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+﻿  Main.cpp
+  UnitTests.cpp
+C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\main\UnitTests.cpp(66,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
   main.vcxproj -> C:\Users\User\source\repos\AndrijaDordevic\GAPT\main\x64\Debug\main.exe
