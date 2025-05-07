@@ -122,6 +122,9 @@ int main(int argc, char* argv[]) {
     // Start client thread (remains detached throughout the application)
     Test_hmacEquals();
     Test_ComputeHMAC();
+    Test_validateHMAC_Missing();
+    Test_validateHMAC_Correct();
+    Test_validateHMAC_BadTag();
     Test_HoverStates();
     Test_InsideGrid(); // Run unit tests
     thread clientThread(Client::runClient);

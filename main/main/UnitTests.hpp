@@ -8,5 +8,9 @@ bool Test_InsideGrid();
 bool Test_HoverStates();
 bool Test_ComputeHMAC();
 bool Test_hmacEquals();
+bool Test_UpdateScore();
+bool Test_validateHMAC_Missing();
+bool Test_validateHMAC_Correct();
+bool Test_validateHMAC_BadTag();
 
 #endif 
