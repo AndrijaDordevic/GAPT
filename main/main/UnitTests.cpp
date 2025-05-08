@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Window.hpp"
 #include "Audio.hpp"
+#include "Client.hpp"
 #include <sstream>
 #include <iomanip>
 #include <string>
@@ -14,8 +15,15 @@
 #include <nlohmann/json.hpp>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <mutex>
+#include <random>
+#include <condition_variable>
+#include <unordered_map>
+#include <queue>
 #pragma comment(lib, "ws2_32.lib")
 
+#define PORT 1235
+#define BROADCAST_INTERVAL 1
 
 
 std::vector<std::vector<SDL_Point>> shapes = {
@@ -47,17 +55,95 @@ struct MenuItem {
     int textHeight;
 };
 
+struct ClientInfo {
+    int clientSocket;
+    bool ready;
+};
+struct PairInfo {
+    int partnerID;
+    int partnerSocket;
+};
+
+struct Message {
+    int seq;
+    int payload;
+};
+
 extern std::vector<MenuItem> menuItems;
 extern SDL_Window* windowm;
 extern SDL_Renderer* rendererm;
-using json = nlohmann::json;
+static std::mutex waitingMutex;
+static std::condition_variable waitingCV;
+static std::unordered_map<int, ClientInfo> waitingClients;
+static std::unordered_map<int, PairInfo> pairingMap;
+extern std::atomic<bool> stopBroadcast;
+std::atomic<bool> stopBroadcast{ false };
+bool recvSecure(int sock, nlohmann::json& j, const std::string& secret, int clientID);
+extern std::unordered_map<int, ClientInfo> clientStates;
+extern std::mutex clientStatesMutex;
+static std::mt19937 rng{ std::random_device{}() };
+static std::queue<Message> networkQueue;
+static std::mutex networkMutex;
 
+using json = nlohmann::json;
+static const std::string SHARED_SECRET = "my?very?strong?key";
+
+  // Redefined Fns for testing 
     Tetromino CreateTetromino(const std::vector<SDL_Point>& shape, int xOffset, int yOffset) {
         Tetromino t;
         for (const auto& p : shape) {
             t.blocks.push_back({ p.x + xOffset, p.y + yOffset });
         }
         return t;
+    }
+
+    void mockSend(const Message& m, double dropProb, int delayMs) {
+        std::uniform_real_distribution<> ud(0, 1);
+        if (ud(rng) < dropProb) {
+            // drop packet
+            return;
+        }
+        // simulate network delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
+        std::lock_guard<std::mutex> lk(networkMutex);
+        networkQueue.push(m);
+    }
+
+    void sendWithRetry(const Message& m, double dropProb, int delayMs) {
+        while (true) {
+            {
+                std::lock_guard<std::mutex> lk(networkMutex);
+                // if already delivered, break
+                std::queue<Message> copy = networkQueue;
+                bool found = false;
+                while (!copy.empty()) {
+                    if (copy.front().seq == m.seq) {
+                        found = true;
+                        break;
+                    }
+                    copy.pop();
+                }
+                if (found) break;
+            }
+            mockSend(m, dropProb, delayMs);
+        }
+    }
+
+    int receiveOrdered(int expectedCount) {
+        std::vector<Message> buffer;
+        while ((int)buffer.size() < expectedCount) {
+            {
+                std::lock_guard<std::mutex> lk(networkMutex);
+                while (!networkQueue.empty()) {
+                    buffer.push_back(networkQueue.front());
+                    networkQueue.pop();
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        std::sort(buffer.begin(), buffer.end(),
+            [](auto& a, auto& b) { return a.seq < b.seq; });
+        return buffer.back().payload;
     }
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
@@ -102,7 +188,27 @@ using json = nlohmann::json;
         return true;
     }
 
-    static const std::string SHARED_SECRET = "my?very?strong?key";
+    static void doPairing(int clientID, int clientSocket) {
+        std::unique_lock<std::mutex> lock(waitingMutex);
+        waitingClients[clientID] = { clientSocket, true };
+
+        // try to match
+        for (auto it = waitingClients.begin(); it != waitingClients.end(); ++it) {
+            if (it->first != clientID && it->second.ready) {
+                int otherID = it->first;
+                int otherSock = it->second.clientSocket;
+                waitingClients.erase(it);
+                waitingClients.erase(clientID);
+                pairingMap[clientID] = { otherID,   otherSock };
+                pairingMap[otherID] = { clientID,  clientSocket };
+                waitingCV.notify_all();
+                return;
+            }
+        }
+
+        // wait for a partner to arrive
+        waitingCV.wait(lock, [&] { return pairingMap.count(clientID); });
+    }
 
     bool Test_HoverStates() {
         assert(!menuItems.empty());
@@ -209,6 +315,8 @@ using json = nlohmann::json;
 
     }
 
+    // Security Tests
+
     bool Test_ComputeHMAC() {
         std::string data = "The quick brown fox jumps over the lazy dog";
 
@@ -265,4 +373,153 @@ using json = nlohmann::json;
         return true;
     }
 
+    bool Test_PairingSync() {
+        {
+            std::lock_guard<std::mutex> g(waitingMutex);
+            waitingClients.clear();
+            pairingMap.clear();
+        }
 
+        std::atomic<int> p1{ 0 }, s1{ 0 }, p2{ 0 }, s2{ 0 };
+
+        // thread for client 1
+        std::thread t1([&]() {
+            doPairing(1, 111);
+            auto info = pairingMap[1];
+            p1 = info.partnerID;
+            s1 = info.partnerSocket;
+            });
+
+        // thread for client 2
+        std::thread t2([&]() {
+            doPairing(2, 222);
+            auto info = pairingMap[2];
+            p2 = info.partnerID;
+            s2 = info.partnerSocket;
+            });
+
+        t1.join();
+        t2.join();
+
+        // verify both sides saw each other
+        assert(p1 == 2);
+        assert(s1 == 222);
+        assert(p2 == 1);
+        assert(s2 == 111);
+
+        std::cout << "PairingSync test passed.\n";
+        return true;
+    }
+
+
+    bool Test_resetClientState() {
+        using namespace Client;
+
+        client_running = false;
+        TimerBuffer = "abc";
+        startperm = true;
+        waitingForSession = true;
+        StopResponceTaking = true;
+        displayWaitingMessage = true;
+        shape = { 1,2,3 };
+        state::running = false;
+        state::closed = true;
+        gameOver = true;
+        initialized = true;
+        inSession = true;
+
+        resetClientState();
+
+        assert(client_running.load() == true);
+        assert(TimerBuffer.empty());
+        assert(startperm == false);
+        assert(waitingForSession.load() == false);
+        assert(StopResponceTaking == false);
+        assert(displayWaitingMessage == false);
+        assert(shape.empty());
+        assert(state::running == true);
+        assert(state::closed == false);
+        assert(gameOver == false);
+        assert(initialized == false);
+        assert(Client::spawnedCount == 0);
+        assert(inSession.load() == false);
+
+        std::cout << "ResetClientState test passed.\n";
+        return true;
+    }
+
+    bool Test_stopBroadcast_flag() {
+
+        stopBroadcast.store(false);
+        std::atomic<bool> exited{ false };
+
+        std::thread t([&]() {
+            while (!stopBroadcast.load()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            exited = true;
+            });
+
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        assert(!exited.load());
+
+
+        stopBroadcast.store(true);
+        t.join();
+        assert(exited.load() && "Loop should exit when stopBroadcast==true");
+
+        std::cout << "Stop Broadcast Flag test passed.\n";
+        return true;
+    }
+
+  
+    bool Test_VariableJitterSimulation() {
+        {
+            std::lock_guard<std::mutex> lk(networkMutex);
+            std::queue<Message> empty;
+            std::swap(networkQueue, empty);
+        }
+
+        const int N = 10;
+        int minDelay = 0;
+        int maxDelay = 50;   // up to 50ms jitter
+        std::uniform_int_distribution<> jitterDist(minDelay, maxDelay);
+
+        // fire off N messages in parallel, each with random jitter
+        for (int i = 1; i <= N; ++i) {
+            int d = jitterDist(rng);
+            std::thread([i, d]() {
+                mockSend(Message{ i, i * 10 }, /*dropProb=*/0.0, d);
+                }).detach();
+        }
+
+        // collect exactly N messages, then sort
+        int lastPayload = receiveOrdered(N);
+        // since no drops, the highest‐seq payload must be N*10
+        assert(lastPayload == N * 10);
+        std::cout << "VariableJitterSimulation test passed.\n";
+        return true;
+    }
+
+    bool Test_PacketLossSimulation() {
+        {
+            std::lock_guard<std::mutex> lk(networkMutex);
+            std::queue<Message> empty;
+            std::swap(networkQueue, empty);
+        }
+
+        const int N = 10;
+        double dropProb = 0.3;    // 30% packet loss
+        int delayMs = 1;
+
+        for (int i = 1; i <= N; ++i) {
+            Message m{ i, i * 100 };
+            sendWithRetry(m, dropProb, delayMs);
+        }
+
+        int lastPayload = receiveOrdered(N);
+        assert(lastPayload == N * 100);
+        std::cout << "PacketLossSimulation test passed.\n";
+        return true;
+    }

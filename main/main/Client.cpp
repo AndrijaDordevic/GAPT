@@ -52,6 +52,7 @@ namespace Client {
     bool initialized = false;
     int spawnedCount = 0;
     atomic<bool> inSession(false);
+    std::atomic<bool> StopResponceTaking{ false };
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
         unsigned char* result = HMAC(

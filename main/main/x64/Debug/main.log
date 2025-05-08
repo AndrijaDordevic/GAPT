@@ -1,2 +1,5 @@
 ﻿  Main.cpp
-  main.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\main.exe
+  UnitTests.cpp
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(152,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+  main.vcxproj -> C:\Users\User\source\repos\GAPT\main\x64\Debug\main.exe

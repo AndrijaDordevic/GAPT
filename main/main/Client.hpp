@@ -18,6 +18,8 @@ namespace Client {
     extern bool initialized;
     extern int spawnedCount;
     extern std::atomic<bool> inSession;
+    extern std::atomic<bool> StopResponceTaking;
+	extern std::atomic<bool> waitingForSession;
 
 
 

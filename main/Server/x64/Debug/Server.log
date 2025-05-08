@@ -1,15 +1,3 @@
-﻿  Server.cpp
-C:\Users\andri\source\repos\GAPT\main\Server\Timer.hpp(16,48): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Server.cpp')
+﻿  
+Server.rc(54): error RC2135: file not found: C:\Users\andri\source\repos\GAPT\main\main\Assets\ServerIcon.ico
   
-C:\Users\andri\source\repos\GAPT\main\Server\Timer.hpp(21,28): warning C4244: 'initializing': conversion from 'Uint64' to 'Uint32', possible loss of data
-  (compiling source file 'Server.cpp')
-  
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(100,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(213,14): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(255,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(298,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(305,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(788,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\andri\source\repos\GAPT\main\Server\Server.cpp(819,27): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-  Server.vcxproj -> C:\Users\andri\source\repos\GAPT\main\x64\Debug\Server.exe
