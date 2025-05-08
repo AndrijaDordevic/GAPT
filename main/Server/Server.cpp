@@ -333,12 +333,6 @@ void displayWaitingClients() {
     }
 }
 
-void waitingClientsMonitor() {
-    while (true) {
-        displayWaitingClients();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
 
 bool isSocketAlive(int sock) {
     // prepare fd_sets
@@ -388,7 +382,6 @@ bool isSocketAlive(int sock) {
             return false;
         }
     }
-
     return true;
 }
 
@@ -396,7 +389,7 @@ bool isSocketAlive(int sock) {
 // Timer thread function for a session.
 void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atomic<bool>> sessionActive)
 {
-   int remaining = 30;               // total seconds
+   int remaining = 180;               // total seconds
     while (remaining > 0 && sessionActive->load()) {
         // format mm:ss
         int m = remaining / 60, s = remaining % 60;
@@ -811,6 +804,14 @@ int main() {
         return -1;
     }
     std::cout << "Server listening on port " << PORT << "...\n";
+
+    std::thread([] {
+        while (true) {
+            displayWaitingClients();       // prints one line
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        }).detach();
+
     // Main loop: accept new client connections.
     while (true) {
         sockaddr_in client_addr;
@@ -824,8 +825,6 @@ int main() {
         std::cout << "New client connected with unique ID: " << uniqueClientID << std::endl;
         std::thread clientThread(clientHandler, client_socket, uniqueClientID);
         clientThread.detach();
-        std::thread monitor(waitingClientsMonitor);
-        monitor.detach();
     }
     stopBroadcast.store(true);
     broadcaster.join();

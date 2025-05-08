@@ -155,6 +155,7 @@
     <ClInclude Include="Discovery.hpp" />
     <ClInclude Include="Main.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="ScreenShake.hpp" />
     <ClInclude Include="TextRender.hpp" />
     <ClInclude Include="Texture.hpp" />
@@ -165,7 +166,8 @@
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\..\Desktop\BlockIcon.ico" />
+    <Image Include="..\BlockGame\Assets\BlockIcon.ico" />
+    <Image Include="Assets\BlockIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Main.rc" />
