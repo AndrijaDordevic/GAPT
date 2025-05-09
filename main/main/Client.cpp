@@ -1,5 +1,5 @@
 ﻿#include "Client.hpp"
-#include "Discovery.hpp"  // Assumes discoverServer() is declared here.
+#include "Discovery.hpp"  
 #include "Tetromino.hpp"
 #include <iostream>
 #include <cstring>
@@ -169,7 +169,7 @@ namespace Client {
             return false;
         }
         std::string receivedTag = j["hmac"];
-        // Remove it for recomputing
+        // Remove it for re-computing
         j.erase("hmac");
         std::string bodyStr = j.dump();
         // Compute expected
@@ -186,7 +186,7 @@ namespace Client {
         char buffer[4096];
 
         while (client_running && !StopResponceTaking) {
-            // —— read once per loop ——
+            //read once per loop
             int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
 
             if (bytes_received <= 0) {
@@ -284,7 +284,7 @@ namespace Client {
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
-                                break;  // break out of inner while(nl)… if you want
+                                break;  
                             }
                             else if (msgType == "SESSION_OVER") {
                                 inSession.store(false);
@@ -299,12 +299,12 @@ namespace Client {
                         std::cerr << "[Client] JSON parse error: "
                             << e.what() << "\n";
                     }
-                } // end while(nl…)
-            } // end else(bytes_received>0)
+                } 
+            } 
 
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(50));
-        } // end while(client_running…)
+        } 
     }
 
     bool notifyStartGame() {

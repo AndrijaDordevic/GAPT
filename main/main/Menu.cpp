@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <thread>  // For running client in a separate thread
+#include <thread>   
 #include "Client.hpp"
 #include "Texture.hpp"
 #include "Discovery.hpp"

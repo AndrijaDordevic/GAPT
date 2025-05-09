@@ -24,6 +24,7 @@ SDL_Window* gameWindow = nullptr;
 SDL_Renderer* gameRenderer = nullptr;
 ScreenShake shaker; 
 SDL_FPoint cameraOffset = { 0, 0 };
+
 // Function that runs the game loop.
 void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     if (!initializeSDL(window, renderer)) {
@@ -119,7 +120,8 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
 
 int main(int argc, char* argv[]) {
-    Test_validateHMAC_Missing();// Run unit tests
+    // Run unit tests
+    Test_validateHMAC_Missing();
     Test_validateHMAC_Correct();
     Test_validateHMAC_BadTag();
     Test_hmacEquals();

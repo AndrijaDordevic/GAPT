@@ -1,4 +1,3 @@
-// Client.hpp
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
@@ -24,6 +23,7 @@ namespace Client {
 
 
     int UpdateScore();
+
     // Function to start the client.
     void start_client(const std::string& server_ip);
 
@@ -43,4 +43,4 @@ namespace Client {
 
 }
 
-#endif // CLIENT_HPP
+#endif 

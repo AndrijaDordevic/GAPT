@@ -1,6 +1,6 @@
 #include <SDL3/SDL.h>
-#include "Client.hpp"     // For sending drag coordinates.
-#include "Tetromino.hpp"  // Assuming this header defines the Tetromino type.
+#include "Client.hpp"     
+#include "Tetromino.hpp" 
 #include "Window.hpp"
 #include <vector>
 #include <algorithm>
@@ -34,7 +34,6 @@ void DragDrop(SDL_Event& event) {
                     mouseOffsetY = event.button.y - block.y;
                     draggingInProgress = true;
                     draggedTetromino->layer = ++currentMaxLayer;
-					//Client::shape.erase(Client::shape.begin());
                     return;
                 }
             }
@@ -64,8 +63,7 @@ void DragDrop(SDL_Event& event) {
                 }
             }
 
-            // If there is a collision or the tetromino is outside the grid,
-            // revert to the original position.
+            // If there is a collision or the tetromino is outside the grid, revert to the original position.
             if (CheckCollision(*draggedTetromino, placedTetrominos) ||
                 !IsInsideGrid(*draggedTetromino, gridStartX, gridStartY)) {
                 for (size_t i = 0; i < draggedTetromino->blocks.size(); ++i) {
@@ -86,8 +84,6 @@ void DragDrop(SDL_Event& event) {
                 tetrominos.erase(it, tetrominos.end());
                 Client::spawnedCount--;
                 Audio::PlaySoundFile("Assets/Sounds/BlockPlace.mp3");
-
-                // Send the updated coordinates to the server.
                 
             }
             // Reset drag state.

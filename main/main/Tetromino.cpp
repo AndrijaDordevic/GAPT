@@ -32,7 +32,6 @@ int randomShapeIndex;
 
 
 // Store tetrominos by value instead of pointers.
-// Make sure these are defined only once in your project.
 std::vector<Tetromino> tetrominos;         // Active tetrominos (for drag, etc.)
 std::vector<Tetromino> placedTetrominos;     // Tetrominos that have been placed
 
@@ -185,7 +184,7 @@ void RenderTetrominos(SDL_Renderer* ren) {
 	// Combine all tetrominos (active, placed, and locked) into one container for sorting.
 	std::vector<std::reference_wrapper<const Tetromino>> allTetrominos;
 	for (const auto& t : tetrominos) {
-		allTetrominos.push_back(std::cref(t));  // Wrap with std::cref
+		allTetrominos.push_back(std::cref(t)); 
 	}
 	for (const auto& t : placedTetrominos) {
 		allTetrominos.push_back(std::cref(t));
@@ -243,6 +242,7 @@ bool CheckCollision(const Tetromino& tetro, const std::vector<Tetromino>& placed
 // Check if tetromino is inside grid boundaries.
 bool IsInsideGrid(const Tetromino& tetro, int gridStartX, int gridStartY) {
 	for (const auto& block : tetro.blocks) {
+
 		//the -5 and -20 is so the blocks can be placed slightly outside the grid using the cursor.
 		if (block.x < gridStartX - 5 || block.y < gridStartY - 5 ||
 			block.x > gridStartX + (Columns * BLOCK_SIZE) - 20 ||

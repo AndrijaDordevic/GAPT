@@ -30,7 +30,7 @@ void clearTetrominos() {
 }
 
 
-extern SDL_FPoint cameraOffset;  // ← ADD this at top if not already
+extern SDL_FPoint cameraOffset;  
 
 int runClearGridButton(SDL_Renderer* renderer, SDL_Texture* ClearGridSelect, SDL_Texture* ClearGridSelectS) {
     for (auto& button : clrButton) {
@@ -49,16 +49,11 @@ int runClearGridButton(SDL_Renderer* renderer, SDL_Texture* ClearGridSelect, SDL
 }
 
 
-        
-
-    
-
-
-
 // Function to update the button state based on mouse events.
 void updateClearGridButton(const SDL_Event& event) {
      
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+
         // Get mouse coords as float
         float mouseX = static_cast<float>(event.motion.x);
         float mouseY = static_cast<float>(event.motion.y);

@@ -10,6 +10,4 @@ int runClearGridButton(SDL_Renderer* renderer, SDL_Texture* ClearGridSelect, SDL
 void clearTetrominos();
 void updateClearGridButton(const SDL_Event& event);
 
-
-
-#endif // CLEAR_GRID_HPP
+#endif 

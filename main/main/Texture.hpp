@@ -1,7 +1,7 @@
 #ifndef TEXTURE_HPP
 #define TEXTURE_HPP
 
-#include "Tetromino.hpp" // Include the Tetromino header file
+#include "Tetromino.hpp"
 
 
 extern SDL_Texture* redTexture;
@@ -12,7 +12,6 @@ extern SDL_Texture* orangeTexture;
 extern SDL_Texture* purpleTexture;
 extern SDL_Texture* MagentaTexture;
 extern SDL_Texture* cyanTexture;
-
 
 
 SDL_Texture* LoadMenuOptionTextureSelected(SDL_Renderer* ren);
@@ -27,4 +26,4 @@ SDL_Texture* ApplyTexture(Block block);
 
 
 
-#endif // TEXTURE_HPP
+#endif

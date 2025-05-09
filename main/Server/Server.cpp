@@ -117,7 +117,6 @@ static bool hmacEquals(const std::string& a, const std::string& b) {
     return diff == 0;
 }
 
-//------------------------------------------------------------------------------
 // Safe send wrapper (prevents SIGPIPE)
 int safeSend(int sock, const char* buf, size_t len) {
 #ifdef _WIN32
@@ -207,7 +206,6 @@ bool recvSecure(int sock, json& j, const std::string& secret, int clientID) {
     }
 }
 
-//----------------------------------------------------------------------------
 // Helper: Retrieve the local IP address.
 std::string getLocalIP() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -249,7 +247,6 @@ std::string getLocalIP() {
     return std::string(ip_str);
 }
 
-//----------------------------------------------------------------------------
 // Broadcast the server IP address for clients to discover.
 void broadcastIP(const std::string& ip) {
     int udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -318,7 +315,6 @@ void broadcastIP(const std::string& ip) {
 #endif
 }
 
-//----------------------------------------------------------------------------
 // For monitoring waiting clients (for debugging).
 void displayWaitingClients() {
     std::lock_guard<std::mutex> lock(waitingMutex);
@@ -385,7 +381,6 @@ bool isSocketAlive(int sock) {
     return true;
 }
 
-//----------------------------------------------------------------------------
 // Timer thread function for a session.
 void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atomic<bool>> sessionActive)
 {
@@ -455,7 +450,6 @@ void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atom
     sessionActive->store(false);
 }
 
-//----------------------------------------------------------------------------
 // Session handler now does not return until the session is ended.
 void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int clientID2, std::atomic<bool>& sessionOver)
 {
@@ -622,7 +616,6 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     sessionOver.store(true);
 }
 
-//----------------------------------------------------------------------------
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
 void clientHandler(int client_socket, int clientID) {
     {

@@ -4,7 +4,5 @@
 
 #include "Client.hpp"
 
-
-void startMenu();
 int main(int argc, char* argv[]);
 #endif 

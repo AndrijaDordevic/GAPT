@@ -8,7 +8,6 @@ namespace state {
 	extern bool running;
 }
 
-// Function declaration
 int runMenu(SDL_Window* window, SDL_Renderer* renderer);
 
 bool isMouseOver(float mouseX, float mouseY, const SDL_FRect& rect);

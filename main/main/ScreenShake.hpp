@@ -1,4 +1,3 @@
-// ScreenShake.hpp
 #pragma once
 #include <SDL3/SDL.h>
 #include <cstdlib>
