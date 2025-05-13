@@ -1,5 +1,7 @@
-﻿  Main.cpp
-  UnitTests.cpp
-C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(152,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  Generating Code...
+﻿  UnitTests.cpp
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(128,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(633,26): warning C4244: 'argument': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(636,37): warning C4244: 'argument': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(640,26): warning C4244: 'argument': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\User\source\repos\GAPT\main\main\UnitTests.cpp(643,37): warning C4244: 'argument': conversion from 'SOCKET' to 'int', possible loss of data
   main.vcxproj -> C:\Users\User\source\repos\GAPT\main\x64\Debug\main.exe

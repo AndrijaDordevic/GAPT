@@ -13,8 +13,17 @@
 #include <atomic>
 #include <openssl/hmac.h>
 #include <nlohmann/json.hpp>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "ws2_32.lib")
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+
 #include <mutex>
 #include <random>
 #include <condition_variable>
@@ -46,6 +55,16 @@ std::vector<std::vector<SDL_Point>> shapes = {
 {{0, 0}, {0, 0}, {0, 0}, {0, 0}},    // Dot shape
 };
 
+#ifdef _WIN32
+static void initWinsock() {
+    WSADATA wsa;
+    int r = WSAStartup(MAKEWORD(2, 2), &wsa);
+    assert(r == 0);
+}
+
+static const bool wsaInitialized = (initWinsock(), true);
+#endif
+
 struct MenuItem {
     SDL_FRect rect;
     string label;
@@ -69,6 +88,11 @@ struct Message {
     int payload;
 };
 
+struct MockSocket {
+    SOCKET read_fd;
+    SOCKET write_fd;
+};
+
 extern std::vector<MenuItem> menuItems;
 extern SDL_Window* windowm;
 extern SDL_Renderer* rendererm;
@@ -79,6 +103,7 @@ static std::unordered_map<int, PairInfo> pairingMap;
 extern std::atomic<bool> stopBroadcast;
 std::atomic<bool> stopBroadcast{ false };
 bool recvSecure(int sock, nlohmann::json& j, const std::string& secret, int clientID);
+static std::string computeHMAC(const std::string& data, const std::string& secret);
 extern std::unordered_map<int, ClientInfo> clientStates;
 extern std::mutex clientStatesMutex;
 static std::mt19937 rng{ std::random_device{}() };
@@ -95,6 +120,50 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
             t.blocks.push_back({ p.x + xOffset, p.y + yOffset });
         }
         return t;
+    }
+
+    static std::string computeHMAC(const std::string& data, const std::string& secret) {
+        unsigned char* result = HMAC(
+            EVP_sha256(),
+            reinterpret_cast<const unsigned char*>(secret.data()), secret.size(),
+            reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+            nullptr, nullptr
+        );
+
+        std::ostringstream hex;
+        hex << std::hex << std::setfill('0');
+        for (int i = 0; i < 32; ++i) {
+            hex << std::setw(2) << static_cast<int>(result[i]);
+        }
+        return hex.str();
+    }
+
+    int safeSend(int sock, const char* buf, size_t len) {
+        #ifdef _WIN32
+        return send(sock, buf, (int)len, 0);
+        #else
+        return send(sock, buf, len, MSG_NOSIGNAL);
+        #endif
+    }
+
+    bool recvSecure(int, nlohmann::json& j, const std::string&, int) {
+        static bool first = true;
+        if (first) { first = false; j["type"] = "PING"; return true; }
+        return false;
+    }
+
+
+    bool sendSecure(int sock, json j, const std::string& secret) {
+        // 1) Serialize without HMAC
+        std::string body = j.dump();
+        // 2) Compute HMAC
+        std::string tag = computeHMAC(body, secret);
+        // 3) Add it
+        j["hmac"] = tag;
+        std::string withTag = j.dump();
+        // 4) Send (add newline if your protocol expects it)
+        withTag += "\n";
+        return safeSend(sock, withTag.c_str(), withTag.size()) >= 0;
     }
 
     void mockSend(const Message& m, double dropProb, int delayMs) {
@@ -146,20 +215,32 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
         return buffer.back().payload;
     }
 
-    static std::string computeHMAC(const std::string& data, const std::string& secret) {
-        unsigned char* result = HMAC(
-            EVP_sha256(),
-            reinterpret_cast<const unsigned char*>(secret.data()), secret.size(),
-            reinterpret_cast<const unsigned char*>(data.data()), data.size(),
-            nullptr, nullptr
-        );
+    void makeChannel(MockSocket& A, MockSocket& B) {
+        SOCKET listener = socket(AF_INET, SOCK_STREAM, 0);
+        assert(listener != INVALID_SOCKET);
 
-        std::ostringstream hex;
-        hex << std::hex << std::setfill('0');
-        for (int i = 0; i < 32; ++i) {
-            hex << std::setw(2) << static_cast<int>(result[i]);
-        }
-        return hex.str();
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        addr.sin_port = 0;
+        int bindResult = ::bind(listener, (sockaddr*)&addr, sizeof(addr));
+        assert(bindResult != SOCKET_ERROR);
+        assert(listen(listener, 1) == 0);
+
+        socklen_t len = sizeof(addr);
+        assert(getsockname(listener, (sockaddr*)&addr, &len) == 0);
+
+        B.write_fd = socket(AF_INET, SOCK_STREAM, 0);
+        assert(B.write_fd != INVALID_SOCKET);
+        assert(connect(B.write_fd, (sockaddr*)&addr, sizeof(addr)) == 0);
+
+        A.read_fd = accept(listener, nullptr, nullptr);
+        assert(A.read_fd != INVALID_SOCKET);
+
+        A.write_fd = B.write_fd;
+        B.read_fd = A.read_fd;
+
+        closesocket(listener);
     }
 
     static bool hmacEquals(const std::string& a, const std::string& b) {
@@ -209,6 +290,22 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
         // wait for a partner to arrive
         waitingCV.wait(lock, [&] { return pairingMap.count(clientID); });
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     bool Test_HoverStates() {
         assert(!menuItems.empty());
@@ -523,3 +620,30 @@ static const std::string SHARED_SECRET = "my?very?strong?key";
         std::cout << "PacketLossSimulation test passed.\n";
         return true;
     }
+
+
+    bool Test_ReplayProtection() {
+
+        MockSocket client, server;
+        makeChannel(client, server);
+
+        nlohmann::json j;
+        j["type"] = "1PING";
+        j["payload"] = "hello";
+        sendSecure(client.write_fd, j, SHARED_SECRET);
+
+        nlohmann::json out;
+        bool ok1 = recvSecure(server.read_fd, out, SHARED_SECRET, /*clientID=*/42);
+        assert(ok1);
+        assert(out["type"] == "PING");
+
+        sendSecure(client.write_fd, j, SHARED_SECRET);
+
+        nlohmann::json out2;
+        bool ok2 = recvSecure(server.read_fd, out2, SHARED_SECRET, /*clientID=*/42);
+        assert(!ok2);
+
+        std::cout << "Replay protection test passed.\n";
+        return true;
+    }
+

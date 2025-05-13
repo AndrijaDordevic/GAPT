@@ -15,5 +15,6 @@ bool Test_resetClientState();
 bool Test_stopBroadcast_flag();
 bool Test_VariableJitterSimulation();
 bool Test_PacketLossSimulation();
+bool Test_ReplayProtection();
 
 #endif 

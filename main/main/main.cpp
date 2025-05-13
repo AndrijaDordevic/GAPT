@@ -133,6 +133,7 @@ int main(int argc, char* argv[]) {
     Test_InsideGrid();
     Test_VariableJitterSimulation();
     Test_PacketLossSimulation();
+    Test_ReplayProtection();
  
     // Start client thread (remains detached throughout the application)
     thread clientThread(Client::runClient);
