@@ -3,12 +3,11 @@
 
 #include <atomic>
 #include <string>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include "Tetromino.hpp"
 
-
 namespace Client {
-	// Global variables for client state and configuration.
     extern std::vector<int> shape;
     extern std::atomic<bool> client_running;
     extern std::string TimerBuffer;
@@ -18,29 +17,27 @@ namespace Client {
     extern int spawnedCount;
     extern std::atomic<bool> inSession;
     extern std::atomic<bool> StopResponceTaking;
-	extern std::atomic<bool> waitingForSession;
+    extern std::atomic<bool> waitingForSession;
+    extern bool displayWaitingMessage;   
 
-
-
+    // score/tetromino APIs
     int UpdateScore();
-
-    // Function to start the client.
-    void start_client(const std::string& server_ip);
-
-    // Function to handle communication with the server.
-    void handle_server(int client_socket);
-
-    // Function to run the client.
-    void runClient();
-
-    // New function to notify the server to start a game session.
     bool notifyStartGame();
+    bool sendDragCoordinates(const Tetromino&);
+    int sendClearedLinesAndGetScore(const std::vector<int>&, const std::vector<int>&);
 
-    bool sendDragCoordinates(const Tetromino& tetromino);
-    int sendClearedLinesAndGetScore(const std::vector<int>& rows, const std::vector<int>& cols);
+    // session persistence
+    bool loadSessionInfo(uint64_t& token, int& clientID);
+    bool saveSessionInfo(uint64_t token, int clientID);
+    void clearSessionInfo();
+
+    // the reconnect API
+    bool attemptReconnect(uint64_t token, int cid);
 
     void resetClientState();
-
+    void handle_server(int sock);
+    void start_client(const std::string& server_ip);
+    void runClient();
 }
 
-#endif 
+#endif

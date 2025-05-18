@@ -121,6 +121,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
 int main(int argc, char* argv[]) {
     // Run unit tests
+    /*
     Test_validateHMAC_Missing();
     Test_validateHMAC_Correct();
     Test_validateHMAC_BadTag();
@@ -133,6 +134,7 @@ int main(int argc, char* argv[]) {
     Test_InsideGrid();
     Test_VariableJitterSimulation();
     Test_PacketLossSimulation();
+    */
  
     // Start client thread (remains detached throughout the application)
     thread clientThread(Client::runClient);

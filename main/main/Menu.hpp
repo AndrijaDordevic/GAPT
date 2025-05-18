@@ -1,7 +1,9 @@
 #ifndef MENU_H
 #define MENU_H
 
-extern bool displayWaitingMessage;
+namespace Client {
+	extern bool displayWaitingMessage;
+}
 
 namespace state {
 	extern bool closed;

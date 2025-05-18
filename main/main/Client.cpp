@@ -14,6 +14,7 @@
 #include <openssl/hmac.h>
 #include <iomanip>
 #include <sstream>
+#include <cstdio>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -42,6 +43,8 @@ int      myClientID = -1;  // the ID the server assigned us
 
 static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
+static constexpr const char* SESSION_FILE = "reconnect.dat";
+
 namespace Client {
     string ScoreBuffer;
     atomic<bool> client_running(true);
@@ -56,6 +59,26 @@ namespace Client {
     atomic<bool> inSession(false);
     std::atomic<bool> StopResponceTaking{ false };
     bool attemptReconnect(uint64_t token, int cid);
+
+    bool displayWaitingMessage = false;
+
+    bool saveSessionInfo(uint64_t token, int clientID) {
+        std::ofstream ofs(SESSION_FILE, std::ios::binary);
+        if (!ofs) return false;
+        ofs.write(reinterpret_cast<const char*>(&token), sizeof(token));
+        ofs.write(reinterpret_cast<const char*>(&clientID), sizeof(clientID));
+        return bool(ofs);
+    }
+    bool loadSessionInfo(uint64_t& token, int& clientID) {
+        std::ifstream ifs(SESSION_FILE, std::ios::binary);
+        if (!ifs) return false;
+        ifs.read(reinterpret_cast<char*>(&token), sizeof(token));
+        ifs.read(reinterpret_cast<char*>(&clientID), sizeof(clientID));
+        return bool(ifs);
+    }
+    void clearSessionInfo() {
+        std::remove(SESSION_FILE);
+    }
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
         unsigned char* result = HMAC(
@@ -259,9 +282,12 @@ namespace Client {
                             }
                             else if (msgType == "SESSION_START") {
                                 sessionToken = j["sessionToken"].get<uint64_t>();
-                                myClientID = j["clientID"].get<int>();
-                                std::cout << "Session started: token=" << sessionToken<< "  yourID=" << myClientID << "\n";
+                                myClientID = j["clientID"].get<int>();        
+                                saveSessionInfo(sessionToken, myClientID);     
+                                std::cout << "Session started: token=" << sessionToken
+                                    << "  yourID=" << myClientID << "\n";
                                 inSession.store(true);
+                                saveSessionInfo(sessionToken, myClientID);
                             }
                             else if (msgType == "SESSION_ABORT") {
                                 inSession.store(false);
@@ -276,6 +302,7 @@ namespace Client {
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
+                                clearSessionInfo();
                             }
                             else if (msgType == "GAME_OVER") {
                                 inSession.store(false);
@@ -302,6 +329,7 @@ namespace Client {
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
+                                clearSessionInfo();
                                 break;  
                             }
                             else if (msgType == "SESSION_OVER") {
@@ -309,7 +337,7 @@ namespace Client {
                                 std::cout << "Session Ended!\n";
                                 resetClientState();
                                 accumulatedMessage.clear();
-                                // continue processing any further lines
+                                clearSessionInfo();
                             }
                         }
                     }
@@ -387,48 +415,93 @@ namespace Client {
         return sendSecure(j);
     }
 
-    void start_client(const string& server_ip) {
-        cout << "*Server IP: " << server_ip << endl;
+    void start_client(const std::string& server_ip) {
+        std::cout << "*Server IP: " << server_ip << "\n";
+
 #ifdef _WIN32
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            cerr << "WSAStartup failed!" << endl;
+            std::cerr << "[Client] WSAStartup failed!\n";
             return;
         }
 #endif
-        client_socket = socket(AF_INET, SOCK_STREAM, 0);
-        if (client_socket == -1) {
-            cerr << "Socket creation failed" << endl;
-            return;
+
+        // 1) Try to resume
+        {
+            uint64_t tok;
+            int cid;
+            if (loadSessionInfo(tok, cid)) {
+                std::cout << "[Client] Found saved session, attempting reconnect...\n";
+                if (attemptReconnect(tok, cid)) {
+                    std::cout << "[Client] Reconnected to session token=" << tok
+                        << " as clientID=" << cid << "\n";
+                }
+                else {
+                    std::cout << "[Client] Reconnect failed, starting new session.\n";
+                    clearSessionInfo();
+                }
+            }
         }
-        struct sockaddr_in server_addr;
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons(PORT);
-        if (inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr) <= 0) {
-            cerr << "Invalid address" << endl;
-            return;
+
+        // 2) If we still have no socket, do a fresh connect
+        if (client_socket < 0) {
+            client_socket = socket(AF_INET, SOCK_STREAM, 0);
+            if (client_socket < 0) {
+                std::cerr << "[Client] Socket creation failed\n";
+#ifdef _WIN32
+                WSACleanup();
+#endif
+                return;
+            }
+
+            sockaddr_in sa{};
+            sa.sin_family = AF_INET;
+            sa.sin_port = htons(PORT);
+            if (inet_pton(AF_INET, server_ip.c_str(), &sa.sin_addr) <= 0) {
+                std::cerr << "[Client] Invalid address\n";
+#ifdef _WIN32
+                closesocket(client_socket);
+                WSACleanup();
+#else
+                close(client_socket);
+#endif
+                client_socket = -1;
+                return;
+            }
+
+            std::cout << "[Client] Connecting to server...\n";
+            if (connect(client_socket, (sockaddr*)&sa, sizeof sa) < 0) {
+                std::cerr << "[Client] Connection failed\n";
+#ifdef _WIN32
+                closesocket(client_socket);
+                WSACleanup();
+#else
+                close(client_socket);
+#endif
+                client_socket = -1;
+                return;
+            }
+            std::cout << "[Client] Connected to server\n";
         }
-        std::cout << "Connecting to server..." << endl;
-        if (connect(client_socket, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) == -1) {
-            cerr << "Connection failed" << endl;
-            return;
-        }
-        std::cout << "Connected to server" << endl;
-        thread handle_thread(handle_server, client_socket);
+
+        // 3) Launch the receive thread
+        std::thread reader(handle_server, client_socket);
+
+        // 4) Wait here until the reader sets client_running = false
         while (client_running) {
-            this_thread::sleep_for(chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        std::cout << "Disconnecting..." << endl;
+
+        // 5) Clean up
+        std::cout << "[Client] Disconnecting...\n";
 #ifdef _WIN32
         closesocket(client_socket);
+        WSACleanup();
 #else
         close(client_socket);
 #endif
-        client_running = false;
-        handle_thread.join();
-#ifdef _WIN32
-        WSACleanup();
-#endif
+
+        reader.join();
     }
 
     int Client::UpdateScore() {
