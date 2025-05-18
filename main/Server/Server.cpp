@@ -61,9 +61,9 @@ std::atomic<bool> sessionOver(false);
 static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
 struct ClientInfo {
-    int clientSocket;
-    bool ready;
-    uint64_t lastMessageId = 0;
+    int      clientSocket{ -1 }; 
+    bool     ready{ false };
+    uint64_t lastMessageId{ 0 };
 };
 
 std::unordered_map<int, ClientInfo> clientStates; // clientID -> state
@@ -77,6 +77,26 @@ struct PairInfo {
     int partnerID;
     int partnerSocket;
 };
+
+
+struct PlayerState {
+    int                   clientID{ 0 };
+    std::atomic<int>      socket{ -1 };   
+    std::atomic<bool>     connected{ true };
+    std::chrono::steady_clock::time_point disconnectTime{};
+    int                   score{ 0 };
+    size_t                nextShapeIdx{ 0 };
+};
+
+struct Session {
+    uint64_t                        token;      
+    PlayerState                     p1, p2;
+    std::atomic<bool>               active{ true };
+    std::shared_ptr<std::atomic<bool>> timerAlive;
+    std::mutex                      mtx;        // protects hand-offs
+};
+static std::unordered_map<uint64_t, std::shared_ptr<Session>> sessions;
+static std::mutex sessionsMutex;
 
 // Global pairing map (clientID -> PairInfo) used to pass pairing info to waiting clients.
 std::unordered_map<int, PairInfo> pairingMap;
@@ -382,73 +402,59 @@ bool isSocketAlive(int sock) {
 }
 
 // Timer thread function for a session.
-void timerThread(int clientSocket1, int clientSocket2, std::shared_ptr<std::atomic<bool>> sessionActive)
+void timerThread(std::shared_ptr<Session> sess)
 {
-   int remaining = 180;               // total seconds
-    while (remaining > 0 && sessionActive->load()) {
-        // format mm:ss
+    const int TOTAL = 180;
+    int remaining = TOTAL;
+
+    while (remaining > 0 && sess->active) {
+        int s1 = sess->p1.socket.load();
+        int s2 = sess->p2.socket.load();
+
+        if (s1 == -1 && s2 == -1) {                    // nobody connected
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
+        /* mm:ss string ---------------------------------------------------- */
         int m = remaining / 60, s = remaining % 60;
         std::ostringstream ss;
         ss << std::setw(2) << std::setfill('0') << m
-           << ":" << std::setw(2) << std::setfill('0') << s;
+            << ':' << std::setw(2) << std::setfill('0') << s;
+        json tick = { {"type","TIME_UPDATE"}, {"time", ss.str()} };
 
-        json j = { {"type","TIME_UPDATE"}, {"time", ss.str()} };
-        sendSecure(clientSocket1, j, SHARED_SECRET);
-        sendSecure(clientSocket2, j, SHARED_SECRET);
+        if (s1 != -1) sendSecure(s1, tick, SHARED_SECRET);
+        if (s2 != -1) sendSecure(s2, tick, SHARED_SECRET);
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
         --remaining;
     }
 
-    // If the session was aborted mid-timer:
-    if (!sessionActive->load()) {
-        // 1) Force timer to the remaining client
-        json zeroed;
-        zeroed["type"] = "TIME_UPDATE";
-        zeroed["time"] = "00:00";
-        if (isSocketAlive(clientSocket1))
-            sendSecure(clientSocket1, zeroed, SHARED_SECRET);
-        if (isSocketAlive(clientSocket2))
-            sendSecure(clientSocket2, zeroed, SHARED_SECRET);
+    /* -------- game-over / session-over ---------------------------------- */
+    auto sendIf = [&](int fd, const json& j) { if (fd != -1) sendSecure(fd, j, SHARED_SECRET); };
+    int s1 = sess->p1.socket.load();
+    int s2 = sess->p2.socket.load();
 
-        // 2) Notify of session abort
-        json abortMsg;
-        abortMsg["type"] = "SESSION_ABORT";
-        abortMsg["message"] = "Other player disconnected. Session aborted.";
-        if (isSocketAlive(clientSocket1))
-            sendSecure(clientSocket1, abortMsg, SHARED_SECRET);
-        if (isSocketAlive(clientSocket2))
-            sendSecure(clientSocket2, abortMsg, SHARED_SECRET);
-
-        return;
-    }
-
+    json g1, g2;
     if (score1 > score2) {
-        json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score1},{"outcome","win!"} };
-        json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score2},{"outcome","lose!"} };
-        sendSecure(clientSocket1, w1, SHARED_SECRET);
-        sendSecure(clientSocket2, w2, SHARED_SECRET);
+        g1 = { {"type","GAME_OVER"},{"message","Time's up! You Won!" },{"score",score1},{"outcome","win"} };
+        g2 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score2},{"outcome","lose"} };
     }
     else if (score2 > score1) {
-        json w1 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score1},{"outcome","lose!"} };
-        json w2 = { {"type","GAME_OVER"},{"message","Time's up! You Won!"},{"score",score2},{"outcome","win!"} };
-        sendSecure(clientSocket1, w1, SHARED_SECRET);
-        sendSecure(clientSocket2, w2, SHARED_SECRET);
+        g1 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score1},{"outcome","lose"} };
+        g2 = { {"type","GAME_OVER"},{"message","Time's up! You Won!" },{"score",score2},{"outcome","win"} };
     }
     else {
-        json d = { {"type","GAME_OVER"},{"message","Time's up! It's a draw!"},{"score",score1},{"outcome","draw!"} };
-        sendSecure(clientSocket1, d, SHARED_SECRET);
-        sendSecure(clientSocket2, d, SHARED_SECRET);
+        g1 = g2 = { {"type","GAME_OVER"},{"message","Time's up! It's a draw!"},{"score",score1},{"outcome","draw"} };
     }
+    sendIf(s1, g1);  sendIf(s2, g2);
 
-    // Final SESSION_OVER prompt
-    json endMsg = { {"type","SESSION_OVER"},
-                   {"message","Session ended. Press START_GAME to play again."} };
-    sendSecure(clientSocket1, endMsg, SHARED_SECRET);
-    sendSecure(clientSocket2, endMsg, SHARED_SECRET);
+    json over = { {"type","SESSION_OVER"},{"message","Session ended. Press START_GAME to play again."} };
+    sendIf(s1, over); sendIf(s2, over);
 
-    sessionActive->store(false);
+    sess->active = false;
 }
+
 
 // Session handler now does not return until the session is ended.
 void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int clientID2, std::atomic<bool>& sessionOver)
@@ -456,14 +462,31 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     sessionOver.store(false);
     auto sessionActive = std::make_shared<std::atomic<bool>>(true);
 
+    static std::mt19937_64 tokenGen{ std::random_device{}() };
+    std::uniform_int_distribution<uint64_t> td;
+    uint64_t sessToken = td(tokenGen);
+    auto     S = std::make_shared<Session>();
+    S->token = sessToken;
+    S->p1.clientID = clientID1;
+    S->p2.clientID = clientID2;
+    S->p1.socket = clientSocket1;
+    S->p2.socket = clientSocket2;
+    S->timerAlive = sessionActive;
+    {
+        std::lock_guard<std::mutex> lk(sessionsMutex);
+        sessions[sessToken] = S;
+    }
+
     json sessionMsg1;
     sessionMsg1["type"] = "SESSION_START";
     sessionMsg1["message"] = "You are now in a session with client " + std::to_string(clientID2);
+    sessionMsg1["sessionToken"] = sessToken;
     sendSecure(clientSocket1, sessionMsg1, SHARED_SECRET);
 
     json sessionMsg2;
     sessionMsg2["type"] = "SESSION_START";
     sessionMsg2["message"] = "You are now in a session with client " + std::to_string(clientID1);
+    sessionMsg2["sessionToken"] = sessToken;
     sendSecure(clientSocket2, sessionMsg2, SHARED_SECRET);
 
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
@@ -482,7 +505,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     size_t nextIdx1 = 0, nextIdx2 = 0;
 
     // Helper to build and send a SHAPE_ASSIGN
-    auto sendShapeTo = [&](int sock, ShapeType s) {
+    auto sendShapeTo = [&](int sock, ShapeType s, PlayerState& ps) {
         json j;
         j["type"] = "SHAPE_ASSIGN";
         j["shapeType"] = static_cast<int>(s);
@@ -490,24 +513,27 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         if (!sendSecure(sock, j, SHARED_SECRET)) {
             std::cerr << "FAILED to send SHAPE_ASSIGN\n";
         }
+        ++ps.nextShapeIdx;
     };
 
     // 3) Initial deal of 3 shapes each
     for (int i = 0; i < 3; ++i) {
-        sendShapeTo(clientSocket1, shapeArray[nextIdx1++]);
-        sendShapeTo(clientSocket2, shapeArray[nextIdx2++]);
+        sendShapeTo(clientSocket1, shapeArray[nextIdx1++], S->p1);
+        sendShapeTo(clientSocket2, shapeArray[nextIdx2++], S->p2);
     }
 
 
-    std::thread t(timerThread, clientSocket1, clientSocket2, std::ref(sessionActive));
-    t.detach();
+    std::thread(timerThread, S).detach();
 
     while (sessionActive->load()) {
         fd_set readfds;
+        int s1 = S->p1.socket.load();
+        int s2 = S->p2.socket.load();
+
         FD_ZERO(&readfds);
-        FD_SET(clientSocket1, &readfds);
-        FD_SET(clientSocket2, &readfds);
-        int maxfd = std::max(clientSocket1, clientSocket2);
+        if (s1 != -1) FD_SET(s1, &readfds);
+        if (s2 != -1) FD_SET(s2, &readfds);
+        int maxfd = std::max(s1, s2);
         timeval tv{ 1, 0 }; // 1 second timeout
 
         int activity = select(maxfd + 1, &readfds, nullptr, nullptr, &tv);
@@ -520,16 +546,40 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         auto processClient = [&](int fromSocket, int toSocket, int& fromScore, int fromID, int toID) -> bool {
             json j;
             if (!recvSecure(fromSocket, j, SHARED_SECRET, fromID)) {
-                std::cout << "Client " << fromID << " disconnected.\n";
+                // This is where you currently end the session immediately.
+                // Replace that “immediate abort” code with the 20-second watcher:
 
-                // Notify the other client immediately
-                json sessionEndMsg;
-                sessionEndMsg["type"] = "SESSION_OVER";
-                sessionEndMsg["message"] = "Other player disconnected. Press START_GAME to play again.";
-                sendSecure(toSocket, sessionEndMsg, SHARED_SECRET);
+                PlayerState& me = (fromID == S->p1.clientID) ? S->p1 : S->p2;
+                PlayerState& peer = (fromID == S->p1.clientID) ? S->p2 : S->p1;
 
-                sessionActive->store(false);
-                return false; // break the loop
+                me.connected = false;
+                me.disconnectTime = std::chrono::steady_clock::now();
+                me.socket = -1;
+
+                // Notify opponent
+                json notice = { {"type","OPPONENT_DISCONNECTED"}, {"seconds",20} };
+                sendSecure(peer.socket, notice, SHARED_SECRET);
+
+                // Start the 20-second timeout thread
+                std::thread([sess = S, lostID = fromID] {
+                    for (int i = 0; i < 20 && sess->active; ++i) {
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        bool reattached =
+                            (lostID == sess->p1.clientID ? sess->p1.connected
+                                : sess->p2.connected);
+                        if (reattached) return;  // client came back
+                    }
+                    // timeout ? abort session
+                    if (!sess->active) return;
+                    json abort = { {"type","SESSION_ABORT"},
+                                  {"message","Reconnect timeout"} };
+                    if (sess->p1.connected) sendSecure(sess->p1.socket, abort, SHARED_SECRET);
+                    if (sess->p2.connected) sendSecure(sess->p2.socket, abort, SHARED_SECRET);
+                    sess->active = false;
+                    }).detach();
+
+                // Don’t drop out of the sessionHandler loop yet
+                return true;
             }
 
             // Process the message (j is already parsed and verified)
@@ -552,13 +602,15 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     ShapeType next = (nextIdx1 < shapeArray.size())
                         ? shapeArray[nextIdx1++]
                         : static_cast<ShapeType>(dist(gen));
-                    sendShapeTo(fromSocket, next);
+                    PlayerState& ps = (fromID == clientID1 ? S->p1 : S->p2);
+                    sendShapeTo(fromSocket, next, ps);
                 }
                 else {
                     ShapeType next = (nextIdx2 < shapeArray.size())
                         ? shapeArray[nextIdx2++]
                         : static_cast<ShapeType>(dist(gen));
-                    sendShapeTo(fromSocket, next);
+                    PlayerState& ps = (fromID == clientID1 ? S->p1 : S->p2);
+                    sendShapeTo(fromSocket, next, ps);
                 }
 
                 return true;
@@ -586,12 +638,12 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             return true;
             };
 
-        if (FD_ISSET(clientSocket1, &readfds)) {
-            if (!processClient(clientSocket1, clientSocket2, score1, clientID1, clientID2))
+        if (s1 != -1 && FD_ISSET(s1, &readfds)) {
+            if (!processClient(s1, s2, score1, clientID1, clientID2))
                 break;
         }
-        if (FD_ISSET(clientSocket2, &readfds)) {
-            if (!processClient(clientSocket2, clientSocket1, score2, clientID2, clientID1))
+        if (s2 != -1 && FD_ISSET(s2, &readfds)) {
+            if (!processClient(s2, s1, score2, clientID2, clientID1))
                 break;
         }
     }
@@ -614,6 +666,10 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
     sessionActive->store(false);
     sessionOver.store(true);
+    {
+        std::lock_guard<std::mutex> lk(sessionsMutex);
+        sessions.erase(sessToken);
+    }
 }
 
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
@@ -749,6 +805,51 @@ void clientHandler(int client_socket, int clientID) {
     }
 }
 
+bool handleReconnect(int sock, const json& first)
+{
+    uint64_t token = first["token"];
+    int      cid = first["id"];
+
+    std::shared_ptr<Session> sess;
+    {
+        std::lock_guard<std::mutex> lk(sessionsMutex);
+        auto it = sessions.find(token);
+        if (it != sessions.end()) sess = it->second;
+    }
+    if (!sess || !sess->active) return false;
+
+    PlayerState* P = nullptr;
+    if (sess->p1.clientID == cid) P = &sess->p1;
+    else if (sess->p2.clientID == cid) P = &sess->p2;
+    if (!P) return false;
+
+    auto now = std::chrono::steady_clock::now();
+    if (P->connected ||
+        now - P->disconnectTime > std::chrono::seconds(20))
+        return false;                         // late or spoofed
+
+    /* consume the frame we peeked */
+    char dummy[4096]; recv(sock, dummy, sizeof(dummy), 0);
+
+    P->socket = sock;
+    P->connected = true;
+
+    // tell opponent
+    PlayerState& peer = (P == &sess->p1) ? sess->p2 : sess->p1;
+    if (peer.connected) {
+        json up = { {"type","OPPONENT_RECONNECTED"} };
+        sendSecure(peer.socket, up, SHARED_SECRET);
+    }
+
+    // snapshot
+    json snap = { {"type","STATE_SNAPSHOT"},
+                  {"score",P->score},
+                  {"nextShapeIdx",P->nextShapeIdx} };
+    sendSecure(sock, snap, SHARED_SECRET);
+
+    return true;          // accept-loop should skip spawning clientHandler
+}
+
 int main() {
     ignoreSigpipe();
 #ifdef _WIN32
@@ -800,25 +901,29 @@ int main() {
 
     std::thread([] {
         while (true) {
-            displayWaitingClients();       // prints one line
+            displayWaitingClients();   
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         }).detach();
 
     // Main loop: accept new client connections.
     while (true) {
-        sockaddr_in client_addr;
-        socklen_t client_addr_len = sizeof(client_addr);
-        int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
-        if (client_socket < 0) {
-            std::cerr << "Connection failed" << std::endl;
-            continue;
+        sockaddr_in ca; socklen_t cal = sizeof(ca);
+        int sock = accept(server_fd, (sockaddr*)&ca, &cal);
+        if (sock < 0) { std::perror("accept"); continue; }
+
+        // ---- first-frame peek ----
+        char peek[4096]; int n = recv(sock, peek, sizeof(peek) - 1, MSG_PEEK);
+        if (n > 0 && peek[0] == '{') {
+            json first = json::parse(peek, peek + n);
+            if (first.value("type", "") == "RECONNECT" && handleReconnect(sock, first))
+                continue;             // done – wait for next accept()
         }
-        int uniqueClientID = clientIDCounter.fetch_add(1) + 1;
-        std::cout << "New client connected with unique ID: " << uniqueClientID << std::endl;
-        std::thread clientThread(clientHandler, client_socket, uniqueClientID);
-        clientThread.detach();
+
+        int cid = clientIDCounter.fetch_add(1) + 1;
+        std::thread(clientHandler, sock, cid).detach();
     }
+
     stopBroadcast.store(true);
     broadcaster.join();
 #ifdef _WIN32

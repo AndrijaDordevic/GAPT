@@ -1,3 +1,3 @@
-﻿  
-Server.rc(54): error RC2135: file not found: C:\Users\andri\source\repos\GAPT\main\main\Assets\ServerIcon.ico
-  
+﻿  Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.

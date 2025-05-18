@@ -37,6 +37,8 @@ int id = 1;
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
 bool StopResponceTaking;
+uint64_t sessionToken = 0;   // the token from SESSION_START
+int      myClientID = -1;  // the ID the server assigned us
 
 static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
@@ -53,6 +55,7 @@ namespace Client {
     int spawnedCount = 0;
     atomic<bool> inSession(false);
     std::atomic<bool> StopResponceTaking{ false };
+    bool attemptReconnect(uint64_t token, int cid);
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
         unsigned char* result = HMAC(
@@ -191,12 +194,21 @@ namespace Client {
 
             if (bytes_received <= 0) {
                 // connection closed or error
-                if (bytes_received == 0)
-                    std::cout << "Server disconnected.\n";
-                else
-                    perror("recv");
-                client_running = false;
-                break;
+                if (inSession.load()) {
+                    std::cerr << "Lost connection – attempting reconnect...\n";
+                    if (!attemptReconnect(sessionToken, myClientID)) {
+                        std::cerr << "Reconnect failed – exiting\n";
+                        client_running = false;
+                        break;
+                    }
+                    // on success, loop back and keep reading from the new socket
+                    continue;
+                }
+                else {
+                    // outside of a live session: quit completely
+                    client_running = false;
+                    break;
+                }
             }
             else {
                 // accumulate raw bytes
@@ -243,6 +255,12 @@ namespace Client {
                                 startperm = true;
                                 tetrominos.clear();
                                 placedTetrominos.clear();
+                                inSession.store(true);
+                            }
+                            else if (msgType == "SESSION_START") {
+                                sessionToken = j["sessionToken"].get<uint64_t>();
+                                myClientID = j["clientID"].get<int>();
+                                std::cout << "Session started: token=" << sessionToken<< "  yourID=" << myClientID << "\n";
                                 inSession.store(true);
                             }
                             else if (msgType == "SESSION_ABORT") {
@@ -305,6 +323,42 @@ namespace Client {
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(50));
         } 
+    }
+
+    bool attemptReconnect(uint64_t token, int cid) {
+        // create a fresh socket
+        int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) return false;
+
+        sockaddr_in sa{};
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(PORT);
+        inet_pton(AF_INET, server_ip.c_str(), &sa.sin_addr);
+
+        if (::connect(sock, (sockaddr*)&sa, sizeof sa) < 0) {
+#ifdef _WIN32
+            closesocket(sock);
+#else
+            close(sock);
+#endif
+            return false;
+        }
+
+        // send the RECONNECT handshake
+        json j;
+        j["type"] = "RECONNECT";
+        j["token"] = token;
+        j["id"] = cid;
+        client_socket = sock;
+        if (!sendSecure(j)) {
+#ifdef _WIN32
+            closesocket(sock);
+#else
+            close(sock);
+#endif
+            return false;
+        }
+        return true;
     }
 
     bool notifyStartGame() {
