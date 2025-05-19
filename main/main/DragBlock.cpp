@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "ScreenShake.hpp"
 #include "Audio.hpp"
+#include <mutex>
 
 
 int currentMaxLayer = 0;

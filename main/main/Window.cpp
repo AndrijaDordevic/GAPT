@@ -1,4 +1,5 @@
 #include "Window.hpp" 
+#include "Client.hpp" // Include the Client class header for network communication
 
 
 bool initializeSDL(SDL_Window*& window, SDL_Renderer*& renderer) {
@@ -31,6 +32,7 @@ void handleEvents(bool& running) {
 	// Poll events from the event queue
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT) { // If the user clicks 'X' or presses ALT+F4
+			Client::shutdownConnection();
 			running = false; // Set running to false to exit the main loop
 		}
 	}

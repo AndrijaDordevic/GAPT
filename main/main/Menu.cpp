@@ -162,7 +162,9 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 			state::running = false; // Close the menu after starting the game
 		}
 		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_EVENT_QUIT) {
+			if (event.type == SDL_EVENT_QUIT) 
+			{
+				Client::shutdownConnection();
 				state::running = false;
 				state::closed = true;
 			}

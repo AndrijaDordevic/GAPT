@@ -108,6 +108,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\External\SDL\SDL3-3.2.4\include;$(ProjectDir)..\External\SDL\SDL3_ttf-3.1.2\include;$(ProjectDir)..\External\SDL\SDL3_image-3.2.4\include;$(ProjectDir)..\include;C:\Users\jakca\OneDrive\Documents\GitHub\GAPT\main\main\miniaudio.h\include;$(ProjectDir)\main;$(ProjectDir)..\External\SSL\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

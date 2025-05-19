@@ -41,6 +41,9 @@
 #define BROADCAST_INTERVAL 1  // Seconds between broadcasts
 
 using json = nlohmann::json;
+
+using Cell = nlohmann::json;
+
 int score1 = 0;
 int score2 = 0;
 
@@ -89,12 +92,15 @@ struct PlayerState {
 };
 
 struct Session {
-    uint64_t                        token;      
+    uint64_t                        token;
     PlayerState                     p1, p2;
+    std::vector<Cell>               grid1, grid2; 
+    std::vector<ShapeType>       shapeQ;
     std::atomic<bool>               active{ true };
     std::shared_ptr<std::atomic<bool>> timerAlive;
-    std::mutex                      mtx;        // protects hand-offs
+    std::mutex                      mtx;        // protects grid1/grid2
 };
+
 static std::unordered_map<uint64_t, std::shared_ptr<Session>> sessions;
 static std::mutex sessionsMutex;
 
@@ -477,16 +483,24 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         sessions[sessToken] = S;
     }
 
+    std::cout << "[Server] New session started: token="
+        << sessToken
+        << " between clients " << clientID1
+        << " & " << clientID2
+        << std::endl;
+
     json sessionMsg1;
     sessionMsg1["type"] = "SESSION_START";
     sessionMsg1["message"] = "You are now in a session with client " + std::to_string(clientID2);
     sessionMsg1["sessionToken"] = sessToken;
+    sessionMsg1["clientID"] = clientID1;
     sendSecure(clientSocket1, sessionMsg1, SHARED_SECRET);
 
     json sessionMsg2;
     sessionMsg2["type"] = "SESSION_START";
     sessionMsg2["message"] = "You are now in a session with client " + std::to_string(clientID1);
     sessionMsg2["sessionToken"] = sessToken;
+    sessionMsg2["clientID"] = clientID2;
     sendSecure(clientSocket2, sessionMsg2, SHARED_SECRET);
 
     std::cout << "Session started between client " << clientID1 << " and client " << clientID2 << std::endl;
@@ -496,13 +510,10 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     std::uniform_int_distribution<> dist(0, static_cast<int>(ShapeType::Count) - 1);
 
     // Pre-generate a queue of shapes for this session
-    const int totalShapes = 1000; // total number of predetermined shapes
-    std::vector<ShapeType> shapeArray(totalShapes);
+    const int totalShapes = 1000;
+    S->shapeQ.resize(totalShapes);
     for (int i = 0; i < totalShapes; ++i)
-        shapeArray[i] = static_cast<ShapeType>(dist(gen));
-
-    // 2) Two pointers
-    size_t nextIdx1 = 0, nextIdx2 = 0;
+        S->shapeQ[i] = static_cast<ShapeType>(dist(gen));
 
     // Helper to build and send a SHAPE_ASSIGN
     auto sendShapeTo = [&](int sock, ShapeType s, PlayerState& ps) {
@@ -518,8 +529,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
     // 3) Initial deal of 3 shapes each
     for (int i = 0; i < 3; ++i) {
-        sendShapeTo(clientSocket1, shapeArray[nextIdx1++], S->p1);
-        sendShapeTo(clientSocket2, shapeArray[nextIdx2++], S->p2);
+        sendShapeTo(clientSocket1,S->shapeQ[S->p1.nextShapeIdx++],S->p1);
+        sendShapeTo(clientSocket2,S->shapeQ[S->p2.nextShapeIdx++],S->p2);
     }
 
 
@@ -547,8 +558,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
             json j;
             if (!recvSecure(fromSocket, j, SHARED_SECRET, fromID)) {
                 // This is where you currently end the session immediately.
-                // Replace that “immediate abort” code with the 20-second watcher:
 
+                std::cout << "Client " << fromID << " just disconnected — awaiting reconnection...\n";
                 PlayerState& me = (fromID == S->p1.clientID) ? S->p1 : S->p2;
                 PlayerState& peer = (fromID == S->p1.clientID) ? S->p2 : S->p1;
 
@@ -597,27 +608,45 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                 sendSecure(clientSocket1,j, SHARED_SECRET);
                 sendSecure(clientSocket2, j, SHARED_SECRET);
 
+                {
+                    std::lock_guard<std::mutex> lk(S->mtx);
+                    auto& grid = (fromID == S->p1.clientID ? S->grid1 : S->grid2);
+                    grid.insert(grid.end(), j["blocks"].begin(), j["blocks"].end());
+                }
+
                 // 2) Now pop _this_ client’s next shape and send _only_ to them
-                if (fromID == clientID1) {
-                    ShapeType next = (nextIdx1 < shapeArray.size())
-                        ? shapeArray[nextIdx1++]
-                        : static_cast<ShapeType>(dist(gen));
-                    PlayerState& ps = (fromID == clientID1 ? S->p1 : S->p2);
-                    sendShapeTo(fromSocket, next, ps);
-                }
-                else {
-                    ShapeType next = (nextIdx2 < shapeArray.size())
-                        ? shapeArray[nextIdx2++]
-                        : static_cast<ShapeType>(dist(gen));
-                    PlayerState& ps = (fromID == clientID1 ? S->p1 : S->p2);
-                    sendShapeTo(fromSocket, next, ps);
-                }
+                PlayerState& ps = (fromID == S->p1.clientID ? S->p1 : S->p2);
+
+                // grab & advance their personal index
+                size_t idx = ps.nextShapeIdx++;
+
+                // pull from the shared queue
+                ShapeType next = (idx < S->shapeQ.size())
+                    ? S->shapeQ[idx]
+                    : static_cast<ShapeType>(dist(gen));
+
+                sendShapeTo(fromSocket, next, ps);
 
                 return true;
             }
             else if (j["type"] == "SCORE_REQUEST") {
                 std::vector<int> rows = j["rows"];
                 std::vector<int> cols = j["columns"];
+                {
+                    std::lock_guard<std::mutex> lk(S->mtx);
+                    auto& grid = (fromID == S->p1.clientID ? S->grid1 : S->grid2);
+                    // sort so binary_search works
+                    std::sort(rows.begin(), rows.end());
+                    std::sort(cols.begin(), cols.end());
+                    grid.erase(std::remove_if(grid.begin(), grid.end(),
+                        [&](const Cell& c) {
+                            int x = c["x"], y = c["y"];
+                            return std::binary_search(rows.begin(), rows.end(), y)
+                                || std::binary_search(cols.begin(), cols.end(), x);
+                        }),
+                        grid.end());
+                }
+
                 int totalCleared = static_cast<int>(rows.size() + cols.size());
                 double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
                 int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
@@ -670,6 +699,9 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         std::lock_guard<std::mutex> lk(sessionsMutex);
         sessions.erase(sessToken);
     }
+    S->p1.nextShapeIdx = S->p2.nextShapeIdx = 0;
+    S->grid1.clear();
+    S->grid2.clear();
 }
 
 // Updated clientHandler now runs an outer loop so that after each session the thread resumes listening for a new START_GAME.
@@ -807,9 +839,28 @@ void clientHandler(int client_socket, int clientID) {
 
 bool handleReconnect(int sock, const json& first)
 {
+    // 0) Must contain an HMAC
+    if (!first.contains("hmac")) {
+        std::cerr << "Missing HMAC in reconnect message\n";
+        return false;
+    }
+    // 1) Verify HMAC on the reconnect frame
+    {
+        std::string receivedTag = first["hmac"];
+        json body = first;
+        body.erase("hmac");
+        std::string bodyStr = body.dump();
+        if (!hmacEquals(receivedTag, computeHMAC(bodyStr, SHARED_SECRET))) {
+            std::cerr << "HMAC verification failed on reconnect\n";
+            return false;
+        }
+    }
+
+    // 2) Extract token & client ID
     uint64_t token = first["token"];
     int      cid = first["id"];
 
+    // 3) Lookup the session
     std::shared_ptr<Session> sess;
     {
         std::lock_guard<std::mutex> lk(sessionsMutex);
@@ -818,36 +869,57 @@ bool handleReconnect(int sock, const json& first)
     }
     if (!sess || !sess->active) return false;
 
+    // 4) Find the PlayerState
     PlayerState* P = nullptr;
     if (sess->p1.clientID == cid) P = &sess->p1;
     else if (sess->p2.clientID == cid) P = &sess->p2;
     if (!P) return false;
 
+    // 5) Check timeout / already connected
     auto now = std::chrono::steady_clock::now();
     if (P->connected ||
         now - P->disconnectTime > std::chrono::seconds(20))
-        return false;                         // late or spoofed
+        return false;  // too late or spoofed
 
-    /* consume the frame we peeked */
-    char dummy[4096]; recv(sock, dummy, sizeof(dummy), 0);
+    // 6) Consume that peeked frame
+    char dummy[4096];
+    recv(sock, dummy, sizeof(dummy), 0);
 
+    // 7) Reattach
     P->socket = sock;
     P->connected = true;
 
-    // tell opponent
+    {
+        std::lock_guard<std::mutex> lk(clientStatesMutex);
+        clientStates[cid].lastMessageId = 0;   // start fresh
+    }
+
+    std::cout << "[Server] Client " << cid << " reattached to session "
+        << token << std::endl;
+    // 8) Notify opponent
     PlayerState& peer = (P == &sess->p1) ? sess->p2 : sess->p1;
     if (peer.connected) {
         json up = { {"type","OPPONENT_RECONNECTED"} };
         sendSecure(peer.socket, up, SHARED_SECRET);
     }
 
-    // snapshot
-    json snap = { {"type","STATE_SNAPSHOT"},
-                  {"score",P->score},
-                  {"nextShapeIdx",P->nextShapeIdx} };
+    // 9) Send full snapshot, including HMAC’d body
+    json snap = {
+      {"type",         "STATE_SNAPSHOT"},
+      {"score",        P->score},
+      {"nextShapeIdx", P->nextShapeIdx},
+      {"grid",         (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)}
+    };
+    json upcoming = json::array();
+    for (size_t i = P->nextShapeIdx;
+        i < sess->shapeQ.size() && i < P->nextShapeIdx + 5;
+        ++i)
+        upcoming.push_back((int)sess->shapeQ[i]);
+    snap["upcomingShapes"] = std::move(upcoming);
+
     sendSecure(sock, snap, SHARED_SECRET);
 
-    return true;          // accept-loop should skip spawning clientHandler
+    return true;
 }
 
 int main() {
@@ -912,15 +984,49 @@ int main() {
         int sock = accept(server_fd, (sockaddr*)&ca, &cal);
         if (sock < 0) { std::perror("accept"); continue; }
 
-        // ---- first-frame peek ----
-        char peek[4096]; int n = recv(sock, peek, sizeof(peek) - 1, MSG_PEEK);
-        if (n > 0 && peek[0] == '{') {
-            json first = json::parse(peek, peek + n);
-            if (first.value("type", "") == "RECONNECT" && handleReconnect(sock, first))
-                continue;             // done – wait for next accept()
+        bool handled = false;
+        std::string buf;
+
+        // wait up to 1 s OR until we have a '\n' (end-of-frame)
+        for (int i = 0; i < 100 && !handled; ++i)        // 100 × 10 ms = 1 s
+        {
+            fd_set fds; FD_ZERO(&fds); FD_SET(sock, &fds);
+            timeval tv{ 0, 10'000 };                     // 10 ms
+            if (select(sock + 1, &fds, nullptr, nullptr, &tv) <= 0) continue;
+
+            char tmp[4096];
+            int n = recv(sock, tmp, sizeof(tmp) - 1, MSG_PEEK);
+            if (n <= 0) break;
+
+            buf.assign(tmp, n);
+            if (buf.find('\n') == std::string::npos)     // not a full line yet
+                continue;
+
+            try {
+                json first = json::parse(buf);
+                if (first.value("type", "") == "RECONNECT" &&
+                    handleReconnect(sock, first))
+                {
+                    handled = true;                      // we’re done
+                }
+            }
+            catch (...) { /* ignore – treat as new client */ }
         }
 
+        if (handled) continue;                           // joined old session
+
+        // ---- brand-new client ----
         int cid = clientIDCounter.fetch_add(1) + 1;
+
+        // print who just arrived
+        char iptxt[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &ca.sin_addr, iptxt, sizeof(iptxt));
+        std::cout << "Client " << cid << " connected from " << iptxt << '\n';
+
+        // tell the client its ID
+        json hello = { {"type","WELCOME"}, {"clientID", cid} };
+        sendSecure(sock, hello, SHARED_SECRET);
+
         std::thread(clientHandler, sock, cid).detach();
     }
 

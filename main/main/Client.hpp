@@ -6,6 +6,8 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include "Tetromino.hpp"
+#include <mutex>
+
 
 namespace Client {
     extern std::vector<int> shape;
@@ -15,6 +17,12 @@ namespace Client {
     extern bool gameOver;
     extern bool initialized;
     extern int spawnedCount;
+    extern std::atomic<bool> resumeNow;
+    extern std::mutex        snapMtx;
+    extern nlohmann::json    lastSnapshot;
+    extern int               myScore;
+    extern size_t            nextShapeIdx;
+    extern std::vector<nlohmann::json> lockedBlocks;
     extern std::atomic<bool> inSession;
     extern std::atomic<bool> StopResponceTaking;
     extern std::atomic<bool> waitingForSession;
@@ -38,6 +46,8 @@ namespace Client {
     void handle_server(int sock);
     void start_client(const std::string& server_ip);
     void runClient();
+	void shutdownConnection();
+
 }
 
 #endif

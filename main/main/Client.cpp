@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <sstream>
 #include <cstdio>
+#include <mutex>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -38,8 +39,7 @@ int id = 1;
 // Get the server IP using your discovery function.
 string server_ip = discoverServer();
 bool StopResponceTaking;
-uint64_t sessionToken = 0;   // the token from SESSION_START
-int      myClientID = -1;  // the ID the server assigned us
+
 
 static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
 
@@ -56,9 +56,20 @@ namespace Client {
     bool gameOver = false;
     bool initialized = false;
     int spawnedCount = 0;
+    std::atomic<bool> resumeNow(false);       // flag set by STATE_SNAPSHOT
+    std::mutex        snapMtx;               // protects lastSnapshot
+    nlohmann::json    lastSnapshot;          // most-recent snapshot
+
+    int myScore = 0;     
+    size_t nextShapeIdx = 0;
+    std::vector<nlohmann::json> lockedBlocks;   // grid cells from snapshot
     atomic<bool> inSession(false);
     std::atomic<bool> StopResponceTaking{ false };
     bool attemptReconnect(uint64_t token, int cid);
+
+    uint64_t sessionToken = 0;   // the token from SESSION_START
+    int      myClientID = -1;  // the ID the server assigned us
+
 
     bool displayWaitingMessage = false;
 
@@ -69,16 +80,27 @@ namespace Client {
         ofs.write(reinterpret_cast<const char*>(&clientID), sizeof(clientID));
         return bool(ofs);
     }
-    bool loadSessionInfo(uint64_t& token, int& clientID) {
-        std::ifstream ifs(SESSION_FILE, std::ios::binary);
-        if (!ifs) return false;
-        ifs.read(reinterpret_cast<char*>(&token), sizeof(token));
-        ifs.read(reinterpret_cast<char*>(&clientID), sizeof(clientID));
-        return bool(ifs);
+    bool loadSessionInfo(uint64_t& tok, int& cid)
+    {
+        std::ifstream f(SESSION_FILE, std::ios::binary);
+        if (!f) return false;
+
+        f.read(reinterpret_cast<char*>(&tok), sizeof(tok));
+        f.read(reinterpret_cast<char*>(&cid), sizeof(cid));
+
+        /* reject obviously bad data */
+        if (tok == 0 || cid <= 0 || cid > 10'000)   
+        {
+            f.close();
+            std::remove(SESSION_FILE);           
+            return false;
+        }
+        return bool(f);
     }
     void clearSessionInfo() {
         std::remove(SESSION_FILE);
     }
+
 
     static std::string computeHMAC(const std::string& data, const std::string& secret) {
         unsigned char* result = HMAC(
@@ -259,6 +281,25 @@ namespace Client {
                             if (msgType == "TIME_UPDATE") {
                                 TimerBuffer = j["time"];
                             }
+                            else if (msgType == "STATE_SNAPSHOT") {
+                                {
+                                    std::lock_guard<std::mutex> lk(snapMtx);
+                                    lastSnapshot = j;
+                                }
+                                resumeNow.store(true);
+                                ScoreBuffer = "";
+
+                                // refill our queue with exactly what the server sent us
+                                shape.clear();
+                                if (j.contains("upcomingShapes") && j["upcomingShapes"].is_array()) {
+                                    for (auto& sh : j["upcomingShapes"])
+                                        shape.push_back(sh.get<int>());
+                                }
+
+                                state::running = false;
+                                state::closed = false;
+                            }
+
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = j.dump();
                             }
@@ -287,7 +328,6 @@ namespace Client {
                                 std::cout << "Session started: token=" << sessionToken
                                     << "  yourID=" << myClientID << "\n";
                                 inSession.store(true);
-                                saveSessionInfo(sessionToken, myClientID);
                             }
                             else if (msgType == "SESSION_ABORT") {
                                 inSession.store(false);
@@ -351,6 +391,42 @@ namespace Client {
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(50));
         } 
+    }
+
+    bool tryReconnect(int sock)
+    {
+        std::ifstream f(SESSION_FILE);
+        uint64_t token; int id;
+        if (!(f >> token >> id)) return false;
+
+        nlohmann::json r = {
+            {"type","RECONNECT"},
+            {"token",token},
+            {"id",id}
+        };
+        std::string body = r.dump();
+        std::string tag = computeHMAC(body, SHARED_SECRET);
+        r["hmac"] = tag;
+        std::string out = r.dump() + "\n";
+        return send(sock, out.c_str(), out.size(), 0) == (int)out.size();
+    }
+
+    void shutdownConnection()
+    {     
+
+        client_running = false;       
+        StopResponceTaking = true;
+
+        if (client_socket >= 0) {
+#ifdef _WIN32
+            shutdown(client_socket, SD_BOTH);
+            closesocket(client_socket);
+#else
+            shutdown(client_socket, SHUT_RDWR);
+            close(client_socket);
+#endif
+            client_socket = -1;
+        }
     }
 
     bool attemptReconnect(uint64_t token, int cid) {

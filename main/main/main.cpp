@@ -15,6 +15,10 @@
 #include "UnitTests.hpp"
 #include "ScreenShake.hpp"
 #include "windows.h"
+#include <mutex>
+#include <filesystem>
+#include <iostream>
+#include <direct.h>
 
 using namespace std;
 bool BGMRunning = false;
@@ -57,6 +61,7 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
+                Client::shutdownConnection();
                 running = false;
                 if(Client::inSession){
                     closeGame = true;
@@ -118,6 +123,46 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     cleanupSDL(window, renderer);
 }
 
+void loadSnapshotAndRunGame()
+{
+    nlohmann::json snap;
+    {
+        std::lock_guard<std::mutex> lk(Client::snapMtx);
+        snap = Client::lastSnapshot;
+    }
+
+    // restore score & queue index
+    Client::myScore = snap["score"].get<int>();
+    Client::nextShapeIdx = snap["nextShapeIdx"].get<size_t>();
+
+    // rebuild the locked?block grid
+    Client::lockedBlocks.clear();
+    for (auto& c : snap["grid"]) {
+        Client::lockedBlocks.push_back({ c["x"].get<int>(), c["y"].get<int>() });
+    }
+
+    // **new** — reload the next?shapes preview
+    Client::shape.clear();
+    if (snap.contains("upcomingShapes")) {
+        for (auto& s : snap["upcomingShapes"]) {
+            Client::shape.push_back(s.get<int>());
+        }
+    }
+
+    // now start the normal game loop
+    runGame(gameWindow, gameRenderer);
+}
+
+void printWorkingDir()
+{
+    char buf[_MAX_PATH];
+    if (_getcwd(buf, _MAX_PATH)) {
+        std::cout << "Working directory is: " << buf << '\n';
+    }
+    else {
+        std::cout << "Could not query working directory\n";
+    }
+}
 
 int main(int argc, char* argv[]) {
     // Run unit tests
@@ -135,23 +180,35 @@ int main(int argc, char* argv[]) {
     Test_VariableJitterSimulation();
     Test_PacketLossSimulation();
     */
+    printWorkingDir();
+
  
     // Start client thread (remains detached throughout the application)
     thread clientThread(Client::runClient);
     clientThread.detach();
 
+    if (Client::resumeNow.load()) {
+        // clear the menu flag so runMenu() immediately returns “start”
+        state::running = false;
+        state::closed = false;
+    }
+
     // Run the menu first.
     while (true) {
+        if (Client::resumeNow.exchange(false)) {
+            // user was reconnected—skip straight into the game:
+            loadSnapshotAndRunGame();
+            continue;
+        }
+
         initializeMenuWindowAndRenderer();
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
             runGame(gameWindow, gameRenderer);
-            if (closeGame) {
-                break;
-            }
+            if (closeGame) break;
         }
         else if (menuSelection == 2) {
-            return 0;
+            break;
         }
     }
 
