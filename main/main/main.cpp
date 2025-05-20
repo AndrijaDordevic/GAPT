@@ -61,7 +61,6 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
-                Client::shutdownConnection();
                 running = false;
                 if(Client::inSession){
                     closeGame = true;
@@ -204,6 +203,7 @@ int main(int argc, char* argv[]) {
         initializeMenuWindowAndRenderer();
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
+            Client::notifyStartGame();
             runGame(gameWindow, gameRenderer);
             if (closeGame) break;
         }
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
-
+    Client::shutdownConnection();
     SDL_Quit();
     return 0;
 }

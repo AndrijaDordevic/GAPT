@@ -44,9 +44,6 @@ using json = nlohmann::json;
 
 using Cell = nlohmann::json;
 
-int score1 = 0;
-int score2 = 0;
-
 
 uint64_t id = 0;
 
@@ -58,7 +55,6 @@ std::atomic<bool> stopBroadcast(false);
 // Global client ID counter
 std::atomic<int> clientIDCounter(0);
 
-std::atomic<bool> sessionOver(false);
 
 // Shared HMAC secret
 static const std::string SHARED_SECRET = "9fbd2c3e8b4f4ea6e6321ad4c68a1fb2e0d72b89d0a4c715ffbd9b184207c17e";
@@ -418,18 +414,17 @@ void timerThread(std::shared_ptr<Session> sess)
         int s1 = sess->p1.socket.load();
         int s2 = sess->p2.socket.load();
 
-        if (s1 == -1 && s2 == -1) {                    // nobody connected
+        if (s1 == -1 && s2 == -1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
-        /* mm:ss string ---------------------------------------------------- */
-        int m = remaining / 60, s = remaining % 60;
+        // send TIME_UPDATE as before…
+        int m = remaining / 60, sec = remaining % 60;
         std::ostringstream ss;
         ss << std::setw(2) << std::setfill('0') << m
-            << ':' << std::setw(2) << std::setfill('0') << s;
+            << ':' << std::setw(2) << std::setfill('0') << sec;
         json tick = { {"type","TIME_UPDATE"}, {"time", ss.str()} };
-
         if (s1 != -1) sendSecure(s1, tick, SHARED_SECRET);
         if (s2 != -1) sendSecure(s2, tick, SHARED_SECRET);
 
@@ -437,27 +432,65 @@ void timerThread(std::shared_ptr<Session> sess)
         --remaining;
     }
 
-    /* -------- game-over / session-over ---------------------------------- */
-    auto sendIf = [&](int fd, const json& j) { if (fd != -1) sendSecure(fd, j, SHARED_SECRET); };
-    int s1 = sess->p1.socket.load();
-    int s2 = sess->p2.socket.load();
+    if (remaining > 0 && !sess->active) {
+        return;
+    }
+
+    // Game over: pull scores out of sess->p1.score / sess->p2.score
+    int p1score = sess->p1.score;
+    int p2score = sess->p2.score;
 
     json g1, g2;
-    if (score1 > score2) {
-        g1 = { {"type","GAME_OVER"},{"message","Time's up! You Won!" },{"score",score1},{"outcome","win"} };
-        g2 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score2},{"outcome","lose"} };
+    if (p1score > p2score) {
+        g1 = {
+          {"type","GAME_OVER"},
+          {"message","Time's up! You Won!"},
+          {"score", p1score},
+          {"outcome","win"}
+        };
+        g2 = {
+          {"type","GAME_OVER"},
+          {"message","Time's up! You Lost!"},
+          {"score", p2score},
+          {"outcome","lose"}
+        };
     }
-    else if (score2 > score1) {
-        g1 = { {"type","GAME_OVER"},{"message","Time's up! You Lost!"},{"score",score1},{"outcome","lose"} };
-        g2 = { {"type","GAME_OVER"},{"message","Time's up! You Won!" },{"score",score2},{"outcome","win"} };
+    else if (p2score > p1score) {
+        g1 = {
+          {"type","GAME_OVER"},
+          {"message","Time's up! You Lost!"},
+          {"score", p1score},
+          {"outcome","lose"}
+        };
+        g2 = {
+          {"type","GAME_OVER"},
+          {"message","Time's up! You Won!"},
+          {"score", p2score},
+          {"outcome","win"}
+        };
     }
     else {
-        g1 = g2 = { {"type","GAME_OVER"},{"message","Time's up! It's a draw!"},{"score",score1},{"outcome","draw"} };
+        g1 = g2 = {
+          {"type","GAME_OVER"},
+          {"message","Time's up! It's a draw!"},
+          {"score", p1score},   // or p2score—they're equal
+          {"outcome","draw"}
+        };
     }
-    sendIf(s1, g1);  sendIf(s2, g2);
 
-    json over = { {"type","SESSION_OVER"},{"message","Session ended. Press START_GAME to play again."} };
-    sendIf(s1, over); sendIf(s2, over);
+    auto sendIf = [&](int fd, const json& j) {
+        if (fd != -1) sendSecure(fd, j, SHARED_SECRET);
+        };
+    sendIf(sess->p1.socket.load(), g1);
+    sendIf(sess->p2.socket.load(), g2);
+
+    // And the SESSION_OVER notice:
+    json over = {
+      {"type","SESSION_OVER"},
+      {"message","Session ended. Press START_GAME to play again."}
+    };
+    sendIf(sess->p1.socket.load(), over);
+    sendIf(sess->p2.socket.load(), over);
 
     sess->active = false;
 }
@@ -557,85 +590,60 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         }
         if (activity == 0) continue;
 
-        auto processClient = [&](int fromSocket, int toSocket, int& fromScore, int fromID, int toID) -> bool {
+        auto processClient = [&](int fromSock, int toSock) -> bool {
+            // pick the right PlayerState references
+            PlayerState& me = (fromSock == S->p1.socket) ? S->p1 : S->p2;
+            PlayerState& peer = (&me == &S->p1) ? S->p2 : S->p1;
+
             json j;
-            if (!recvSecure(fromSocket, j, SHARED_SECRET, fromID)) {
-                // This is where you currently end the session immediately.
-
-                std::cout << "Client " << fromID << " just disconnected — awaiting reconnection...\n";
-                PlayerState& me = (fromID == S->p1.clientID) ? S->p1 : S->p2;
-                PlayerState& peer = (fromID == S->p1.clientID) ? S->p2 : S->p1;
-
+            if (!recvSecure(fromSock, j, SHARED_SECRET, me.clientID)) {
+                // handle disconnect/reconnect exactly as before...
                 me.connected = false;
                 me.disconnectTime = std::chrono::steady_clock::now();
                 me.socket = -1;
 
-                // Notify opponent
-                json notice = { {"type","OPPONENT_DISCONNECTED"}, {"seconds",20} };
+                json notice = { {"type","OPPONENT_DISCONNECTED"},{"seconds",20} };
                 sendSecure(peer.socket, notice, SHARED_SECRET);
 
-                // Start the 20-second timeout thread
-                std::thread([sess = S, lostID = fromID] {
+                std::thread([sess = S, lostID = me.clientID] {
                     for (int i = 0; i < 20 && sess->active; ++i) {
                         std::this_thread::sleep_for(std::chrono::seconds(1));
-                        bool reattached =
-                            (lostID == sess->p1.clientID ? sess->p1.connected
-                                : sess->p2.connected);
-                        if (reattached) return;  // client came back
+                        bool back = (lostID == sess->p1.clientID ? sess->p1.connected
+                            : sess->p2.connected);
+                        if (back) return;
                     }
-                    // timeout ? abort session
                     if (!sess->active) return;
-                    json abort = { {"type","SESSION_ABORT"},
-                                  {"message","Reconnect timeout"} };
+                    json abort = { {"type","SESSION_ABORT"},{"message","Reconnect timeout"} };
                     if (sess->p1.connected) sendSecure(sess->p1.socket, abort, SHARED_SECRET);
                     if (sess->p2.connected) sendSecure(sess->p2.socket, abort, SHARED_SECRET);
                     sess->active = false;
+                    if (sess->timerAlive)
+                        sess->timerAlive->store(false);
                     }).detach();
 
-                // Don’t drop out of the sessionHandler loop yet
                 return true;
             }
 
-            // Process the message (j is already parsed and verified)
-            if (j.contains("type") && j["type"] == "DRAG_UPDATE") {
-                std::cout << "Received DRAG_UPDATE from client " << fromID << ":\n";
-                if (j.contains("blocks")) {
-                    for (const auto& block : j["blocks"]) {
-                        int x = block.value("x", -1);
-                        int y = block.value("y", -1);
-                        std::cout << "   Block: (" << x << ", " << y << ")\n";
-                    }
-                }
-
-                // 1) Forward the drag-update to both players
+            // DRAG_UPDATE: unchanged forwarding + grid + dealShape…
+            if (j["type"] == "DRAG_UPDATE") {
                 sendSecure(S->p1.socket, j, SHARED_SECRET);
                 sendSecure(S->p2.socket, j, SHARED_SECRET);
-
-                // 2) Update the server-side grid
                 {
                     std::lock_guard<std::mutex> lk(S->mtx);
-                    auto& grid = (fromID == S->p1.clientID ? S->grid1 : S->grid2);
+                    auto& grid = (&me == &S->p1 ? S->grid1 : S->grid2);
                     grid.insert(grid.end(), j["blocks"].begin(), j["blocks"].end());
                 }
-
-                // 3) Remove the shape they just used from their inHand
-                PlayerState& ps = (fromID == S->p1.clientID ? S->p1 : S->p2);
-                if (!ps.inHand.empty()) {
-                    ps.inHand.erase(ps.inHand.begin());
-                }
-
-                // 4) Deal them a replacement
-                dealShape(fromSocket, ps);
-
+                if (!me.inHand.empty()) me.inHand.erase(me.inHand.begin());
+                dealShape(fromSock, me);
                 return true;
             }
+            // SCORE_REQUEST: **all score logic now lives in me.score**
             else if (j["type"] == "SCORE_REQUEST") {
-                std::vector<int> rows = j["rows"];
-                std::vector<int> cols = j["columns"];
+                auto rows = j["rows"].get<std::vector<int>>();
+                auto cols = j["columns"].get<std::vector<int>>();
                 {
                     std::lock_guard<std::mutex> lk(S->mtx);
-                    auto& grid = (fromID == S->p1.clientID ? S->grid1 : S->grid2);
-                    // sort so binary_search works
+                    auto& grid = (&me == &S->p1 ? S->grid1 : S->grid2);
                     std::sort(rows.begin(), rows.end());
                     std::sort(cols.begin(), cols.end());
                     grid.erase(std::remove_if(grid.begin(), grid.end(),
@@ -647,33 +655,37 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                         grid.end());
                 }
 
-                int totalCleared = static_cast<int>(rows.size() + cols.size());
-                double multiplier = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
-                int earnedScore = static_cast<int>(totalCleared * 100 * multiplier);
-                fromScore += std::min(earnedScore, 400);
+                int totalCleared = int(rows.size() + cols.size());
+                double mult = (totalCleared > 1) ? (1.0 + 0.5 * (totalCleared - 1)) : 1.0;
+                int earned = std::min(int(totalCleared * 100 * mult), 400);
+                me.score += earned;
 
-                // Send response ONLY to the client who scored
-                json response;
-                response["type"] = "SCORE_RESPONSE";
-                response["score"] = fromScore;
-                sendSecure(fromSocket, response, SHARED_SECRET);
-
-                // Send update ONLY to the opponent
-                json updateMsg;
-                updateMsg["type"] = "SCORE_UPDATE";
-                updateMsg["opponentScore"] = fromScore;
-                sendSecure(toSocket, updateMsg, SHARED_SECRET);
+                // respond to scorer
+                json resp = { {"type","SCORE_RESPONSE"},{"score", me.score} };
+                sendSecure(fromSock, resp, SHARED_SECRET);
+                // tell opponent
+                json upd = { {"type","SCORE_UPDATE"},{"opponentScore", me.score} };
+                sendSecure(toSock, upd, SHARED_SECRET);
             }
+
             return true;
             };
 
-        if (s1 != -1 && FD_ISSET(s1, &readfds)) {
-            if (!processClient(s1, s2, score1, clientID1, clientID2))
-                break;
-        }
-        if (s2 != -1 && FD_ISSET(s2, &readfds)) {
-            if (!processClient(s2, s1, score2, clientID2, clientID1))
-                break;
+        {
+            fd_set readfds;
+            int s1 = S->p1.socket.load(), s2 = S->p2.socket.load();
+            FD_ZERO(&readfds);
+            if (s1 != -1) FD_SET(s1, &readfds);
+            if (s2 != -1) FD_SET(s2, &readfds);
+            timeval tv{ 1,0 };
+            int activity = select(std::max(s1, s2) + 1, &readfds, nullptr, nullptr, &tv);
+            if (activity < 0) break;
+            if (activity == 0) continue;
+
+            if (s1 != -1 && FD_ISSET(s1, &readfds))
+                if (!processClient(s1, s2)) break;
+            if (s2 != -1 && FD_ISSET(s2, &readfds))
+                if (!processClient(s2, s1)) break;
         }
     }
 
@@ -684,8 +696,7 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
     }
 
     std::cout << "Session between client " << clientID1 << " and client " << clientID2 << " ended.\n";
-    score1 = 0;
-    score2 = 0;
+
 
     json sessionEndMsg;
     sessionEndMsg["type"] = "SESSION_OVER";
@@ -808,19 +819,20 @@ void clientHandler(int client_socket, int clientID) {
         sendSecure(client_socket, tostartMsg, SHARED_SECRET);
 
         // Reset sessionOver flag for the new session.
-        sessionOver.store(false);
+
+        std::atomic<bool> sessionOverLocal{ false };
 
         // Determine roles: the client with the lower ID will launch the session handler.
         if (clientID < partnerID) {
             std::cout << "Leader: Starting session for clients " << clientID << " and " << partnerID << std::endl;
-            sessionHandler(client_socket, clientID, partnerSocket, partnerID, sessionOver);
+            sessionHandler(client_socket, clientID, partnerSocket, partnerID, sessionOverLocal);
         }
         else {
-            // Instead of blocking with a future, wait until sessionOver is set.
+
             std::cout << "Partner: Waiting for leader to complete session for clients "
                 << clientID << " and " << partnerID << std::endl;
             // Use a polling loop with a small sleep.
-            while (!sessionOver.load()) {
+            while (!sessionOverLocal.load()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
@@ -912,11 +924,12 @@ bool handleReconnect(int sock, const json& first)
         hand.push_back(static_cast<int>(s));
 
     json snap = {
-      {"type",        "STATE_SNAPSHOT"},
-      {"score",       P->score},
-      {"nextShapeIdx",P->nextShapeIdx},
-      {"grid",        (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)},
-      {"inHand",      hand}
+      {"type",           "STATE_SNAPSHOT"},
+      {"yourScore",      P->score},
+      {"opponentScore",  peer.score},         
+      {"nextShapeIdx",   P->nextShapeIdx},
+      {"grid",           (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)},
+      {"inHand",         hand}
     };
 
     sendSecure(sock, snap, SHARED_SECRET);

@@ -238,21 +238,30 @@ namespace Client {
             int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
 
             if (bytes_received <= 0) {
-                // connection closed or error
-                if (inSession.load()) {
-                    std::cerr << "Lost connection – attempting reconnect...\n";
-                    if (!attemptReconnect(sessionToken, myClientID)) {
-                        std::cerr << "Reconnect failed – exiting\n";
-                        client_running = false;
-                        break;
+                // real disconnect?
+#ifdef _WIN32
+                int err = WSAGetLastError();
+                bool wouldBlock = (err == WSAEWOULDBLOCK);
+#else
+                int err = errno;
+                bool wouldBlock = (err == EAGAIN || err == EWOULDBLOCK);
+#endif
+
+                if (!wouldBlock) {
+                    // If we're in a session, try to reconnect
+                    if (inSession.load()) {
+                        std::cerr << "Lost connection – attempting reconnect...\n";
+                        if (!attemptReconnect(sessionToken, myClientID)) {
+                            std::cerr << "Reconnect failed – exiting\n";
+                            client_running = false;
+                            break;
+                        }
+                        // on success, loop back and keep reading
+                        continue;
                     }
-                    // on success, loop back and keep reading from the new socket
+                    // if we're _not_ in a session, just pause and keep the socket open
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
-                }
-                else {
-                    // outside of a live session: quit completely
-                    client_running = false;
-                    break;
                 }
             }
             else {
@@ -270,12 +279,9 @@ namespace Client {
                     try {
                         json j = json::parse(raw);
 
-                        // validate+strip HMAC
                         if (!validateHMAC(j, SHARED_SECRET)) {
                             continue;
                         }
-
-                        // dispatch on type
                         if (j.contains("type")) {
                             std::string msgType = j["type"];
                             if (msgType == "TIME_UPDATE") {
@@ -287,25 +293,34 @@ namespace Client {
                                     lastSnapshot = j;
                                 }
                                 resumeNow.store(true);
-                                ScoreBuffer = "";
 
-                                // 1) Restore the locked grid cells
+                                ScoreBuffer.clear();
+
                                 lockedBlocks.clear();
                                 if (j.contains("grid") && j["grid"].is_array()) {
                                     for (auto& cell : j["grid"])
                                         lockedBlocks.push_back(cell);
                                 }
-
-                                // 2) Restore exactly the shapes the server says were in-hand
                                 shape.clear();
                                 if (j.contains("inHand") && j["inHand"].is_array()) {
                                     for (auto& sh : j["inHand"])
                                         shape.push_back(sh.get<int>());
                                 }
+                                if (j.contains("yourScore")) {
+                                    myScore = j["yourScore"].get<int>();
+                                    ScoreBuffer = json{
+                                      {"type","SCORE_RESPONSE"},
+                                      {"score", myScore}
+                                    }.dump();
+                                }
+                                if (j.contains("opponentScore")) {
+                                    RecieveOpponentScore(j["opponentScore"].get<int>());
+                                }
 
                                 state::running = false;
                                 state::closed = false;
                             }
+
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = j.dump();
                             }
@@ -375,8 +390,7 @@ namespace Client {
                                 gameOver = true;
                                 resetClientState();
                                 accumulatedMessage.clear();
-                                clearSessionInfo();
-                                break;  
+                                clearSessionInfo(); 
                             }
                             else if (msgType == "SESSION_OVER") {
                                 inSession.store(false);
