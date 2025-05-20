@@ -289,17 +289,23 @@ namespace Client {
                                 resumeNow.store(true);
                                 ScoreBuffer = "";
 
-                                // refill our queue with exactly what the server sent us
+                                // 1) Restore the locked grid cells
+                                lockedBlocks.clear();
+                                if (j.contains("grid") && j["grid"].is_array()) {
+                                    for (auto& cell : j["grid"])
+                                        lockedBlocks.push_back(cell);
+                                }
+
+                                // 2) Restore exactly the shapes the server says were in-hand
                                 shape.clear();
-                                if (j.contains("upcomingShapes") && j["upcomingShapes"].is_array()) {
-                                    for (auto& sh : j["upcomingShapes"])
+                                if (j.contains("inHand") && j["inHand"].is_array()) {
+                                    for (auto& sh : j["inHand"])
                                         shape.push_back(sh.get<int>());
                                 }
 
                                 state::running = false;
                                 state::closed = false;
                             }
-
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = j.dump();
                             }

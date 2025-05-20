@@ -89,6 +89,7 @@ struct PlayerState {
     std::chrono::steady_clock::time_point disconnectTime{};
     int                   score{ 0 };
     size_t                nextShapeIdx{ 0 };
+    std::vector<ShapeType> inHand;
 };
 
 struct Session {
@@ -516,21 +517,23 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         S->shapeQ[i] = static_cast<ShapeType>(dist(gen));
 
     // Helper to build and send a SHAPE_ASSIGN
-    auto sendShapeTo = [&](int sock, ShapeType s, PlayerState& ps) {
-        json j;
-        j["type"] = "SHAPE_ASSIGN";
-        j["shapeType"] = static_cast<int>(s);
-        // sign+send
-        if (!sendSecure(sock, j, SHARED_SECRET)) {
+    auto dealShape = [&](int sock, PlayerState& ps) {
+        if (ps.nextShapeIdx >= S->shapeQ.size()) return;
+        ShapeType s = S->shapeQ[ps.nextShapeIdx++];
+        ps.inHand.push_back(s);
+
+        json j = {
+          {"type","SHAPE_ASSIGN"},
+          {"shapeType", static_cast<int>(s)}
+        };
+        if (!sendSecure(sock, j, SHARED_SECRET))
             std::cerr << "FAILED to send SHAPE_ASSIGN\n";
-        }
-        ++ps.nextShapeIdx;
-    };
+        };
 
     // 3) Initial deal of 3 shapes each
     for (int i = 0; i < 3; ++i) {
-        sendShapeTo(clientSocket1,S->shapeQ[S->p1.nextShapeIdx++],S->p1);
-        sendShapeTo(clientSocket2,S->shapeQ[S->p2.nextShapeIdx++],S->p2);
+        dealShape(clientSocket1, S->p1);
+        dealShape(clientSocket2, S->p2);
     }
 
 
@@ -604,28 +607,25 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
                     }
                 }
 
-                // 1) Forward the drag-update to both (unchanged)
-                sendSecure(clientSocket1,j, SHARED_SECRET);
-                sendSecure(clientSocket2, j, SHARED_SECRET);
+                // 1) Forward the drag-update to both players
+                sendSecure(S->p1.socket, j, SHARED_SECRET);
+                sendSecure(S->p2.socket, j, SHARED_SECRET);
 
+                // 2) Update the server-side grid
                 {
                     std::lock_guard<std::mutex> lk(S->mtx);
                     auto& grid = (fromID == S->p1.clientID ? S->grid1 : S->grid2);
                     grid.insert(grid.end(), j["blocks"].begin(), j["blocks"].end());
                 }
 
-                // 2) Now pop _this_ client’s next shape and send _only_ to them
+                // 3) Remove the shape they just used from their inHand
                 PlayerState& ps = (fromID == S->p1.clientID ? S->p1 : S->p2);
+                if (!ps.inHand.empty()) {
+                    ps.inHand.erase(ps.inHand.begin());
+                }
 
-                // grab & advance their personal index
-                size_t idx = ps.nextShapeIdx++;
-
-                // pull from the shared queue
-                ShapeType next = (idx < S->shapeQ.size())
-                    ? S->shapeQ[idx]
-                    : static_cast<ShapeType>(dist(gen));
-
-                sendShapeTo(fromSocket, next, ps);
+                // 4) Deal them a replacement
+                dealShape(fromSocket, ps);
 
                 return true;
             }
@@ -700,6 +700,8 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         sessions.erase(sessToken);
     }
     S->p1.nextShapeIdx = S->p2.nextShapeIdx = 0;
+    S->p1.inHand.clear();
+    S->p2.inHand.clear();
     S->grid1.clear();
     S->grid2.clear();
 }
@@ -903,19 +905,19 @@ bool handleReconnect(int sock, const json& first)
         sendSecure(peer.socket, up, SHARED_SECRET);
     }
 
+
     // 9) Send full snapshot, including HMAC’d body
+    json hand = json::array();
+    for (ShapeType s : P->inHand)
+        hand.push_back(static_cast<int>(s));
+
     json snap = {
-      {"type",         "STATE_SNAPSHOT"},
-      {"score",        P->score},
-      {"nextShapeIdx", P->nextShapeIdx},
-      {"grid",         (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)}
+      {"type",        "STATE_SNAPSHOT"},
+      {"score",       P->score},
+      {"nextShapeIdx",P->nextShapeIdx},
+      {"grid",        (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)},
+      {"inHand",      hand}
     };
-    json upcoming = json::array();
-    for (size_t i = P->nextShapeIdx;
-        i < sess->shapeQ.size() && i < P->nextShapeIdx + 5;
-        ++i)
-        upcoming.push_back((int)sess->shapeQ[i]);
-    snap["upcomingShapes"] = std::move(upcoming);
 
     sendSecure(sock, snap, SHARED_SECRET);
 

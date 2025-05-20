@@ -1,9 +1,9 @@
 ﻿  Client.cpp
 C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(108,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(141,61): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(411,48): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(434,18): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(524,35): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(417,48): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(440,18): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(530,35): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.
