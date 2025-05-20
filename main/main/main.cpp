@@ -18,23 +18,35 @@
 #include <mutex>
 #include <filesystem>
 #include <iostream>
-#include <direct.h>
+#include <nlohmann/json.hpp>
 
 using namespace std;
+using json = nlohmann::json;
 bool BGMRunning = false;
 bool closeGame = false;
 
 SDL_Window* gameWindow = nullptr;
 SDL_Renderer* gameRenderer = nullptr;
-ScreenShake shaker; 
+ScreenShake shaker;
 SDL_FPoint cameraOffset = { 0, 0 };
 
 // Function that runs the game loop.
 void runGame(SDL_Window* window, SDL_Renderer* renderer) {
+    // start each session fresh
+    closeGame = false;
+    BGMRunning = false;
+
     if (!initializeSDL(window, renderer)) {
         cerr << "Failed to initialize SDL." << endl;
         exit(1);
     }
+
+    // >>> flush out any stale quit/close events <<<
+    SDL_Event _ev;
+    while (SDL_PollEvent(&_ev)) {
+        // discard
+    }
+
     srand(static_cast<unsigned>(time(0)));
     // Load game background texture and block textures
     SDL_Texture* texture = LoadGameTexture(renderer);
@@ -51,26 +63,30 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
     bool running = true;
     SDL_Event event;
-    
 
     Audio::Init();
     // Main game loop
     uint64_t last = SDL_GetTicksNS();
 
-
     while (running) {
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
+            // handle quit or window-close for *this* window
+            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+                if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+                    if (event.window.windowID != SDL_GetWindowID(window)) {
+                        continue;
+                    }
+                }
                 running = false;
-                if(Client::inSession){
+                Client::StopResponceTaking.store(true);
+                if (Client::inSession) {
                     closeGame = true;
                 }
             }
             DragDrop(event); // Handle drag events
             updateClearGridButton(event);
-
         }
-            
+
         // Check client connection status
         if (Client::gameOver) {
             cout << "Game over, closing game..." << endl;
@@ -80,7 +96,6 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         uint64_t now = SDL_GetTicksNS();
         float deltaTime = (now - last) / 1'000'000'000.0f;
         last = now;
-
 
         cameraOffset = shaker.update(deltaTime);
 
@@ -99,13 +114,11 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
         };
         SDL_RenderTexture(renderer, texture, nullptr, &bgRect);
 
-		score = Client::UpdateScore();
+        score = Client::UpdateScore();
         RunBlocks(renderer);
         RenderScore(renderer, score, OpponentScore);
-        runClearGridButton(renderer, ClearGridSelect,ClearGridSelectS);
+        runClearGridButton(renderer, ClearGridSelect, ClearGridSelectS);
         RenderTetrominos(renderer);
-
-
 
         // Render timer text
         timerText.renderText(735, 47);
@@ -124,43 +137,28 @@ void runGame(SDL_Window* window, SDL_Renderer* renderer) {
 
 void loadSnapshotAndRunGame()
 {
-    nlohmann::json snap;
+    // reset closeGame for resumed session
+    closeGame = false;
+
+    json snap;
     {
         std::lock_guard<std::mutex> lk(Client::snapMtx);
         snap = Client::lastSnapshot;
     }
 
-    // restore score & queue index
-    Client::myScore = snap["score"].get<int>();
+    Client::myScore = snap["yourScore"].get<int>();
     Client::nextShapeIdx = snap["nextShapeIdx"].get<size_t>();
 
-    // rebuild the locked?block grid
     Client::lockedBlocks.clear();
-    for (auto& c : snap["grid"]) {
+    for (auto& c : snap["grid"])
         Client::lockedBlocks.push_back({ c["x"].get<int>(), c["y"].get<int>() });
-    }
 
-    // **new** — reload the next?shapes preview
     Client::shape.clear();
-    if (snap.contains("upcomingShapes")) {
-        for (auto& s : snap["upcomingShapes"]) {
-            Client::shape.push_back(s.get<int>());
-        }
-    }
+    for (auto& s : snap["inHand"])
+        Client::shape.push_back(s.get<int>());
 
-    // now start the normal game loop
+    // now go into the normal game loop
     runGame(gameWindow, gameRenderer);
-}
-
-void printWorkingDir()
-{
-    char buf[_MAX_PATH];
-    if (_getcwd(buf, _MAX_PATH)) {
-        std::cout << "Working directory is: " << buf << '\n';
-    }
-    else {
-        std::cout << "Could not query working directory\n";
-    }
 }
 
 int main(int argc, char* argv[]) {
@@ -171,17 +169,15 @@ int main(int argc, char* argv[]) {
     Test_validateHMAC_BadTag();
     Test_hmacEquals();
     Test_ComputeHMAC();
-	Test_PairingSync();
+    Test_PairingSync();
     Test_stopBroadcast_flag();
-	Test_resetClientState();
+    Test_resetClientState();
     Test_HoverStates();
     Test_InsideGrid();
     Test_VariableJitterSimulation();
     Test_PacketLossSimulation();
     */
-    printWorkingDir();
 
- 
     // Start client thread (remains detached throughout the application)
     thread clientThread(Client::runClient);
     clientThread.detach();
@@ -204,6 +200,8 @@ int main(int argc, char* argv[]) {
         int menuSelection = runMenu(nullptr, nullptr);
         if (menuSelection == 0) {
             Client::notifyStartGame();
+            // reset for a fresh game
+            closeGame = false;
             runGame(gameWindow, gameRenderer);
             if (closeGame) break;
         }

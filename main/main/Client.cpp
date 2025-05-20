@@ -288,12 +288,19 @@ namespace Client {
                                 TimerBuffer = j["time"];
                             }
                             else if (msgType == "STATE_SNAPSHOT") {
+                                // 1) Always stash the new snapshot under lock
                                 {
                                     std::lock_guard<std::mutex> lk(snapMtx);
                                     lastSnapshot = j;
                                 }
-                                resumeNow.store(true);
 
+                                // 2) Only trigger the main thread to re-enter the game loop once
+                                if (!inSession.load()) {
+                                    resumeNow.store(true);
+                                    inSession.store(true);
+                                }
+
+                                // 3) Refresh score & grid state
                                 ScoreBuffer.clear();
 
                                 lockedBlocks.clear();
@@ -301,25 +308,30 @@ namespace Client {
                                     for (auto& cell : j["grid"])
                                         lockedBlocks.push_back(cell);
                                 }
+
                                 shape.clear();
                                 if (j.contains("inHand") && j["inHand"].is_array()) {
                                     for (auto& sh : j["inHand"])
                                         shape.push_back(sh.get<int>());
                                 }
+
                                 if (j.contains("yourScore")) {
                                     myScore = j["yourScore"].get<int>();
                                     ScoreBuffer = json{
-                                      {"type","SCORE_RESPONSE"},
+                                      {"type", "SCORE_RESPONSE"},
                                       {"score", myScore}
                                     }.dump();
                                 }
+
                                 if (j.contains("opponentScore")) {
                                     RecieveOpponentScore(j["opponentScore"].get<int>());
                                 }
 
+                                // 4) Signal the menu thread that the menu window should close
                                 state::running = false;
                                 state::closed = false;
                             }
+
 
                             else if (msgType == "SCORE_RESPONSE") {
                                 ScoreBuffer = j.dump();
