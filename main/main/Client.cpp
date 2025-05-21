@@ -1,6 +1,7 @@
 ﻿#include "Client.hpp"
 #include "Discovery.hpp"  
 #include "Tetromino.hpp"
+#include "Window.hpp"
 #include <iostream>
 #include <cstring>
 #include <thread>
@@ -16,6 +17,7 @@
 #include <sstream>
 #include <cstdio>
 #include <mutex>
+
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -516,14 +518,23 @@ namespace Client {
     bool sendDragCoordinates(const Tetromino& tetromino) {
         json j;
         j["type"] = to_string(id) + "DRAG_UPDATE";
-		std::cout << "Sending drag coordinates to server: " << j["type"] << endl;
-		id++;
+        id++;
         j["blocks"] = json::array();
         for (const auto& block : tetromino.blocks) {
-            j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"r", block.color.r},{"g", block.color.g},{"b", block.color.b} });
+            // convert pixel → grid
+            int col = (block.x - GRID_START_X) / BLOCK_SIZE;
+            int row = (block.y - GRID_START_Y) / BLOCK_SIZE;
+            j["blocks"].push_back({
+                {"x", col},              // 0..numCols-1
+                {"y", row},              // 0..numRows-1
+                {"r", block.color.r},
+                {"g", block.color.g},
+                {"b", block.color.b}
+                });
         }
         return sendSecure(j);
     }
+
 
     void start_client(const std::string& server_ip) {
         std::cout << "*Server IP: " << server_ip << "\n";

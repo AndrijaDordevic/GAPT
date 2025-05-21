@@ -157,9 +157,11 @@ void SpawnTetromino() {
 					255 // alpha, or adjust as needed
 				};
 
+				int col = blockData["x"].get<int>();
+				int row = blockData["y"].get<int>();
 				Block block = {
-					blockData["x"],
-					blockData["y"],
+					GRID_START_X + col * BLOCK_SIZE,
+					GRID_START_Y + row * BLOCK_SIZE,
 					color
 				};
 

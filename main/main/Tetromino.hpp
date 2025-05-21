@@ -6,7 +6,6 @@
 
 struct Block;
 
-const int BLOCK_SIZE = 80;
 const int Columns = 9;
 extern bool draggingInProgress;
 extern bool CanDrag;
