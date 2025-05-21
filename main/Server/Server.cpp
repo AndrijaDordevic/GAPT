@@ -923,12 +923,27 @@ bool handleReconnect(int sock, const json& first)
     for (ShapeType s : P->inHand)
         hand.push_back(static_cast<int>(s));
 
+
+    json gridData = json::array();
+    {
+
+        std::lock_guard<std::mutex> lk(sess->mtx); // Use session's mutex
+        auto& grid = (cid == sess->p1.clientID ? sess->grid1 : sess->grid2);
+
+        for (const Cell& cell : grid) {
+            gridData.push_back(cell);
+               
+        }
+        std::cout << "Grid data:" << gridData.dump(4) << std::endl;
+
+    }
+
     json snap = {
       {"type",           "STATE_SNAPSHOT"},
       {"yourScore",      P->score},
       {"opponentScore",  peer.score},         
       {"nextShapeIdx",   P->nextShapeIdx},
-      {"grid",           (cid == sess->p1.clientID ? sess->grid1 : sess->grid2)},
+      {"grid",           gridData},
       {"inHand",         hand}
     };
 

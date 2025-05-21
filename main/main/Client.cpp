@@ -305,8 +305,10 @@ namespace Client {
 
                                 lockedBlocks.clear();
                                 if (j.contains("grid") && j["grid"].is_array()) {
+                                    std::cout << "Grid data:" << j["grid"].dump(4) << std::endl;
                                     for (auto& cell : j["grid"])
                                         lockedBlocks.push_back(cell);
+                                    std::cout << "Locked Blocks:" << lockedBlocks << std::endl;
                                 }
 
                                 shape.clear();

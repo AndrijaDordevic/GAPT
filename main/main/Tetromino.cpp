@@ -91,6 +91,11 @@ void SpawnTetromino() {
 
 	};
 
+
+	
+
+
+
 	//Creating a random shape/Color from the vector
 	int randomColorIndex = rand() % (sizeof(colors) / sizeof(colors[0]));
 	if (Client::shape.empty()) {
@@ -134,6 +139,29 @@ void SpawnTetromino() {
 			newTetromino.color
 		};
 		newTetromino.blocks.push_back(block);
+	}
+
+
+	if (!Client::lockedBlocks.empty()) {
+		Tetromino placed;
+		placed.color = colors[randomColorIndex]; // or getColorFromType
+
+		for (const auto& blockData : Client::lockedBlocks) {
+			if (blockData.contains("x") && blockData.contains("y")) {
+				Block block = {
+					blockData["x"],
+					blockData["y"],
+					placed.color
+				};
+
+				block.texture = ApplyTexture(block);
+				placed.blocks.push_back(block);
+			}
+		}
+
+		placed.canBeDragged = false; // lock it
+		placedTetrominos.push_back(placed);
+		Client::lockedBlocks.clear(); // Clear the locked blocks after placing them
 	}
 
 	for (auto& block : newTetromino.blocks) {
