@@ -147,11 +147,20 @@ void SpawnTetromino() {
 		placed.color = colors[randomColorIndex]; // or getColorFromType
 
 		for (const auto& blockData : Client::lockedBlocks) {
-			if (blockData.contains("x") && blockData.contains("y")) {
+			if (blockData.contains("x") && blockData.contains("y") &&
+				blockData.contains("r") && blockData.contains("g") && blockData.contains("b")) {
+
+				SDL_Color color = {
+					static_cast<Uint8>(blockData["r"]),
+					static_cast<Uint8>(blockData["g"]),
+					static_cast<Uint8>(blockData["b"]),
+					255 // alpha, or adjust as needed
+				};
+
 				Block block = {
 					blockData["x"],
 					blockData["y"],
-					placed.color
+					color
 				};
 
 				block.texture = ApplyTexture(block);

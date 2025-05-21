@@ -520,7 +520,7 @@ namespace Client {
 		id++;
         j["blocks"] = json::array();
         for (const auto& block : tetromino.blocks) {
-            j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"block type", "d"} });
+            j["blocks"].push_back({ {"x", block.x}, {"y", block.y}, {"r", block.color.r},{"g", block.color.g},{"b", block.color.b} });
         }
         return sendSecure(j);
     }
