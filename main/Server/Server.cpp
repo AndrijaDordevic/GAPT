@@ -551,17 +551,26 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
     // Helper to build and send a SHAPE_ASSIGN
     auto dealShape = [&](int sock, PlayerState& ps) {
+        // nothing to do if we’ve exhausted the pre-gen queue
         if (ps.nextShapeIdx >= S->shapeQ.size()) return;
-        ShapeType s = S->shapeQ[ps.nextShapeIdx++];
-        ps.inHand.push_back(s);
 
+        // peek the next shape, but don’t advance yet
+        ShapeType s = S->shapeQ[ps.nextShapeIdx];
         json j = {
-          {"type","SHAPE_ASSIGN"},
-          {"shapeType", static_cast<int>(s)}
+            {"type", "SHAPE_ASSIGN"},
+            {"shapeType", static_cast<int>(s)}
         };
-        if (!sendSecure(sock, j, SHARED_SECRET))
-            std::cerr << "FAILED to send SHAPE_ASSIGN\n";
+
+        // only if the client actually received it do we advance
+        if (sendSecure(sock, j, SHARED_SECRET)) {
+            ps.inHand.push_back(s);
+            ++ps.nextShapeIdx;
+        }
+        else {
+            std::cerr << "FAILED to send SHAPE_ASSIGN, will retry on next dealShape call\n";
+        }
         };
+
 
     // 3) Initial deal of 3 shapes each
     for (int i = 0; i < 3; ++i) {
@@ -799,7 +808,18 @@ void clientHandler(int client_socket, int clientID) {
         }
         if (!paired) {
             std::unique_lock<std::mutex> lock(waitingMutex);
-            waitingCV.wait(lock, [&]() { return pairingMap.find(clientID) != pairingMap.end(); });
+            // Wait until either we're paired or the client disconnects
+            while (pairingMap.find(clientID) == pairingMap.end()) {
+                // if our own socket has died, give up and clean up
+                if (!isSocketAlive(client_socket)) {
+                    std::cerr << "Client " << clientID
+                        << " disconnected before pairing — removing from queue\n";
+                    waitingClients.erase(clientID);
+                    return;  // drop out of clientHandler entirely
+                }
+                // otherwise sleep up to one second or until notify_all
+                waitingCV.wait_for(lock, std::chrono::seconds(1));
+            }
             PairInfo info = pairingMap[clientID];
             partnerID = info.partnerID;
             partnerSocket = info.partnerSocket;
@@ -1029,7 +1049,7 @@ int main() {
             if (n <= 0) break;
 
             buf.assign(tmp, n);
-            if (buf.find('\n') == std::string::npos)     // not a full line yet
+            if (buf.find('\n') == std::string::npos)     
                 continue;
 
             try {
@@ -1037,7 +1057,7 @@ int main() {
                 if (first.value("type", "") == "RECONNECT" &&
                     handleReconnect(sock, first))
                 {
-                    handled = true;                      // we’re done
+                    handled = true;                     
                 }
             }
             catch (...) { /* ignore – treat as new client */ }
@@ -1045,7 +1065,6 @@ int main() {
 
         if (handled) continue;                           // joined old session
 
-        // ---- brand-new client ----
         int cid = clientIDCounter.fetch_add(1) + 1;
 
         // print who just arrived
