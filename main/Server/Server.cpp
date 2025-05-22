@@ -550,26 +550,27 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
         S->shapeQ[i] = static_cast<ShapeType>(dist(gen));
 
     // Helper to build and send a SHAPE_ASSIGN
-    auto dealShape = [&](int sock, PlayerState& ps) {
-        // nothing to do if we’ve exhausted the pre-gen queue
-        if (ps.nextShapeIdx >= S->shapeQ.size()) return;
+    auto dealShape = [&](int sock, PlayerState& ps) -> bool {
+        if (ps.nextShapeIdx >= S->shapeQ.size())
+            return false;
 
-        // peek the next shape, but don’t advance yet
         ShapeType s = S->shapeQ[ps.nextShapeIdx];
         json j = {
             {"type", "SHAPE_ASSIGN"},
             {"shapeType", static_cast<int>(s)}
         };
 
-        // only if the client actually received it do we advance
-        if (sendSecure(sock, j, SHARED_SECRET)) {
-            ps.inHand.push_back(s);
-            ++ps.nextShapeIdx;
+        if (!sendSecure(sock, j, SHARED_SECRET)) {
+            std::cerr << "FAILED to send SHAPE_ASSIGN, will retry later\n";
+            return false;
         }
-        else {
-            std::cerr << "FAILED to send SHAPE_ASSIGN, will retry on next dealShape call\n";
-        }
+
+        // only advance once we know the client got it
+        ps.inHand.push_back(s);
+        ++ps.nextShapeIdx;
+        return true;
         };
+
 
 
     // 3) Initial deal of 3 shapes each
@@ -635,17 +636,28 @@ void sessionHandler(int clientSocket1, int clientID1, int clientSocket2, int cli
 
             // DRAG_UPDATE: unchanged forwarding + grid + dealShape…
             if (j["type"] == "DRAG_UPDATE") {
+                // 1) forward the drag to both clients
                 sendSecure(S->p1.socket, j, SHARED_SECRET);
                 sendSecure(S->p2.socket, j, SHARED_SECRET);
+
+                // 2) record the new blocks on the server?side grid
                 {
                     std::lock_guard<std::mutex> lk(S->mtx);
                     auto& grid = (&me == &S->p1 ? S->grid1 : S->grid2);
                     grid.insert(grid.end(), j["blocks"].begin(), j["blocks"].end());
                 }
-                if (!me.inHand.empty()) me.inHand.erase(me.inHand.begin());
+
+                // 3) first remove the shape we just used (if we still have one)
+                if (!me.inHand.empty()) {
+                    me.inHand.erase(me.inHand.begin());
+                }
+
+                // 4) then deal a fresh new shape at the end
                 dealShape(fromSock, me);
+
                 return true;
             }
+
             // SCORE_REQUEST: **all score logic now lives in me.score**
             else if (j["type"] == "SCORE_REQUEST") {
                 auto rows = j["rows"].get<std::vector<int>>();
@@ -919,6 +931,25 @@ bool handleReconnect(int sock, const json& first)
     char dummy[4096];
     recv(sock, dummy, sizeof(dummy), 0);
 
+#ifdef _WIN32
+    // put into nonblocking
+    u_long nonblock = 1;
+    ioctlsocket(sock, FIONBIO, &nonblock);
+    char junk[4096];
+    while (recv(sock, junk, sizeof(junk), 0) > 0) {}
+    // restore blocking
+    nonblock = 0;
+    ioctlsocket(sock, FIONBIO, &nonblock);
+#else
+    // POSIX: use fcntl() to make it nonblocking
+    int flags = fcntl(sock, F_GETFL, 0);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    char junk[4096];
+    while (recv(sock, junk, sizeof(junk), 0) > 0) {}
+    // restore original flags
+    fcntl(sock, F_SETFL, flags);
+#endif
+
     // 7) Reattach
     P->socket = sock;
     P->connected = true;
@@ -937,36 +968,34 @@ bool handleReconnect(int sock, const json& first)
         sendSecure(peer.socket, up, SHARED_SECRET);
     }
 
+    size_t H = P->inHand.size();
+    // compute the index of the first shape they hold
+    size_t firstIdx = (P->nextShapeIdx >= H ? P->nextShapeIdx - H : 0);
 
-    // 9) Send full snapshot, including HMAC’d body
+    // rebuild the “inHand” list exactly as the client should see it
     json hand = json::array();
-    for (ShapeType s : P->inHand)
-        hand.push_back(static_cast<int>(s));
-
-
-    json gridData = json::array();
-    {
-
-        std::lock_guard<std::mutex> lk(sess->mtx); // Use session's mutex
-        auto& grid = (cid == sess->p1.clientID ? sess->grid1 : sess->grid2);
-
-        for (const Cell& cell : grid) {
-            gridData.push_back(cell);
-               
-        }
-        std::cout << "Grid data:" << gridData.dump(4) << std::endl;
-
+    for (size_t i = 0; i < H; ++i) {
+        hand.push_back(static_cast<int>(sess->shapeQ[firstIdx + i]));
     }
 
-    json snap = {
-      {"type",           "STATE_SNAPSHOT"},
-      {"yourScore",      P->score},
-      {"opponentScore",  peer.score},         
-      {"nextShapeIdx",   P->nextShapeIdx},
-      {"grid",           gridData},
-      {"inHand",         hand}
-    };
+    // snapshot the grid under lock
+    json gridData = json::array();
+    {
+        std::lock_guard<std::mutex> lk(sess->mtx);
+        auto& grid = (cid == sess->p1.clientID ? sess->grid1 : sess->grid2);
+        for (auto& cell : grid)
+            gridData.push_back(cell);
+    }
 
+    // send a single STATE_SNAPSHOT with corrected nextShapeIdx and inHand
+    json snap = {
+        {"type",           "STATE_SNAPSHOT"},
+        {"yourScore",      P->score},
+        {"opponentScore",  peer.score},
+        {"nextShapeIdx",   firstIdx + H},   // exactly where the client should pick up
+        {"grid",           gridData},
+        {"inHand",         hand}
+    };
     sendSecure(sock, snap, SHARED_SECRET);
 
     return true;

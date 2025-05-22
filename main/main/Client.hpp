@@ -27,6 +27,7 @@ namespace Client {
     extern std::atomic<bool> StopResponceTaking;
     extern std::atomic<bool> waitingForSession;
     extern bool displayWaitingMessage;   
+    extern bool startSent;
 
     // score/tetromino APIs
     int UpdateScore();

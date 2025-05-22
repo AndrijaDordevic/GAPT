@@ -61,6 +61,7 @@ namespace Client {
     std::atomic<bool> resumeNow(false);       // flag set by STATE_SNAPSHOT
     std::mutex        snapMtx;               // protects lastSnapshot
     nlohmann::json    lastSnapshot;          // most-recent snapshot
+    bool Client::startSent = false;
 
     int myScore = 0;     
     size_t nextShapeIdx = 0;
@@ -211,6 +212,7 @@ namespace Client {
         spawnedCount = 0;
         inSession = false;
         RecieveOpponentScore(0);
+		startSent = false;
     }
 
     static bool validateHMAC(json& j, const std::string& secret) {
@@ -502,6 +504,8 @@ namespace Client {
     }
 
     bool notifyStartGame() {
+        if (startSent) return true;
+
         std::cout << "Attempting to notify server to start game on IP "
             << server_ip << " and port " << PORT << endl;
         if (client_socket < 0) {
@@ -512,7 +516,13 @@ namespace Client {
         json j;
         j["type"] = to_string(id) + "START_GAME";
         id++;
-        return sendSecure(j);
+        if (!sendSecure(j)) {
+            return false;
+        }
+
+        // mark it so future calls do nothing
+        startSent = true;
+        return true;
     }
 
     bool sendDragCoordinates(const Tetromino& tetromino) {

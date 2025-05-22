@@ -10,8 +10,8 @@ C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(234,14): warning C4244: 
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(275,20): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(318,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(325,75): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(1004,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(1034,18): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(1033,19): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\Owner\source\repos\GAPT\main\Server\Server.cpp(1063,18): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
   Server.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\Server.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.
