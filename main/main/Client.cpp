@@ -17,6 +17,8 @@
 #include <sstream>
 #include <cstdio>
 #include <mutex>
+#include <cstdlib>
+#include <ctime>
 
 
 #ifdef _WIN32
@@ -62,6 +64,7 @@ namespace Client {
     std::mutex        snapMtx;               // protects lastSnapshot
     nlohmann::json    lastSnapshot;          // most-recent snapshot
     bool Client::startSent = false;
+    std::mutex scoreMtx;
 
     int myScore = 0;     
     size_t nextShapeIdx = 0;
@@ -323,6 +326,7 @@ namespace Client {
 
                                 if (j.contains("yourScore")) {
                                     myScore = j["yourScore"].get<int>();
+                                    std::lock_guard<std::mutex> lk(scoreMtx);
                                     ScoreBuffer = json{
                                       {"type", "SCORE_RESPONSE"},
                                       {"score", myScore}
@@ -337,9 +341,8 @@ namespace Client {
                                 state::running = false;
                                 state::closed = false;
                             }
-
-
                             else if (msgType == "SCORE_RESPONSE") {
+                                std::lock_guard<std::mutex> lk(scoreMtx);
                                 ScoreBuffer = j.dump();
                             }
                             else if (msgType == "SCORE_UPDATE") {
@@ -545,6 +548,64 @@ namespace Client {
         return sendSecure(j);
     }
 
+    bool connectWithBackoff(const std::string& server_ip, int& out_sock) {
+        const int    MAX_ATTEMPTS = 8;
+        const size_t BASE_DELAY_MS = 500;      //  0.5s
+        const size_t MAX_DELAY_MS = 10 * 1000;  // 10s cap
+
+        size_t delay = BASE_DELAY_MS;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; ++attempt) {
+            int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+            if (sock < 0) {
+                std::cerr << "[Client] socket() failed\n";
+                return false;
+            }
+
+            sockaddr_in sa{};
+            sa.sin_family = AF_INET;
+            sa.sin_port = htons(PORT);
+            inet_pton(AF_INET, server_ip.c_str(), &sa.sin_addr);
+
+            std::cout << "[Client] Attempt " << attempt
+                << " to connect to " << server_ip
+                << ":" << PORT << " …\n";
+
+            if (::connect(sock, (sockaddr*)&sa, sizeof sa) == 0) {
+                // success
+                out_sock = sock;
+                std::cout << "[Client] Connected on attempt " << attempt << "\n";
+                return true;
+            }
+
+            // failed ⇒ close and back off
+#ifdef _WIN32
+            closesocket(sock);
+#else
+            close(sock);
+#endif
+            out_sock = -1;
+
+            if (attempt == MAX_ATTEMPTS) break;
+
+            // compute jittered delay
+            size_t jitter = rand() % (delay / 4 + 1);
+            size_t wait_ms = delay - jitter / 2 + jitter;
+            std::cout << "[Client] Connect failed; waiting "
+                << wait_ms << "ms before retrying\n";
+
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(wait_ms));
+
+            // exponential back-off for next round
+            delay = min(delay * 2, MAX_DELAY_MS);
+        }
+
+        std::cerr << "[Client] All " << MAX_ATTEMPTS
+            << " connect attempts failed.\n";
+        return false;
+    }
+
+
 
     void start_client(const std::string& server_ip) {
         std::cout << "*Server IP: " << server_ip << "\n";
@@ -574,45 +635,15 @@ namespace Client {
             }
         }
 
-        // 2) If we still have no socket, do a fresh connect
+        // 2) If we still have no socket, do a fresh connect with back-off
         if (client_socket < 0) {
-            client_socket = socket(AF_INET, SOCK_STREAM, 0);
-            if (client_socket < 0) {
-                std::cerr << "[Client] Socket creation failed\n";
+            if (!connectWithBackoff(server_ip, client_socket)) {
+                std::cerr << "[Client] Unable to connect; exiting\n";
 #ifdef _WIN32
                 WSACleanup();
 #endif
                 return;
             }
-
-            sockaddr_in sa{};
-            sa.sin_family = AF_INET;
-            sa.sin_port = htons(PORT);
-            if (inet_pton(AF_INET, server_ip.c_str(), &sa.sin_addr) <= 0) {
-                std::cerr << "[Client] Invalid address\n";
-#ifdef _WIN32
-                closesocket(client_socket);
-                WSACleanup();
-#else
-                close(client_socket);
-#endif
-                client_socket = -1;
-                return;
-            }
-
-            std::cout << "[Client] Connecting to server...\n";
-            if (connect(client_socket, (sockaddr*)&sa, sizeof sa) < 0) {
-                std::cerr << "[Client] Connection failed\n";
-#ifdef _WIN32
-                closesocket(client_socket);
-                WSACleanup();
-#else
-                close(client_socket);
-#endif
-                client_socket = -1;
-                return;
-            }
-            std::cout << "[Client] Connected to server\n";
         }
 
         // 3) Launch the receive thread
@@ -645,7 +676,7 @@ namespace Client {
             json response = json::parse(ScoreBuffer);
             if (response.contains("type") && response["type"] == "SCORE_RESPONSE") {
                 int score = response["score"].get<int>();
-                 cout << "[Client] Score response received: " << score << "\n";
+                cout << "[Client] Score response received: " << score << "\n";
                 // clear it so you don’t parse it again on the next tick
 
                 return score;
