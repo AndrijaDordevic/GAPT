@@ -200,7 +200,7 @@ int runMenu(SDL_Window* window, SDL_Renderer* renderer) {
 						}
 						else if (i == 1) {
 							// Instructions
-							MessageBox(NULL, L"Click and drag the blocks on the right to the grid and form lines.\n\nForming a line will clear all blocks in the line and award you with points.\n\nIf you get stuck then click the clear grid button to clear the entire grid.\n\nYou only have 3 minutes to get more points than your opponent!\n\nHave fun!", L"Instructions", MB_OK);
+							MessageBox(NULL, L"Click and drag the blocks on the right to the grid and form lines.\n\nForming a line either vertically or horizontally will clear all blocks in the line and award you with points.\n\nThe more lines you clear at once, the higher the points you get!\n\nThe colour of the blocks do not matter\n\nIf you get stuck you can click the clear grid button to clear the entire grid.\n\nYou only have 3 minutes to get more points than your opponent!\n\nHave fun!", L"Instructions", MB_OK);
 
 						}
 					}

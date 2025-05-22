@@ -1,22 +1,4 @@
-﻿  Client.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(111,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(144,61): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(449,48): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(472,18): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\Client.cpp(579,35): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
-  DragBlock.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(34,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(35,51): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(46,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Owner\source\repos\GAPT\main\main\DragBlock.cpp(47,16): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-  Main.cpp
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\filesystem(12): warning STL4038: The contents of <filesystem> are available only with C++17 or later.
-  Menu.cpp
-  Tetromino.cpp
-  UnitTests.cpp
-C:\Users\Owner\source\repos\GAPT\main\main\UnitTests.cpp(152,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  Window.cpp
-  Generating Code...
+﻿  Menu.cpp
   main.vcxproj -> C:\Users\Owner\source\repos\GAPT\main\x64\Debug\main.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.
