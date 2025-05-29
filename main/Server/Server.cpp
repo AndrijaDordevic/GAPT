@@ -162,7 +162,7 @@ bool sendSecure(int sock, json j, const std::string& secret) {
     return safeSend(sock, withTag.c_str(), withTag.size()) >= 0;
 }
 
-// Add this function to read and verify secure messages
+// This function is to read and verify secure messages
 bool recvSecure(int sock, json& j, const std::string& secret, int clientID) {
     char buffer[4096];
     int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
